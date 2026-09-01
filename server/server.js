@@ -3,6 +3,7 @@ const http = require('node:http')
 const setupRoutes = require('./routes/index')
 const mongodb = require('./config/db')
 const config = require('./config/config')
+const logger = require('./utils/logger')
 
 
 class Server{
@@ -21,7 +22,7 @@ class Server{
     await mongodb.connect()
     await this.initialize()
         this.server.listen(this.port,()=>{
-            console.log(`server is running on http://localhost:${this.port}`)
+            logger.info(`server is running on http://localhost:${this.port}`)
         })
     }
 }
