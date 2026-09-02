@@ -1,26 +1,18 @@
-const BaseController = require('../baseController')
-const Users = require('../../models/User')
-const bcrypt = require('bcrypt')
-const Authservice = require('../../services/Authservice')
+const BaseController = require("../baseController");
+const Authservice = require("../../services/Authservice");
 
+class AuthController extends BaseController {
+  static register = BaseController.asyncHandler(async (req, res) => {
 
-
-
-class AuthController extends BaseController{
-    static register = BaseController.asyncHandler(async(req,res,next)=>{
-
-        const result = await Authservice.register(req.body)
-
-    
- 
+    const result = await Authservice.register(req.body);
 
     return this.sendSuccessResponse(
-        res,"user created succesfully",user,201
-    )
-    })
-
-    
+      res,
+      "User created successfully",
+      result,
+      201
+    );
+  });
 }
 
-
-module.exports = AuthController
+module.exports = AuthController;

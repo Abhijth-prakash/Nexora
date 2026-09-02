@@ -1,6 +1,14 @@
 const Users = require("../models/User");
 const logger = require("../utils/logger");
 const bcrypt = require("bcrypt");
+const {
+  ConflictError,
+  AuthenticationError,
+  NotFoundError,
+  AuthorizationError,
+  ValidationError,
+  OTPError,
+} = require("../utils/errors");
 
 class AuthService {
   static async register(userData) {
@@ -10,7 +18,7 @@ class AuthService {
       });
 
       if (existingUser) {
-        throw new Error("User already exists");
+        throw new ConflictError("email already exists");
       }
 
       const hashPass = await bcrypt.hash(userData.password, 12);

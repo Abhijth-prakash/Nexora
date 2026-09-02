@@ -14,6 +14,7 @@ class Server{
     }
 
     initialize(){
+        this.app.use(express.json());
         setupRoutes(this.app)
     }
 
