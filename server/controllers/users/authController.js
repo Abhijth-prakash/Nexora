@@ -1,19 +1,26 @@
-
-class register {
-    async registerFnction (){
-
-        return res.status(201).json("this is register page by mysterio")
-
-    }catch(err){
-        console.log(err)
-        return res.status(500).json("internals server error")
-
-    }
-    }    
+const BaseController = require('../baseController')
+const Users = require('../../models/User')
+const bcrypt = require('bcrypt')
+const Authservice = require('../../services/Authservice')
 
 
 
 
-module.exports ={
-    register
+class AuthController extends BaseController{
+    static register = BaseController.asyncHandler(async(req,res,next)=>{
+
+        const result = await Authservice.register(req.body)
+
+    
+ 
+
+    return this.sendSuccessResponse(
+        res,"user created succesfully",user,201
+    )
+    })
+
+    
 }
+
+
+module.exports = AuthController
