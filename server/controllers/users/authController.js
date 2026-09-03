@@ -1,10 +1,13 @@
 const BaseController = require("../baseController");
 const Authservice = require("../../services/Authservice");
+const {registerValidate} = require('../../utils/validation')
 
 class AuthController extends BaseController {
   static register = BaseController.asyncHandler(async (req, res) => {
+    
+    const validatedData = BaseController.validateRequest(registerValidate,req.body)
 
-    const result = await Authservice.register(req.body);
+    const result = await Authservice.register(validatedData);
 
     return this.sendSuccessResponse(
       res,

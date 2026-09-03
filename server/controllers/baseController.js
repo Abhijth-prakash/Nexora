@@ -5,6 +5,23 @@ class BaseController {
     };
   }
 
+
+    static validateRequest(schema, data) {
+    const { error, value } = schema.validate(data, { abortEarly: false });
+
+    if (error) {
+      const details = error.details.map((detail) => ({
+        field: detail.path.join("."),
+        message: detail.message.replace(/['"]/g, ""),
+      }));
+      throw new ValidationError("Validation failed", details);
+    }
+
+    return value;
+  }
+
+
+  
   static sendSuccessResponse(
     res,
     message,
