@@ -8,6 +8,7 @@ class AuthController extends BaseController {
     const validatedData = BaseController.validateRequest(registerValidate,req.body)
 
     const result = await Authservice.register(validatedData);
+    BaseController.logAction("UserRegisterd",result.user)
 
     return this.sendSuccessResponse(
       res,

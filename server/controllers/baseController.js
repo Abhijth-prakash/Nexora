@@ -1,3 +1,5 @@
+const logger = require('../utils/logger')
+
 class BaseController {
   static asyncHandler(fn) {
     return (req, res, next) => {
@@ -21,7 +23,7 @@ class BaseController {
   }
 
 
-  
+
   static sendSuccessResponse(
     res,
     message,
@@ -46,6 +48,24 @@ class BaseController {
       message,
       details,
     });
+  }
+
+
+    static logAction(action, user = null, details = {}) {
+    const logData = {
+      action,
+      timestamp: new Date().toISOString(),
+      ...details,
+    };
+
+    if (user) {
+      logData.user = {
+        id: user._id || user.id,
+        email: user.email,
+      };
+    }
+
+    logger.info(`Controller Action: ${action}`, logData);
   }
 }
 
