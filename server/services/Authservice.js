@@ -10,6 +10,7 @@ const {
   ValidationError,
   OTPError,
 } = require("../utils/errors");
+const {generateUserToken} = require('../utils/jwt')
 
 class AuthService {
   static async register(userData) {
@@ -34,7 +35,7 @@ class AuthService {
       });
       await user.save();
 
-       await Mail.sendOTP(user.email, otp, user.name);
+      await Mail.sendOTP(user.email, otp, user.name);
 
       logger.info(`New user registered: ${userData.email}. OTP sent.`);
 
@@ -106,7 +107,7 @@ class AuthService {
       logger.info(`Email verified for user: ${email}`);
 
       return {
-        user: user.getPublicProfile(),
+        user: user.getProfile(),
         token,
       };
     } catch (error) {

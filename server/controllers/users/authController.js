@@ -1,6 +1,6 @@
 const BaseController = require("../baseController");
 const Authservice = require("../../services/Authservice");
-const {registerValidate} = require('../../utils/validation')
+const {registerValidate,OTPValidation} = require('../../utils/validation')
 
 class AuthController extends BaseController {
   static register = BaseController.asyncHandler(async (req, res) => {
@@ -17,6 +17,14 @@ class AuthController extends BaseController {
       201
     );
   });
+
+  static Verify = BaseController.asyncHandler(async (req,res)=>{
+
+    const validatedOtp = BaseController.validateRequest(OTPValidation,req.body)
+
+  }) 
+
+  
 }
 
 module.exports = AuthController;

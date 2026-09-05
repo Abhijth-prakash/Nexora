@@ -68,6 +68,18 @@ const registerValidate = Joi.object({
   password: commonPatterns.password,
 });
 
+
+const OTPValidation = Joi.object({
+  email: commonPatterns.email,
+  otp: commonPatterns.otp,
+}).messages({
+  ...customMessages,
+  "string.length": "OTP must be exactly 6 digits",
+  "string.pattern.base": "OTP must contain only numbers",
+  "any.required": "OTP is required",
+});
+
 module.exports = {
   registerValidate,
+  OTPValidation
 };
