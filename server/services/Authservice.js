@@ -51,70 +51,83 @@ class AuthService {
 
 
   static async verifyOTP(email, otp) {
-    try {
-      const user = await User.findByEmail(email);
+  try {
+    const user = await User.findByEmail(email);
 
-      if (!user) {
-        throw new NotFoundError("User not found");
-      }
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
 
-      if (user.Verified) {
-        throw new ConflictError("already verified");
-      }
+    if (user.Verified) {
+      throw new ConflictError("already verified");
+    }
 
-      if (!user.otp || !user.otpExpiry) {
-        throw new OTPError("No active OTP found. Please request a new one");
-      }
+    if (!user.otp || !user.otpExpiry) {
+      throw new OTPError(
+        "No active OTP found. Please request a new one"
+      );
+    }
 
-      const now = new Date();
-      if (user.otpExpiry < now) {
-        user.otp = null;
-        user.otpExpiry = null;
-        await user.save();
+    const now = new Date();
 
-        throw new OTPError("OTP has expired. Please request a new one");
-      }
-
-      if (user.otp !== otp) {
-        user.otpAttempts = (user.otpAttempts || 0) + 1;
-        if (user.otpAttempts >= 5) {
-          user.otp = null;
-          user.otpExpiry = null;
-          user.otpAttempts = 0;
-          await user.save();
-          throw new OTPError(
-            "Too many failed attempts. Please request a new OTP",
-          );
-        }
-        await user.save();
-        throw new OTPError("Invalid OTP");
-      }
-
-      user.otpAttempts = 0;
-      user.Verified = true;
+    if (user.otpExpiry < now) {
       user.otp = null;
       user.otpExpiry = null;
-      user.lastLogin = new Date();
+
       await user.save();
 
-      const token = generateUserToken({
-        id: user._id,
-        email: user.email,
-        Verified: true,
-        banned: user.banned,
-      });
-
-      logger.info(`Email verified for user: ${email}`);
-
-      return {
-        user: user.getProfile(),
-        token,
-      };
-    } catch (error) {
-      logger.error("OTP verification error:", error);
-      throw error;
+      throw new OTPError(
+        "OTP has expired. Please request a new one"
+      );
     }
+
+    if (user.otp !== otp) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+
+      if (user.otpAttempts >= 5) {
+        user.otp = null;
+        user.otpExpiry = null;
+        user.otpAttempts = 0;
+
+        await user.save();
+
+        throw new OTPError(
+          "Too many failed attempts. Please request a new OTP"
+        );
+      }
+
+      await user.save();
+
+      throw new OTPError("Invalid OTP");
+    }
+
+    user.otpAttempts = 0;
+    user.Verified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    user.lastLogin = new Date();
+
+    await user.save();
+
+    const token = generateUserToken({
+      id: user._id,
+      email: user.email,
+      Verified: true,
+      banned: user.banned,
+    });
+
+    logger.info(`Email verified for user: ${email}`);
+
+    return {
+      user: user.getProfile(),
+      token,
+    };
+
+  } catch (error) {
+    logger.error("OTP verification error:", error);
+    throw error;
   }
+}
 
 }
 

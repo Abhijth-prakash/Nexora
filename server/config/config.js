@@ -12,4 +12,11 @@ module.exports = {
     EMAIL_secure: process.env.EMAIL_secure,
     EMAIL_from: process.env.EMAIL_from,
   },
+
+    JWT: {
+    USER_SECRET: process.env.JWT_USER_SECRET ,
+    ADMIN_SECRET: process.env.JWT_ADMIN_SECRET ,
+    EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
+  },
+
 };
