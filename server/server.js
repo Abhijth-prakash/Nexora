@@ -6,6 +6,7 @@ const setupRoutes = require("./routes/index");
 const mongodb = require("./config/db");
 const config = require("./config/config");
 const logger = require("./utils/logger");
+const cors = require("cors");
 
 class Server {
   constructor() {
@@ -19,6 +20,15 @@ class Server {
 
     
     this.app.use(cookieParser());
+
+      this.app.use(
+      cors({
+        origin: config.CORS.ORIGIN,
+        credentials: config.CORS.CREDENTIALS,
+        methods: config.CORS.METHODS,
+        allowedHeaders: config.CORS.ALLOWED_HEADERS,
+      })
+    );
 
     setupRoutes(this.app);
   }

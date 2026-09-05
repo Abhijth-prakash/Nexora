@@ -19,4 +19,15 @@ module.exports = {
     EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
   },
 
+   CORS: {
+    ORIGIN:
+      process.env.FRONTEND_URL && process.env.ADMIN_APP_URL
+        ? [process.env.FRONTEND_URL, process.env.ADMIN_APP_URL]
+        : ["http://localhost:5173", "http://localhost:5174"],
+    CREDENTIALS: true,
+    METHODS: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    ALLOWED_HEADERS: ["Content-Type", "Authorization", "X-Requested-With"],
+  },
+
+
 };
