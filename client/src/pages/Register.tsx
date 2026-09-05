@@ -1,18 +1,16 @@
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { registerSchema } from '../utils/Validation'
+import type { RegisterData } from '../utils/Validation'
 
-
-type FormData = {
-  name: string
-  email: string
-  password: string
-  confirmpassword: string
-}
 
 const Register = () => {
-    const {register,handleSubmit} = useForm<FormData>()
+    const {register,handleSubmit,formState:{errors}} = useForm<RegisterData>({
+        resolver:zodResolver(registerSchema)
+    })
 
 
-    const dataHandle=(data:FormData)=>{
+    const dataHandle=(data:RegisterData)=>{
 
         console.log(data)
     }
@@ -23,9 +21,13 @@ const Register = () => {
 
     <form onSubmit={handleSubmit(dataHandle)} > 
       <input type="text" {...register('name')} placeholder='name' />
+      {errors.name&&<p>{errors.name.message}</p>}
       <input type="email" {...register('email')} placeholder='email' />
+       {errors.email&&<p>{errors.email.message}</p>}
       <input type="password" {...register('password')} placeholder='password' />
+       {errors.password&&<p>{errors.password.message}</p>}
       <input type="password" {...register('confirmpassword')} placeholder='confirmpassword' />
+       {errors.confirmpassword&&<p>{errors.confirmpassword.message}</p>}
       <input type="submit" />
     </form>
 
