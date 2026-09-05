@@ -2,7 +2,7 @@ const config = require("../config/config");
 const logger = require("./logger");
 const nodemailer = require("nodemailer");
 
-class EmailService {
+class Mail {
   static getTransporter() {
     if (
       config.Nodemailer.EMAIL_host &&
@@ -136,4 +136,4 @@ If you didn't create an account, please ignore this email.
   }
 }
 
-module.exports = EmailService;
+module.exports = Mail;
