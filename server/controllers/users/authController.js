@@ -7,6 +7,7 @@ const {
 
 class AuthController extends BaseController {
   static register = BaseController.asyncHandler(async (req, res) => {
+    console.log(req.body)
     const validatedData = BaseController.validateRequest(
       registerValidate,
       req.body

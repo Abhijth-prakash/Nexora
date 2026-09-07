@@ -62,6 +62,15 @@ const commonPatterns = {
     }),
 };
 
+const customMessages = {
+  "string.min": "{#label} must be at least {#limit} characters long",
+  "string.max": "{#label} cannot exceed {#limit} characters",
+  "string.email": "Please provide a valid email address",
+  "any.required": "{#label} is required",
+  "any.only": "{#label} must be one of: {#valids}",
+  "string.pattern.base": "{#label} format is invalid",
+};
+
 const registerValidate = Joi.object({
   name: commonPatterns.name,
   email: commonPatterns.email,

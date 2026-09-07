@@ -2,6 +2,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registerSchema } from '../utils/Validation'
 import type { RegisterData } from '../utils/Validation'
+import { registerUser } from '../redux/features/userSlice'
+import { useAppDispatch } from "../redux/hooks";
+
 
 
 const Register = () => {
@@ -9,11 +12,18 @@ const Register = () => {
         resolver:zodResolver(registerSchema)
     })
 
+    const dispatch = useAppDispatch()
 
-    const dataHandle=(data:RegisterData)=>{
+const dataHandle = async (data: RegisterData) => {
+  try {
+    const { confirmpassword, ...registerData } = data;
+    const result = await dispatch(registerUser(registerData)).unwrap();
 
-        console.log(data)
-    }
+    console.log("success", result);
+  } catch (error) {
+    console.log("Registration failed", error);
+  }
+};
   return (
    <>
 

@@ -1,4 +1,5 @@
 const logger = require('../utils/logger')
+const {ValidationError} = require('../utils/errors')
 
 class BaseController {
   static asyncHandler(fn) {
