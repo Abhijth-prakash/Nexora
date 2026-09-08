@@ -19,7 +19,6 @@ class BaseController {
       }));
       throw new ValidationError("Validation failed", details);
     }
-
     return value;
   }
 

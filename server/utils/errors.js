@@ -197,23 +197,28 @@ class ErrorUtils {
     return codes[statusCode] || "INTERNAL_ERROR";
   }
 
-  static logError(error, logger, context = {}) {
-    const statusCode = this.getStatusCode(error);
+static logError(error, logger, context = {}) {
+  const statusCode = this.getStatusCode(error);
 
-    const logData = {
-      message: error.message,
-      code: error.code,
-      statusCode,
-      stack: error.stack,
-      ...context,
-    };
+  const logData = {
+    message: error.message,
+    code: error.code,
+    statusCode,
+    stack: error.stack,
+    ...context,
+  };
 
-    if (error instanceof AppError && statusCode < 500) {
-      logger.warn("Operational error:", logData);
-    } else {
-      logger.error("System error:", logData);
-    }
+
+  if (error instanceof ValidationError && error.details?.length) {
+    logData.details = error.details;
   }
+
+  if (error instanceof AppError && statusCode < 500) {
+    logger.warn("Operational error:", logData);
+  } else {
+    logger.error("System error:", logData);
+  }
+}
 }
 
 module.exports = {
