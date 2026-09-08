@@ -25,8 +25,6 @@ export const registerUser = createAsyncThunk(
     try {
       const response = await AUTH_Api.register(userData);
 
-      console.log(response.data);
-
       return response.data.user;
 
     } catch (error) {
