@@ -25,7 +25,6 @@ const UserSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters long"],
     },
 
@@ -39,11 +38,17 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    Verified: {
+    verified: {
       type: Boolean,
       default: false,
     },
+    googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+}
   },
+  
   {
     timestamps: true,
   }

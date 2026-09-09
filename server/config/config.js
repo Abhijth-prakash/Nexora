@@ -29,5 +29,10 @@ module.exports = {
     ALLOWED_HEADERS: ["Content-Type", "Authorization", "X-Requested-With"],
   },
 
+  google:{
+    clientID:process.env.clientID,
+    clientSecret:process.env.clientSecret
+  }
+
 
 };
