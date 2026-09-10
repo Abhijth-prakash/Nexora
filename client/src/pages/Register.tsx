@@ -4,6 +4,7 @@ import { registerSchema } from '../utils/Validation'
 import type { RegisterData } from '../utils/Validation'
 import { registerUser } from '../redux/features/userSlice'
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { useNavigate } from 'react-router-dom'
 
 
 
@@ -13,12 +14,14 @@ const Register = () => {
     })
 
     const dispatch = useAppDispatch()
+    const navigate =useNavigate()
     const {error} = useAppSelector(state=> state.userData)
 
 const dataHandle = async (data: RegisterData) => {
   try {
     const { confirmpassword, ...registerData } = data;
      await dispatch(registerUser(registerData)).unwrap();
+     navigate('/auth/verify')
   } catch (error) {
     console.log("Registration failed", error);
   }
