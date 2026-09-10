@@ -24,6 +24,10 @@ const dataHandle = async (data: RegisterData) => {
   }
 };
 
+const handleGoogleLogin = () => {
+  window.location.href = "http://localhost:5000/api/auth/google";
+};
+
 
 
   return (
@@ -93,6 +97,9 @@ const dataHandle = async (data: RegisterData) => {
 
           </form>
               {error&&<p>{error}</p>}
+             <button onClick={handleGoogleLogin}>
+  Continue with Google
+</button>
         </div>
        </div>
 

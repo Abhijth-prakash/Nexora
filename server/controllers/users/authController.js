@@ -1,5 +1,7 @@
 const BaseController = require("../baseController");
 const Authservice = require("../../services/Authservice");
+const passport = require('passport')
+const {generateUserToken} = require('../../utils/jwt')
 const {
   registerValidate,
   OTPValidation,
@@ -61,6 +63,42 @@ class AuthController extends BaseController {
       200
     );
   });
+
+
+static googleCallback = BaseController.asyncHandler(
+  async (req, res) => {
+
+    const user = req.user;
+
+    const token = generateUserToken({
+      id: user._id,
+      email: user.email,
+      Verified: user.Verified,
+      banned: user.banned,
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    BaseController.logAction(
+      "User registered/logged in with Google",
+      user
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "Google authentication successful",
+      {
+        user: user.getProfile ? user.getProfile() : user,
+      },
+      200
+    );
+  }
+);
 }
 
 module.exports = AuthController;
