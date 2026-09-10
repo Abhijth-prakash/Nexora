@@ -8,6 +8,8 @@ const config = require("./config/config");
 const logger = require("./utils/logger");
 const cors = require("cors");
 const { errorHandler,notFound } = require("./middilewares/errorHandler");
+const passport = require('passport')
+require("./config/passport");
 
 
 
@@ -32,8 +34,10 @@ class Server {
         allowedHeaders: config.CORS.ALLOWED_HEADERS,
       })
     );
-        setupRoutes(this.app);
-       this.app.use(notFound);
+
+      this.app.use(passport.initialize());
+      setupRoutes(this.app);
+      this.app.use(notFound);
       this.app.use(errorHandler);
 
 
