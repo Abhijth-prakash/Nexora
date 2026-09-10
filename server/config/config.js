@@ -13,6 +13,8 @@ module.exports = {
     EMAIL_from: process.env.EMAIL_from,
   },
 
+    FRONTEND_URL: process.env.FRONTEND_URL,
+
     JWT: {
     USER_SECRET: process.env.JWT_USER_SECRET ,
     ADMIN_SECRET: process.env.JWT_ADMIN_SECRET ,

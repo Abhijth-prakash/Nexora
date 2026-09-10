@@ -6,6 +6,7 @@ const {
   registerValidate,
   OTPValidation,
 } = require("../../utils/validation");
+const config = require('../../config/config')
 
 class AuthController extends BaseController {
   static register = BaseController.asyncHandler(async (req, res) => {
@@ -88,15 +89,11 @@ static googleCallback = BaseController.asyncHandler(
       "User registered/logged in with Google",
       user
     );
+      
+    return res.redirect(
+  `${config.FRONTEND_URL}/home`
+);
 
-    return this.sendSuccessResponse(
-      res,
-      "Google authentication successful",
-      {
-        user: user.getProfile ? user.getProfile() : user,
-      },
-      200
-    );
   }
 );
 }
