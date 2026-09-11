@@ -9,6 +9,7 @@ const {
 const config = require('../../config/config')
 
 class AuthController extends BaseController {
+  //registering user
   static register = BaseController.asyncHandler(async (req, res) => {
     const validatedData = BaseController.validateRequest(
       registerValidate,
@@ -27,6 +28,8 @@ class AuthController extends BaseController {
     );
   });
 
+
+  //verifying otp
   static Verify = BaseController.asyncHandler(async (req, res) => {
     const validatedOtp = BaseController.validateRequest(
       OTPValidation,

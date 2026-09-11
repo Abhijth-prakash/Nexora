@@ -3,19 +3,23 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { OtpValidate } from "../utils/Validation"
 
+import { veirifyingOtp } from "../redux/features/userSlice"
+import { useAppDispatch } from "../redux/hooks"
+import { useNavigate } from "react-router-dom"
+
 type OtpForm = {
   otp: string
 }
 
 const OtpVerify = () => {
   const [otp, setOtp] = useState("")
-
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const {
     handleSubmit,
     setValue,
-    reset,
     formState: { errors },
   } = useForm<OtpForm>({
     resolver: zodResolver(OtpValidate),
@@ -59,13 +63,15 @@ const OtpVerify = () => {
     }
   }
 
-  const dataHandle = (data: OtpForm) => {
-    console.log(data)
+  const dataHandle = async (data: OtpForm) => {
+    try{
 
-    setOtp("")
-    reset()
+    await dispatch(veirifyingOtp(data))
+    navigate('/home')
 
-    inputRefs.current[0]?.focus()
+    }catch(error){
+      console.log(error,"verification failed")
+    }
   }
 
   return (

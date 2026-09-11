@@ -18,3 +18,12 @@ export type ApiResponse<T> = {
 export type RegisterRes = {
   user: BaseUser
 }
+
+export type VerifyOtpResponse = {
+  user: BaseUser
+  expiresIn: string
+  verification: {
+    emailVerified: boolean
+    verifiedAt: string
+  }
+}
