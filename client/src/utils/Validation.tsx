@@ -46,4 +46,16 @@ export const registerSchema = z
     path: ["confirmpassword"],
   });
 
+  export const OtpValidate = z.object({
+  otp: z
+    .string()
+    .length(6, "OTP must be exactly 6 digits")
+    .regex(/^\d{6}$/, "OTP must contain only numbers"),
+})
+
+export type OtpForm = z.infer<typeof OtpValidate>
+
+
+
+
 export type { RegisterData, RegisterRequest };
