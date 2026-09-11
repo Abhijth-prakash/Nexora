@@ -5,16 +5,20 @@ import { OtpValidate } from "../utils/Validation"
 
 import { veirifyingOtp } from "../redux/features/userSlice"
 import { useAppDispatch } from "../redux/hooks"
-import { useNavigate } from "react-router-dom"
+import { useNavigate,useLocation } from "react-router-dom"
+import type { VerifyOtpRequest } from "../utils/apiTypes"
 
 type OtpForm = {
-  otp: string
+  otp: string,
 }
 
 const OtpVerify = () => {
   const [otp, setOtp] = useState("")
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
+  const email = location.state?.email
+
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const {
@@ -66,7 +70,14 @@ const OtpVerify = () => {
   const dataHandle = async (data: OtpForm) => {
     try{
 
-    await dispatch(veirifyingOtp(data))
+       if (!email) {
+      throw new Error("Email not found")
+    }
+      const verifyData:VerifyOtpRequest = {
+        ...data,email
+      }
+
+    await dispatch(veirifyingOtp(verifyData))
     navigate('/home')
 
     }catch(error){

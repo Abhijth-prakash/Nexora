@@ -52,7 +52,7 @@ class AuthService {
 
   static async verifyOTP(email, otp) {
   try {
-    const user = await User.findByEmail(email);
+    const user = await Users.findByEmail(email);
 
     if (!user) {
       throw new NotFoundError("User not found");

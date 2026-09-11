@@ -27,3 +27,8 @@ export type VerifyOtpResponse = {
     verifiedAt: string
   }
 }
+
+export type VerifyOtpRequest = {
+  otp: string
+  email: string
+}

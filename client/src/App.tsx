@@ -7,7 +7,6 @@ import OtpVerify from "./pages/OtpVerify"
 function App() {
   return (
     <>
-      <h1>this is frontend</h1>
 
       <Link to="/auth/register">Register</Link>
 

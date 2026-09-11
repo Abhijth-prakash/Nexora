@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
-import type { OtpForm, RegisterRequest } from '../utils/Validation'
-import type { ApiResponse, RegisterRes,VerifyOtpResponse } from '../utils/apiTypes'
+import type {  RegisterRequest } from '../utils/Validation'
+import type { ApiResponse, RegisterRes,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 
 const ClientApi = axios.create({
   baseURL: BASE_URL,
@@ -17,8 +17,8 @@ export const AUTH_Api = {
     const response = await ClientApi.post<ApiResponse<RegisterRes>>("/auth/register", userData)
     return response.data
   },
-  Veirfy: async (otp: OtpForm): Promise<ApiResponse<VerifyOtpResponse>> => {
-  const response = await ClientApi.post<ApiResponse<VerifyOtpResponse>>("/auth/verify",otp)
+  Veirfy: async (verifyData: VerifyOtpRequest): Promise<ApiResponse<VerifyOtpResponse>> => {
+  const response = await ClientApi.post<ApiResponse<VerifyOtpResponse>>("/auth/verify",verifyData)
   return response.data
 },
 }

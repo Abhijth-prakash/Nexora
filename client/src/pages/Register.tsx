@@ -21,7 +21,11 @@ const dataHandle = async (data: RegisterData) => {
   try {
     const { confirmpassword, ...registerData } = data;
      await dispatch(registerUser(registerData)).unwrap();
-     navigate('/auth/verify')
+    navigate("/auth/verify", {
+  state: {
+    email: registerData.email,
+  },
+})
   } catch (error) {
     console.log("Registration failed", error);
   }

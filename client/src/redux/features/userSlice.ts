@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
-import type { OtpForm, RegisterRequest } from '../../utils/Validation'
+import type {  RegisterRequest } from '../../utils/Validation'
 import axios from "axios"
-import type { BaseUser } from "../../utils/apiTypes"
+import type { BaseUser, VerifyOtpRequest } from "../../utils/apiTypes"
 
 
 type UserState = {
@@ -49,9 +49,9 @@ export const registerUser = createAsyncThunk(
 export const veirifyingOtp = createAsyncThunk(
   "auth/veirify",
 
-  async (otp: OtpForm, { rejectWithValue }) => {
+  async (verifyData: VerifyOtpRequest, { rejectWithValue }) => {
     try {
-      const response = await AUTH_Api.Veirfy(otp);
+      const response = await AUTH_Api.Veirfy(verifyData);
       console.log(response.data.user)
       return response.data.user;
 
