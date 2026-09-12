@@ -5,19 +5,8 @@ const passport= require('passport')
 
 router.post("/register", authController.register);
 router.post("/verify", authController.Verify);
-router.get(
-  "/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-  }),
-);
-router.get(
-    "/google/callback",
-    passport.authenticate("google", {
-        session: false,
-        failureRedirect: "/register",
-    }),
-    authController.googleCallback
-);
+router.get("/google",passport.authenticate("google", {scope: ["profile", "email"],}),);
+router.get("/google/callback",passport.authenticate("google", {session: false,failureRedirect: "/register",}),authController.googleCallback);
+router.post("/login",authController.login)
 
 module.exports = router;

@@ -5,6 +5,7 @@ const {generateUserToken} = require('../../utils/jwt')
 const {
   registerValidate,
   OTPValidation,
+  loginValidate
 } = require("../../utils/validation");
 const config = require('../../config/config')
 
@@ -69,6 +70,39 @@ class AuthController extends BaseController {
   });
 
 
+
+//login user
+static login = BaseController.asyncHandler(
+  async (req, res) => {
+    const validatedData = BaseController.validateRequest(
+      loginValidate,
+      req.body
+    );
+
+    const result = await Authservice.login(validatedData);
+
+    res.cookie("token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    BaseController.logAction(
+      "user logged in successfully",
+      result.user
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "Login successful",
+      { user: result.user },
+      200
+    );
+  }
+);
+
+//google auth
 static googleCallback = BaseController.asyncHandler(
   async (req, res) => {
 

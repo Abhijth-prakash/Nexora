@@ -129,6 +129,42 @@ class AuthService {
   }
 }
 
+static async login(userData) {
+  try {
+    const user = await Users.findOne({ email: userData.email });
+
+    if (!user) {
+      throw new AuthenticationError("Invalid email or password");
+    }
+
+    const checkpass = await bcrypt.compare(
+      userData.password,
+      user.password
+    );
+
+    if (!checkpass) {
+      throw new AuthenticationError("Invalid email or password");
+    }
+
+    logger.info(`${user.name} logged in successfully, ${user.email}`);
+
+    const token = generateUserToken({
+      id: user._id,
+      email: user.email,
+      Verified: user.Verified,
+      banned: user.banned,
+    });
+
+    return {
+      user: user.getProfile(),
+      token,
+    };
+  } catch (error) {
+    logger.error("Something went wrong while logging in user", error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = AuthService;

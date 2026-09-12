@@ -77,6 +77,16 @@ const registerValidate = Joi.object({
   password: commonPatterns.password,
 });
 
+const loginValidate = Joi.object({
+  email: commonPatterns.email,
+ password: Joi.string()
+  .min(1)
+  .required()
+  .messages({
+    "string.empty": "Password is required",
+    "any.required": "Password is required",
+  })  
+})
 
 const OTPValidation = Joi.object({
   email: commonPatterns.email,
@@ -90,5 +100,6 @@ const OTPValidation = Joi.object({
 
 module.exports = {
   registerValidate,
-  OTPValidation
+  OTPValidation,
+  loginValidate
 };
