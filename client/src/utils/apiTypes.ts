@@ -32,3 +32,7 @@ export type VerifyOtpRequest = {
   otp: string
   email: string
 }
+
+export type LoginResponse = {
+  user: BaseUser
+}

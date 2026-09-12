@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
-import type {  RegisterRequest } from '../../utils/Validation'
+import type {  RegisterRequest,LoginData } from '../../utils/Validation'
 import axios from "axios"
 import type { BaseUser, VerifyOtpRequest } from "../../utils/apiTypes"
 
@@ -52,6 +52,33 @@ export const veirifyingOtp = createAsyncThunk(
   async (verifyData: VerifyOtpRequest, { rejectWithValue }) => {
     try {
       const response = await AUTH_Api.Veirfy(verifyData);
+      return response.data.user;
+
+    } catch (error) {
+
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Registration failed. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Registration failed. Please try again."
+      );
+    }
+  },
+);
+
+//login user
+
+
+export const Loginuser = createAsyncThunk(
+  "auth/Loginuser",
+
+  async (userData: LoginData, { rejectWithValue }) => {
+    try {
+      const response = await AUTH_Api.login(userData); 
       console.log(response.data.user)
       return response.data.user;
 
@@ -109,6 +136,22 @@ const userSlice = createSlice({
       })
 
       .addCase(veirifyingOtp.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+
+      //login user
+       .addCase(Loginuser.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(Loginuser.fulfilled, (state, action) => {
+        state.loading = false
+        state.user = action.payload
+      })
+
+      .addCase(Loginuser.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })

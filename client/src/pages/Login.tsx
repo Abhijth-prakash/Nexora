@@ -2,6 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { LoginSchema } from "../utils/Validation"
 import type { LoginData } from "../utils/Validation"
+import { useNavigate } from "react-router-dom"
+import { useAppDispatch } from "../redux/hooks"
+import { Loginuser } from "../redux/features/userSlice"
 
 
 
@@ -9,9 +12,18 @@ const Login = () => {
   const {register,handleSubmit,formState: { errors }} = useForm<LoginData>({
     resolver:zodResolver(LoginSchema)
   })
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const datahandle = async(data:LoginData)=>{
+    try{
 
-  const datahandle = (data:LoginData)=>{
-      console.log(data)
+      await dispatch(Loginuser(data))
+      navigate('/')
+
+    }catch(error){
+      console.log(error)
+    }
+    
   }
   return (
     <div>
