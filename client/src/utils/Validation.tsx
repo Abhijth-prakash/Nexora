@@ -55,7 +55,18 @@ export const registerSchema = z
 
 export type OtpForm = z.infer<typeof OtpValidate>
 
+export const LoginSchema = z.object({
+      email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("Please provide a valid email address"),
 
+  password: z
+    .string()
+    .min(1, "Password is required"),
+})
 
+export type LoginData = z.infer<typeof LoginSchema>
 
 export type { RegisterData, RegisterRequest };
