@@ -165,6 +165,24 @@ static async login(userData) {
   }
 }
 
+static async UserProfile(id) {
+  try {
+    const user = await Users.findById(id);
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    return {
+      user: user.getProfile(),
+    };
+
+  } catch (error) {
+    logger.error("Something went wrong while getting user profile", error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = AuthService;

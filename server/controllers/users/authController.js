@@ -133,6 +133,26 @@ static googleCallback = BaseController.asyncHandler(
 
   }
 );
+
+
+static userDetails = BaseController.asyncHandler(
+  async (req, res) => {
+    const id = req.userId
+
+    const result = await Authservice.UserProfile(id)
+
+    BaseController.logAction(
+      `user profile fetched ${result.user.email}`
+    )
+
+    return this.sendSuccessResponse(
+      res,
+      "Profile fetched",
+      { user: result.user },
+      200
+    )
+  }
+)
 }
 
 module.exports = AuthController;
