@@ -94,7 +94,7 @@ static googleCallback = BaseController.asyncHandler(
     );
       
     return res.redirect(
-  `${config.FRONTEND_URL}/home`
+  `${config.FRONTEND_URL}/`
 );
 
   }

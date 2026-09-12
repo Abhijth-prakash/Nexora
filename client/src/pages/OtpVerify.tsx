@@ -78,7 +78,7 @@ const OtpVerify = () => {
       }
 
     await dispatch(veirifyingOtp(verifyData))
-    navigate('/home')
+    navigate('/')
 
     }catch(error){
       console.log(error,"verification failed")
