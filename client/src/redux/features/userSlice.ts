@@ -7,13 +7,15 @@ import type { BaseUser, VerifyOtpRequest } from "../../utils/apiTypes"
 
 type UserState = {
   user: BaseUser | null
-  loading: boolean
+  loading: boolean,
+  logged: boolean,
   error: string | null
 }
 
 const initialState: UserState = {
   user: null,
   loading: false,
+  logged:false,
   error: null
 }
 
@@ -132,6 +134,7 @@ const userSlice = createSlice({
 
       .addCase(veirifyingOtp.fulfilled, (state, action) => {
         state.loading = false
+        state.logged = true
         state.user = action.payload
       })
 
@@ -148,6 +151,7 @@ const userSlice = createSlice({
 
       .addCase(Loginuser.fulfilled, (state, action) => {
         state.loading = false
+        state.logged = true
         state.user = action.payload
       })
 

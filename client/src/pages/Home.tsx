@@ -1,13 +1,24 @@
 import { Link } from "react-router-dom"
-
-
+import { useAppSelector } from "../redux/hooks"
 
 const Home = () => {
-  return (
-    <div>this is home page
-      <Link to={'/auth/register'}> Register </Link>
-      <Link to={'/auth/login'}> Login </Link>
+  const { logged } = useAppSelector(state => state.userData)
 
+  return (
+    <div>
+      this is home page
+
+      {!logged && (
+        <Link to="/auth/register">
+          Register
+        </Link>
+      )}
+
+      {!logged && (
+        <Link to="/auth/login">
+          Login
+        </Link>
+      )}
     </div>
   )
 }
