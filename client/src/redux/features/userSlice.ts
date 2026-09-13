@@ -127,6 +127,32 @@ async (_, { rejectWithValue }) => {
 );
 
 
+//logout
+
+
+export const logout = createAsyncThunk(
+  "auth/userlogout",
+
+async (_, { rejectWithValue }) => {
+  try {
+    const response = await AUTH_Api.logout();
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return rejectWithValue(
+        error.response?.data?.error?.message ||
+        "Get profile failed. Please try again."
+      );
+    }
+
+    return rejectWithValue(
+      "Get profile failed. Please try again."
+    );
+  }
+}
+);
+
 
 
 
@@ -200,6 +226,23 @@ const userSlice = createSlice({
       })
 
       .addCase(UserProfile.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+
+      //logout
+
+        .addCase(logout.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(logout.fulfilled, (state) => {
+        state.loading = false
+        state.logged = false
+      })
+
+      .addCase(logout.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })

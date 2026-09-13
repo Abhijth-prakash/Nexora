@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData } from '../utils/Validation'
-import type { ApiResponse, LoginResponse, profileResponse, RegisterRes,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { ApiResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 
 const ClientApi = axios.create({
   baseURL: BASE_URL,
@@ -28,7 +28,12 @@ export const AUTH_Api = {
   getProfile: async (): Promise<ApiResponse<profileResponse>> => {
   const response = await ClientApi.get<ApiResponse<profileResponse>>("/auth/user")
   return response.data
-}
+},
+    logout: async (): Promise<ApiResponse<LogoutResponse>> => {
+  const response = await ClientApi.get<ApiResponse<LogoutResponse>>("/auth/logout")
+  return response.data
+},
+
 }
 
 

@@ -40,3 +40,5 @@ export type LoginResponse = {
 export type profileResponse = {
   user: BaseUser
 }
+
+export type LogoutResponse = null
