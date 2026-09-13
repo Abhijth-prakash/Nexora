@@ -36,3 +36,7 @@ export type VerifyOtpRequest = {
 export type LoginResponse = {
   user: BaseUser
 }
+
+export type profileResponse = {
+  user: BaseUser
+}

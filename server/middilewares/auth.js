@@ -1,4 +1,4 @@
-const {verifyUserToken} = require('../utils/validation')
+const {verifyUserToken} = require('../utils/jwt')
 const { AuthenticationError } = require("../utils/errors");
 
 const authenticate = (req, res, next) => {

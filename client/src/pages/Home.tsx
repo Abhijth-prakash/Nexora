@@ -1,8 +1,17 @@
 import { Link } from "react-router-dom"
-import { useAppSelector } from "../redux/hooks"
+import { useAppDispatch, useAppSelector } from "../redux/hooks"
+import { useEffect } from "react"
+import { UserProfile } from "../redux/features/userSlice"
 
 const Home = () => {
   const { logged } = useAppSelector(state => state.userData)
+
+  const dispatch = useAppDispatch()
+
+
+  useEffect(()=>{
+    dispatch(UserProfile())
+  },[dispatch])
 
   return (
     <div>

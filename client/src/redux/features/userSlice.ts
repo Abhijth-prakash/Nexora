@@ -61,12 +61,12 @@ export const veirifyingOtp = createAsyncThunk(
       if (axios.isAxiosError(error)) {
         return rejectWithValue(
           error.response?.data?.error?.message ||
-          "Registration failed. Please try again."
+          "verification failed. Please try again."
         );
       }
 
       return rejectWithValue(
-        "Registration failed. Please try again."
+        "verification  failed. Please try again."
       );
     }
   },
@@ -81,7 +81,6 @@ export const Loginuser = createAsyncThunk(
   async (userData: LoginData, { rejectWithValue }) => {
     try {
       const response = await AUTH_Api.login(userData); 
-      console.log(response.data.user)
       return response.data.user;
 
     } catch (error) {
@@ -89,16 +88,44 @@ export const Loginuser = createAsyncThunk(
       if (axios.isAxiosError(error)) {
         return rejectWithValue(
           error.response?.data?.error?.message ||
-          "Registration failed. Please try again."
+          "Login failed. Please try again."
         );
       }
 
       return rejectWithValue(
-        "Registration failed. Please try again."
+        "Login failed. Please try again."
       );
     }
   },
 );
+
+
+//getUserProfile
+
+
+export const UserProfile = createAsyncThunk(
+  "auth/getUserProfile",
+
+async (_, { rejectWithValue }) => {
+  try {
+    const response = await AUTH_Api.getProfile();
+
+    return response.data.user;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return rejectWithValue(
+        error.response?.data?.error?.message ||
+        "Get profile failed. Please try again."
+      );
+    }
+
+    return rejectWithValue(
+      "Get profile failed. Please try again."
+    );
+  }
+}
+);
+
 
 
 
@@ -159,6 +186,24 @@ const userSlice = createSlice({
         state.loading = false
         state.error = action.payload as string
       })
+
+      //get ptofile
+        .addCase(UserProfile.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(UserProfile.fulfilled, (state, action) => {
+        state.loading = false
+        state.logged = true
+        state.user = action.payload
+      })
+
+      .addCase(UserProfile.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+      
   }
 })
 
