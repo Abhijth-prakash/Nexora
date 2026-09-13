@@ -134,7 +134,7 @@ static googleCallback = BaseController.asyncHandler(
   }
 );
 
-
+//getting userDetails
 static userDetails = BaseController.asyncHandler(
   async (req, res) => {
     const id = req.userId
@@ -153,6 +153,31 @@ static userDetails = BaseController.asyncHandler(
     )
   }
 )
+
+//userlgout
+
+static logout = BaseController.asyncHandler(
+  async (req, res) => {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    BaseController.logAction(
+      "user logout successfully"
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "user logout successfully",
+      null,
+      200
+    );
+  }
+);
+
+
 }
 
 module.exports = AuthController;
