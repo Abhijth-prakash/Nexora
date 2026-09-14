@@ -3,7 +3,7 @@ const router = express.Router()
 const AdminController = require('../../controllers/Admin/adminController')
 
 
-router.post('/admin/login',AdminController.login)
+router.post('/login',AdminController.login)
 
 
 module.exports = router

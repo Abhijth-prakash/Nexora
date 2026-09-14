@@ -236,7 +236,7 @@ static async resetPassword(data){
       }
 
         if (user.password) {
-        const prevPassword = await user.comparePassword(data.password);
+        const prevPassword = await  bcrypt.compare(data.password,user.password)
         if (prevPassword) {
           throw new ConflictError(
             "Please choose a different password. You cannot reuse your current password.",
