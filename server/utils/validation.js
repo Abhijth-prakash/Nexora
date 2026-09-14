@@ -98,7 +98,7 @@ const OTPValidation = Joi.object({
   "any.required": "OTP is required",
 });
 
-const EmailValidation = joi.object({
+const EmailValidation = Joi.object({
   email:commonPatterns.email
 })
 
