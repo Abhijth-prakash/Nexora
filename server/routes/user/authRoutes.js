@@ -11,7 +11,9 @@ router.get("/google/callback",passport.authenticate("google", {session: false,fa
 router.post("/login",authController.login)
 router.get("/logout",authController.logout)
 router.post("/forgetpassword",authController.forgetpassword)
+router.post('/resetpassword',authController.resetPassword)
 router.get("/user",authenticate,authController.userDetails)
+
 
 
 module.exports = router;

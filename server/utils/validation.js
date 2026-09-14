@@ -102,9 +102,19 @@ const EmailValidation = Joi.object({
   email:commonPatterns.email
 })
 
+const resetPassValidation = Joi.object({
+  password:commonPatterns.password,
+  token: Joi.string().required().messages({
+    "any.required": "Reset token is required",
+  })
+})
+
+
+
 module.exports = {
   registerValidate,
   OTPValidation,
   loginValidate,
-  EmailValidation
+  EmailValidation,
+  resetPassValidation
 };

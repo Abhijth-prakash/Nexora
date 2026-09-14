@@ -1,23 +1,29 @@
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { forgetpassSchema } from "../utils/Validation";
 import type { forgetpassDAta } from "../utils/Validation";
 import { useAppDispatch } from "../redux/hooks";
 import { forgetpassword } from "../redux/features/userSlice";
-import { useNavigate } from "react-router-dom";
+
 
 const Forgetpass = () => {
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(forgetpassSchema),
   });
 
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+
+  const [message, setMessage] = useState("");
 
   const datahandle = async (data: forgetpassDAta) => {
     try {
       await dispatch(forgetpassword(data));
-      navigate("/auth/resetpass");
+
+      setMessage(
+        "A password reset link has been sent to your email."
+      );
+
     } catch (error) {
       console.log("reset email failed to sent", error);
     }
@@ -68,6 +74,15 @@ const Forgetpass = () => {
 
           </div>
 
+          {/* Success Message */}
+          {message && (
+            <div className="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-center">
+              <p className="text-sm font-medium text-green-700">
+                {message}
+              </p>
+            </div>
+          )}
+
           {/* Form */}
           <form
             onSubmit={handleSubmit(datahandle)}
@@ -88,6 +103,12 @@ const Forgetpass = () => {
               placeholder="Enter your email address"
               className="w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
             />
+
+            {errors.email && (
+              <p className="mt-1.5 text-xs text-red-500">
+                {errors.email.message}
+              </p>
+            )}
 
             <input
               type="submit"
@@ -144,4 +165,3 @@ const Forgetpass = () => {
 };
 
 export default Forgetpass;
-

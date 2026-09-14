@@ -6,7 +6,8 @@ const {
   registerValidate,
   OTPValidation,
   loginValidate,
-  EmailValidation
+  EmailValidation,
+  resetPassValidation
 } = require("../../utils/validation");
 const config = require('../../config/config')
 
@@ -206,6 +207,27 @@ static forgetpassword = BaseController.asyncHandler(
   }
 );
 
+
+//user/reset password
+
+static resetPassword = BaseController.asyncHandler(
+  async (req,res)=>{
+    const validatedData = BaseController.validateRequest(resetPassValidation,req.body)
+
+    await Authservice.resetPassword(validatedData)
+
+    BaseController.logAction(
+      `password reset successfull `
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "password reset successfull",
+      null,
+      200
+    );
+  }
+)
 
 }
 

@@ -193,13 +193,11 @@ static async Forgetpassword(email) {
 
     const token = Mail.generateResetToken();
 
-    const hashedToken = await bcrypt.hash(token, 12);
-
     const resetTokenExpiry = new Date(
       Date.now() + 10 * 60 * 1000
     );
 
-    user.resetToken = hashedToken;
+    user.resetToken = token;
     user.resetTokenExpiry = resetTokenExpiry;
 
     await user.save();
@@ -219,6 +217,45 @@ static async Forgetpassword(email) {
     );
 
     throw error;
+  }
+}
+
+
+//reset password
+
+static async resetPassword(data){
+  try{
+
+     const user = await Users.findOne({
+        resetToken: data.token,
+        resetTokenExpiry: { $gt: new Date() },
+      });
+
+        if (!user) {
+        throw new NotFoundError("Invalid or expired token");
+      }
+
+        if (user.password) {
+        const prevPassword = await user.comparePassword(data.password);
+        if (prevPassword) {
+          throw new ConflictError(
+            "Please choose a different password. You cannot reuse your current password.",
+          );
+        }
+      }
+
+      user.password = data.password;
+      user.resetToken = null;
+      user.resetTokenExpiry = null;
+      await user.save();
+
+      logger.info(`Password reset successful for user: ${user.email}`);
+      return true;
+
+
+  }catch(error){
+    logger.error('failed to reset password',error)
+    throw error
   }
 }
 
