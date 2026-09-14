@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 
 const AdminSchema = new mongoose.Schema(
   {
@@ -32,9 +32,9 @@ const AdminSchema = new mongoose.Schema(
   },
 );
 
-adminSchema.index({ lastLogin: -1 });
+AdminSchema.index({ lastLogin: -1 });
 
-adminSchema.pre("save", async function () {
+AdminSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   try {
     const hashedPassword = await bcrypt.hash(this.password, 12);
@@ -44,18 +44,18 @@ adminSchema.pre("save", async function () {
   }
 });
 
-adminSchema.methods.getPublicProfile = function () {
+AdminSchema.methods.getPublicProfile = function () {
   const adminObject = this.toObject();
   delete adminObject.password;
   delete adminObject.__v;
   return adminObject;
 };
 
-adminSchema.methods.comparePassword = async function (password) {
+AdminSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-adminSchema.statics.findByEmail = function (email) {
+AdminSchema.statics.findByEmail = function (email) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
