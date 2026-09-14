@@ -34,6 +34,11 @@ module.exports = {
   google:{
     clientID:process.env.clientID,
     clientSecret:process.env.clientSecret
+  },
+
+  admin:{
+    EMAil:process.env.ADMIN_EMAIL,
+    PASSWORD:process.env.ADMIN_PASSWORD
   }
 
 

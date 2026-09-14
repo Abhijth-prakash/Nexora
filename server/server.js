@@ -10,6 +10,7 @@ const cors = require("cors");
 const { errorHandler,notFound } = require("./middilewares/errorHandler");
 const passport = require('passport')
 require("./config/passport");
+const {runSeeders} = require('./utils/seeder')
 
 
 
@@ -45,6 +46,7 @@ class Server {
 
   async start() {
     await mongodb.connect();
+    await runSeeders();
     this.initialize();
 
     this.server.listen(this.port, () => {

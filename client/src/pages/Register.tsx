@@ -16,7 +16,7 @@ const Register = () => {
   const navigate =useNavigate()
   const {error} = useAppSelector(state=> state.userData)
 
-  // UI-only state for the password visibility toggle — does not touch form logic
+  
   const [showPassword, setShowPassword] = useState(false)
 
   const dataHandle = async (data: RegisterData) => {
