@@ -44,3 +44,10 @@ export type profileResponse = {
 export type LogoutResponse = null
 
 export type ForgetpassResponse = null
+
+export type Resetpass= {
+  token:string | null,
+  password:string
+}
+
+export type resetpassResponse = null

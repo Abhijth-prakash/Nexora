@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
 import type {  RegisterRequest,LoginData, forgetpassDAta } from '../../utils/Validation'
 import axios from "axios"
-import type { BaseUser, VerifyOtpRequest } from "../../utils/apiTypes"
+import type { BaseUser, Resetpass, VerifyOtpRequest } from "../../utils/apiTypes"
 
 
 type UserState = {
@@ -182,6 +182,33 @@ export const forgetpassword = createAsyncThunk(
 );
 
 
+//resetpass
+
+export const resetPass = createAsyncThunk(
+  "auth/resetPass",
+
+  async (userData:Resetpass, { rejectWithValue }) => {
+    try {
+      const response = await AUTH_Api.resetpass(userData); 
+      return response.data;
+
+    } catch (error) {
+
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "password reset failed.."
+        );
+      }
+
+      return rejectWithValue(
+        "password reset failed"
+      );
+    }
+  },
+);
+
+
 const userSlice = createSlice({
   name: "userSlice",
   initialState,
@@ -274,7 +301,6 @@ const userSlice = createSlice({
 
       //forgetpass
 
-
         .addCase(forgetpassword.pending, (state) => {
         state.loading = true
         state.error = null
@@ -286,6 +312,23 @@ const userSlice = createSlice({
       })
 
       .addCase(forgetpassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+
+      //password reset 
+
+        .addCase(resetPass.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(resetPass.fulfilled, (state) => {
+        state.loading = false
+        state.logged = false
+      })
+
+      .addCase(resetPass.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })
