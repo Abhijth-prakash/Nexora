@@ -5,7 +5,8 @@ const {generateUserToken} = require('../../utils/jwt')
 const {
   registerValidate,
   OTPValidation,
-  loginValidate
+  loginValidate,
+  EmailValidation
 } = require("../../utils/validation");
 const config = require('../../config/config')
 
@@ -171,6 +172,34 @@ static logout = BaseController.asyncHandler(
     return this.sendSuccessResponse(
       res,
       "user logout successfully",
+      null,
+      200
+    );
+  }
+);
+
+
+//user/forgetpass
+
+static forgetpassword = BaseController.asyncHandler(
+  async (req, res) => {
+
+    const validatedData = BaseController.validateRequest(
+      EmailValidation,
+      req.body
+    );
+
+    await Authservice.Forgetpassword(
+      validatedData.email
+    );
+
+    BaseController.logAction(
+      `Reset email sent successfully to ${validatedData.email}`
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "Reset email sent successfully",
       null,
       200
     );

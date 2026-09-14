@@ -98,8 +98,13 @@ const OTPValidation = Joi.object({
   "any.required": "OTP is required",
 });
 
+const EmailValidation = joi.object({
+  email:commonPatterns.email
+})
+
 module.exports = {
   registerValidate,
   OTPValidation,
-  loginValidate
+  loginValidate,
+  EmailValidation
 };

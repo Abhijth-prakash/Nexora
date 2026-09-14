@@ -5,6 +5,7 @@ import Home from "./pages/Home"
 import OtpVerify from "./pages/OtpVerify"
 import Login from "./pages/Login"
 import Forgetpass from "./pages/Forgetpass"
+import Resetpass from "./pages/Resetpass"
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/auth/verify" element={<OtpVerify />}/>
         <Route path="/auth/login" element={<Login />}/>
         <Route path="/auth/forgetpass" element={<Forgetpass />}/>
+        <Route path="/auth/resetpass" element={<Resetpass />}/>
       </Routes>
     </>
   )

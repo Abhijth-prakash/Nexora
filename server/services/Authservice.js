@@ -183,6 +183,45 @@ static async UserProfile(id) {
   }
 }
 
+static async Forgetpassword(email) {
+  try {
+    const user = await Users.findOne({ email });
+
+    if (!user) {
+      throw new NotFoundError("Email not registered");
+    }
+
+    const token = Mail.generateResetToken();
+
+    const hashedToken = await bcrypt.hash(token, 12);
+
+    const resetTokenExpiry = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    user.resetToken = hashedToken;
+    user.resetTokenExpiry = resetTokenExpiry;
+
+    await user.save();
+
+    await Mail.sendResetPasswordEmail(
+      user.email,
+      token,
+      user.name
+    );
+
+    return true;
+
+  } catch (error) {
+    logger.error(
+      "Failed to send reset password email",
+      error
+    );
+
+    throw error;
+  }
+}
+
 }
 
 module.exports = AuthService;

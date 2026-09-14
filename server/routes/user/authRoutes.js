@@ -10,6 +10,8 @@ router.get("/google",passport.authenticate("google", {scope: ["profile", "email"
 router.get("/google/callback",passport.authenticate("google", {session: false,failureRedirect: "/register",}),authController.googleCallback);
 router.post("/login",authController.login)
 router.get("/logout",authController.logout)
+router.post("/forgetpassword",authController.forgetpassword)
 router.get("/user",authenticate,authController.userDetails)
+
 
 module.exports = router;
