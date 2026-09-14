@@ -21,7 +21,7 @@ const Login = () => {
   const datahandle = async(data:LoginData)=>{
     try{
 
-      await dispatch(Loginuser(data))
+      await dispatch(Loginuser(data)).unwrap()
       navigate('/')
 
     }catch(error){
