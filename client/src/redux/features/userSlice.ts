@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
-import type {  RegisterRequest,LoginData } from '../../utils/Validation'
+import type {  RegisterRequest,LoginData, forgetpassDAta } from '../../utils/Validation'
 import axios from "axios"
 import type { BaseUser, VerifyOtpRequest } from "../../utils/apiTypes"
 
@@ -154,7 +154,32 @@ async (_, { rejectWithValue }) => {
 );
 
 
+//forget-pass
 
+
+export const forgetpassword = createAsyncThunk(
+  "auth/Forgetpass",
+
+  async (userEmail: forgetpassDAta, { rejectWithValue }) => {
+    try {
+      const response = await AUTH_Api.forgetpass(userEmail); 
+      return response.data;
+
+    } catch (error) {
+
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "reset email failed to send.."
+        );
+      }
+
+      return rejectWithValue(
+        "reset email failed to send. Please try again."
+      );
+    }
+  },
+);
 
 
 const userSlice = createSlice({
@@ -243,6 +268,24 @@ const userSlice = createSlice({
       })
 
       .addCase(logout.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+
+      //forgetpass
+
+
+        .addCase(forgetpassword.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(forgetpassword.fulfilled, (state) => {
+        state.loading = false
+        state.logged = false
+      })
+
+      .addCase(forgetpassword.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })

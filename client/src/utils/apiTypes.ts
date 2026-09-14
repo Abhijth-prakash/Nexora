@@ -42,3 +42,5 @@ export type profileResponse = {
 }
 
 export type LogoutResponse = null
+
+export type ForgetpassResponse = null

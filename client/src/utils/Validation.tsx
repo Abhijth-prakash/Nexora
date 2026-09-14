@@ -69,4 +69,15 @@ export const LoginSchema = z.object({
 
 export type LoginData = z.infer<typeof LoginSchema>
 
+export const forgetpassSchema = z.object({
+  email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("Please provide a valid email address"),
+
+})
+
+export type forgetpassDAta = z.infer<typeof forgetpassSchema>
+
 export type { RegisterData, RegisterRequest };
