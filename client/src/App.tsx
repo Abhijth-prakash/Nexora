@@ -1,5 +1,4 @@
 import {   Route, Routes } from "react-router-dom"
-import "./App.css"
 import Register from "./pages/Register"
 import Home from "./pages/Home"
 import OtpVerify from "./pages/OtpVerify"

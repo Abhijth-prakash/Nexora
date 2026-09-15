@@ -24,7 +24,19 @@ const verifyUserToken = (token) => {
 };
 
 
+const generateAdminToken = (payload) => {
+  try {
+    return jwt.sign(payload, config.JWT.ADMIN_SECRET, {
+      expiresIn: config.JWT.EXPIRES_IN,
+    });
+  } catch (error) {
+    logger.error("Error generating admin token:", error);
+    throw new Error("Token generation failed");
+  }
+};
+
 module.exports = {
     generateUserToken,
-    verifyUserToken
+    verifyUserToken,
+    generateAdminToken
 }
