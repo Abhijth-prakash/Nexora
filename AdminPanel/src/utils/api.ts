@@ -1,6 +1,6 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
-import type { Email, LoginData, passwordData, Resetpassdata } from "./validation";
+import type { Email, LoginData,  Resetpassdata } from "./validation";
 import type { ApiResponse,Forgetpass,LoginResponse, Resetpass } from "./apiTypes";
 
 

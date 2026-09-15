@@ -1,6 +1,6 @@
 const Admin = require('../../models/Admin')
 const Adminservice = require("../../services/Adminservice");
-const { loginValidate, EmailValidation } = require('../../utils/validation');
+const { loginValidate, EmailValidation, resetPassValidation } = require('../../utils/validation');
 const BaseController = require('../baseController');
 
 
@@ -36,6 +36,8 @@ class AdminController extends BaseController{
         }
     )
 
+
+    //forget password
 static Forgetpassword = BaseController.asyncHandler(
   async (req, res) => {
     const Email = BaseController.validateRequest(
@@ -57,6 +59,25 @@ static Forgetpassword = BaseController.asyncHandler(
     );
   }
 );
+
+static Resetpassword = BaseController.asyncHandler(
+  async(req,res)=>{
+    const data =  BaseController.validateRequest(resetPassValidation,req.body)
+    await Adminservice.passwordReset(data)
+
+     BaseController.logAction(
+      `Password succesfully reset`
+    );
+
+    return BaseController.sendSuccessResponse(
+      res,
+      "Password succesfully reset",
+      null,
+      200
+    );
+
+  }
+)
 
 }
 

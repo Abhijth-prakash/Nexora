@@ -106,7 +106,7 @@ static Forgetpass = async(Email)=>{
     await admin.save()
 
 
-        await Mail.sendResetPasswordEmail(
+        await Mail.AdminPasswordResetEmail(
           admin.email,
           token,
           admin.name
@@ -121,6 +121,55 @@ static Forgetpass = async(Email)=>{
 
     throw error;
 
+  }
+}
+
+//reset password
+
+static async passwordReset(data) {
+  try {
+    const admin = await Admin.findOne({
+      resetToken: data.token,
+      resetTokenExpiry: { $gt: new Date() },
+    });
+
+
+    if (!admin) {
+      throw new NotFoundError("Invalid or expired token");
+    }
+
+
+    const prevPassword = await bcrypt.compare(
+      data.password,
+      admin.password
+    );
+
+    if (prevPassword) {
+      throw new ConflictError(
+        "Please choose a different password. You cannot reuse your current password."
+      );
+    }
+
+
+    admin.password = data.password;
+
+
+    admin.resetToken = null;
+    admin.resetTokenExpiry = null;
+
+    await admin.save();
+
+    logger.info(
+      `Password reset successful for user: ${admin.email}`
+    );
+
+    return true;
+  } catch (error) {
+    logger.error("Failed to reset password", {
+      error: error.message,
+    });
+
+    throw error;
   }
 }
 

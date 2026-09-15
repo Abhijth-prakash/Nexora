@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { BaseAdmin } from "../../utils/apiTypes";
-import type { Email, LoginData, passwordData, Resetpassdata } from "../../utils/validation";
+import type { Email, LoginData,  Resetpassdata } from "../../utils/validation";
 import axios from "axios";
 import { Admin_Api } from "../../utils/api";
 
@@ -111,10 +111,12 @@ const adminSLice = createSlice({
         //login
         .addCase(login.pending,(state)=>{
             state.loading = true
+            state.error = null
         })
         .addCase(login.fulfilled,(state,action)=>{
             state.loading = false
             state.admin = action.payload
+            state.error = null
         })
         .addCase(login.rejected,(state,action)=>{
             state.loading= false
@@ -124,9 +126,11 @@ const adminSLice = createSlice({
         //forgetpass
         .addCase(Forgetpass.pending,(state)=>{
             state.loading = true
+            state.error = null
         })
         .addCase(Forgetpass.fulfilled,(state)=>{
             state.loading = false
+            state.error = null
         })
         .addCase(Forgetpass.rejected,(state,action)=>{
             state.loading= false
@@ -136,9 +140,11 @@ const adminSLice = createSlice({
         //resetpass
         .addCase(resetPass.pending,(state)=>{
             state.loading = true
+            state.error = null
         })
         .addCase(resetPass.fulfilled,(state)=>{
             state.loading = false
+            state.error = null
         })
         .addCase(resetPass.rejected,(state,action)=>{
             state.loading= false

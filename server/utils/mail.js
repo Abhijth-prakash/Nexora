@@ -364,6 +364,198 @@ All rights reserved.
       );
     }
   }
+
+  static async AdminPasswordResetEmail(
+    email,
+    resetToken,
+    name 
+  ) {
+    try {
+
+      const resetUrl =
+        `${config.ADMIN_URL}/resetpassword?token=${resetToken}`;
+
+      const emailContent = {
+
+        from:
+          config.Nodemailer.EMAIL_from ||
+          config.Nodemailer.EMAIL_user,
+
+        to: email,
+
+        subject: "Reset Your Nexora Password",
+
+        html: `
+          <div style="
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+          ">
+
+            <h2 style="
+              color: #222;
+              margin-bottom: 10px;
+            ">
+              Reset Your Nexora Password
+            </h2>
+
+            <p>
+              Hi ${name},
+            </p>
+
+            <p>
+              We received a request to reset the
+              password for your Nexora account.
+            </p>
+
+            <p>
+              Click the button below to create
+              a new password:
+            </p>
+
+            <div style="
+              text-align: center;
+              margin: 30px 0;
+            ">
+
+              <a
+                href="${resetUrl}"
+                style="
+                  display: inline-block;
+                  background-color: #007bff;
+                  color: #ffffff;
+                  text-decoration: none;
+                  padding: 14px 28px;
+                  border-radius: 6px;
+                  font-size: 16px;
+                  font-weight: bold;
+                "
+              >
+                Reset My Password
+              </a>
+
+            </div>
+
+            <p>
+              This password reset link is valid
+              for <strong>10 minutes</strong>.
+            </p>
+
+            <p>
+              If you didn't request a password reset,
+              you can safely ignore this email.
+              Your password will remain unchanged.
+            </p>
+
+            <hr style="
+              border: none;
+              border-top: 1px solid #eee;
+              margin: 30px 0;
+            ">
+
+            <p style="
+              color: #666;
+              font-size: 12px;
+              line-height: 1.5;
+            ">
+              If the button doesn't work, copy and
+              paste the following link into your browser:
+            </p>
+
+            <p style="
+              color: #007bff;
+              font-size: 12px;
+              word-break: break-all;
+            ">
+              ${resetUrl}
+            </p>
+
+            <p style="
+              color: #666;
+              font-size: 12px;
+              margin-top: 30px;
+            ">
+              © ${new Date().getFullYear()} Nexora.
+              All rights reserved.
+            </p>
+
+          </div>
+        `,
+
+        text: `
+Hi ${name},
+
+We received a request to reset the password
+for your Nexora account.
+
+Reset your password using the link below:
+
+${resetUrl}
+
+This password reset link is valid for 10 minutes.
+
+If you didn't request a password reset,
+you can safely ignore this email.
+Your password will remain unchanged.
+
+© ${new Date().getFullYear()} Nexora.
+All rights reserved.
+        `,
+      };
+
+      const transporter = this.getTransporter();
+
+      if (transporter) {
+
+        await transporter.sendMail(emailContent);
+
+        logger.info(
+          `Password reset email sent to ${email}`
+        );
+
+      } else {
+
+        logger.info(
+          `[EMAIL SERVICE] Password reset email would be sent to ${email}`,
+          {
+            resetUrl,
+            subject: emailContent.subject,
+          }
+        );
+
+        console.log(
+          "\n=== PASSWORD RESET EMAIL (Development Mode) ==="
+        );
+
+        console.log(`To: ${email}`);
+        console.log(
+          `Subject: ${emailContent.subject}`
+        );
+        console.log(
+          `Reset URL: ${resetUrl}`
+        );
+
+        console.log(
+          "===============================================\n"
+        );
+      }
+
+      return true;
+
+    } catch (error) {
+
+      logger.error(
+        "Error sending password reset email:",
+        error
+      );
+
+      throw new Error(
+        "Failed to send password reset email"
+      );
+    }
+  }
 }
 
 module.exports = Mail;

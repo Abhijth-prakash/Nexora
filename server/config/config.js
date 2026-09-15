@@ -14,6 +14,7 @@ module.exports = {
   },
 
     FRONTEND_URL: process.env.FRONTEND_URL,
+    ADMIN_URL:process.env.ADMIN_APP_URL,
 
     JWT: {
     USER_SECRET: process.env.JWT_USER_SECRET ,
