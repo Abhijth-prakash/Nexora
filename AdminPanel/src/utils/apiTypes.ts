@@ -19,3 +19,4 @@ export type LoginResponse = {
 }
 
 export type Forgetpass = null
+export type Resetpass = null

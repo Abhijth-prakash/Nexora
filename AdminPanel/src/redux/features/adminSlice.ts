@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { BaseAdmin } from "../../utils/apiTypes";
-import type { Email, LoginData } from "../../utils/validation";
+import type { Email, LoginData, passwordData, Resetpassdata } from "../../utils/validation";
 import axios from "axios";
 import { Admin_Api } from "../../utils/api";
 
@@ -70,6 +70,34 @@ export const Forgetpass =  createAsyncThunk(
     }
 )
 
+//admin/reset passs
+
+export const resetPass = createAsyncThunk(
+    "admin/forgetpass",
+    async(adminData:Resetpassdata,{rejectWithValue})=>{
+        try{
+                const response = await Admin_Api.Resetpass(adminData)
+                return response.data
+        }catch(error){
+
+        if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Registration failed. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Registration failed. Please try again."
+      );
+
+            
+        }
+
+
+    }
+)
+
 
 
 const adminSLice = createSlice({
@@ -101,6 +129,18 @@ const adminSLice = createSlice({
             state.loading = false
         })
         .addCase(Forgetpass.rejected,(state,action)=>{
+            state.loading= false
+            state.error = action.payload as string
+        })
+
+        //resetpass
+        .addCase(resetPass.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(resetPass.fulfilled,(state)=>{
+            state.loading = false
+        })
+        .addCase(resetPass.rejected,(state,action)=>{
             state.loading= false
             state.error = action.payload as string
         })
