@@ -17,3 +17,5 @@ export type ApiResponse<T> = {
 export type LoginResponse = {
     admin:BaseAdmin
 }
+
+export type Forgetpass = null

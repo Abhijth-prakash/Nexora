@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { BaseAdmin } from "../../utils/apiTypes";
-import type { LoginData } from "../../utils/validation";
+import type { Email, LoginData } from "../../utils/validation";
 import axios from "axios";
 import { Admin_Api } from "../../utils/api";
 
@@ -17,7 +17,7 @@ const initialState: AdminState = {
   error: null
 }
 
-
+//admin login
 export const login = createAsyncThunk(
     'admin/login',
     async (adminData:LoginData,{ rejectWithValue })=>{
@@ -44,6 +44,33 @@ export const login = createAsyncThunk(
 )
 
 
+//admin/forgetpass
+
+export const Forgetpass =  createAsyncThunk(
+    'admin/resetpass',
+    async (Email:Email, { rejectWithValue })=>{
+        try{
+        const response = await Admin_Api.Forgetpass(Email)
+        return response.data
+        }catch(error){
+
+                if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Registration failed. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Registration failed. Please try again."
+      );
+
+        }
+
+    }
+)
+
+
 
 const adminSLice = createSlice({
     name:"adminslice",
@@ -52,6 +79,8 @@ const adminSLice = createSlice({
     extraReducers: (build)=>{
         build
 
+
+        //login
         .addCase(login.pending,(state)=>{
             state.loading = true
         })
@@ -60,6 +89,18 @@ const adminSLice = createSlice({
             state.admin = action.payload
         })
         .addCase(login.rejected,(state,action)=>{
+            state.loading= false
+            state.error = action.payload as string
+        })
+
+        //forgetpass
+        .addCase(Forgetpass.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(Forgetpass.fulfilled,(state)=>{
+            state.loading = false
+        })
+        .addCase(Forgetpass.rejected,(state,action)=>{
             state.loading= false
             state.error = action.payload as string
         })
