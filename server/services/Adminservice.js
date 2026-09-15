@@ -14,7 +14,10 @@ const {
 
 
 
+
 class Adminservice {
+
+  //login
 
 static async login(data) {
   try {
@@ -71,6 +74,53 @@ static async login(data) {
     });
 
     throw error;
+  }
+}
+
+
+//forgetpass
+static Forgetpass = async(Email)=>{
+  try{
+
+    const admin = await Admin.findOne({email:Email})
+
+    if(!admin){
+      throw  new AuthorizationError("email not registred")
+    }
+
+ if (admin.lockUntil && admin.lockUntil > new Date()) {
+      throw new AuthenticationError(
+        "Account locked. Try again later"
+      );
+    }
+
+    const token = Mail.generateResetToken()
+    
+        const resetTokenExpiry = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    admin.resetToken = token;
+    admin.resetTokenExpiry = resetTokenExpiry;
+
+    await admin.save()
+
+
+        await Mail.sendResetPasswordEmail(
+          admin.email,
+          token,
+          admin.name
+        );
+    
+        return true;
+
+  }catch(error){
+     logger.error("Email not registerd error:", {
+      error: error.message,
+    });
+
+    throw error;
+
   }
 }
 

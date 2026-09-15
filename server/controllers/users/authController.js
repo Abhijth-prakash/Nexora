@@ -184,7 +184,7 @@ static logout = BaseController.asyncHandler(
 
 static forgetpassword = BaseController.asyncHandler(
   async (req, res) => {
-
+    
     const validatedData = BaseController.validateRequest(
       EmailValidation,
       req.body
