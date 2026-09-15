@@ -28,16 +28,27 @@ static async login(data) {
       );
     }
 
+      if (existAdmin.loginAttempts >= 5 && existAdmin.lockUntil > new Date()) {
+        throw new AuthenticationError("Account locked. Try again later");
+      }
+
     const passCheck = await bcrypt.compare(
       data.password,
       existAdmin.password
     );
 
     if (!passCheck) {
-      throw new AuthorizationError(
-        "email or password incorrect"
-      );
+     existAdmin.loginAttempts += 1;
+        if (existAdmin.loginAttempts >= 5) {
+          existAdmin.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
+        }
+        await existAdmin.save();
+        throw new AuthenticationError("Invalid email or password");
     }
+
+      existAdmin.loginAttempts = 0;
+      existAdmin.lockUntil = null;
+      await existAdmin.save();
 
     const token = generateAdminToken({
       id: existAdmin._id,
