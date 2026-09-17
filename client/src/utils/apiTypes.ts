@@ -1,13 +1,4 @@
-
-
-export type BaseUser = {
-  _id: string
-  name: string
-  email: string
-  Verified: boolean
-  createdAt: string
-  updatedAt: string
-}
+import  type { BaseUser,BaseAddress } from "./baseTypes"
 
 export type ApiResponse<T> = {
   success: boolean
@@ -51,3 +42,8 @@ export type Resetpass= {
 }
 
 export type resetpassResponse = null
+
+
+export type AddressResponse = {
+  address: BaseAddress[]
+}

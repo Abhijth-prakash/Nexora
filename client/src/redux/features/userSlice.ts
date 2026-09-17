@@ -2,7 +2,8 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
 import type {  RegisterRequest,LoginData, forgetpassDAta } from '../../utils/Validation'
 import axios from "axios"
-import type { BaseUser, Resetpass, VerifyOtpRequest } from "../../utils/apiTypes"
+import type {  Resetpass, VerifyOtpRequest } from "../../utils/apiTypes"
+import type { BaseUser } from "../../utils/baseTypes"
 
 
 type UserState = {

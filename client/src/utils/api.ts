@@ -1,7 +1,8 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta } from '../utils/Validation'
-import type { ApiResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,Resetpass,resetpassResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { AddressResponse, ApiResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,Resetpass,resetpassResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+
 
 const ClientApi = axios.create({
   baseURL: BASE_URL,
@@ -11,6 +12,8 @@ const ClientApi = axios.create({
   withCredentials: true,
   timeout: 30000,
 });
+
+//auth_api
 
 export const AUTH_Api = {
   register: async (userData: RegisterRequest): Promise<ApiResponse<RegisterRes>> => {
@@ -43,6 +46,16 @@ export const AUTH_Api = {
   return response.data
 },
 
+}
+
+//address api 
+
+export const addressApi = {
+
+  getAddress: async (): Promise<ApiResponse<AddressResponse>> =>{
+    const response = await ClientApi.get<ApiResponse <AddressResponse>>('/profile/address')
+    return response.data
+  }
 }
 
 
