@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { logout, UserProfile } from "../redux/features/userSlice"
 import Navbar from "../components/Navbar"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
 const getInitials = (name?: string) => {
   if (!name) return "?"
@@ -162,38 +162,34 @@ const Profile = () => {
 
                 {/* Address Book */}
 
-                <div className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
+          <Link
+  to="/profile/address"
+  className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+>
+  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 21s7-5.25 7-11a7 7 0 10-14 0c0 5.75 7 11 7 11z"
+      />
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
+      <circle
+        cx="12"
+        cy="10"
+        r="2.2"
+      />
+    </svg>
+  </div>
 
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 21s7-5.25 7-11a7 7 0 10-14 0c0 5.75 7 11 7 11z"
-                      />
-
-                      <circle
-                        cx="12"
-                        cy="10"
-                        r="2.2"
-                      />
-
-                    </svg>
-
-                  </div>
-
-                  <span>
-                    Address Book
-                  </span>
-
-                </div>
+  <span>Address Book</span>
+</Link>
 
 
                 {/* Wallet */}

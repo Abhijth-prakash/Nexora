@@ -6,6 +6,7 @@ import Login from "./pages/Login"
 import Forgetpass from "./pages/Forgetpass"
 import Resetpass from "./pages/Resetpass"
 import Profile from "./pages/Profile"
+import Address from "./pages/Address"
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
 
 
         <Route path="/myprofile" element={<Profile />}/>
+        <Route path="/profile/address" element={<Address />}/>
       </Routes>
     </>
   )
