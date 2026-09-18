@@ -6,7 +6,7 @@ import Login from "./pages/Login"
 import Forgetpass from "./pages/Forgetpass"
 import Resetpass from "./pages/Resetpass"
 import Profile from "./pages/Profile"
-import Address from "./pages/Address"
+import Address from "./pages/Address/Address"
 
 function App() {
   return (
