@@ -1,10 +1,13 @@
 const Address = require('../../models/Address');
 const BaseController = require('../baseController');
-const Addressservice = require('../../services/Addressservice')
+const Addressservice = require('../../services/Addressservice');
+const { AddressValidation } = require('../../utils/validation');
 
 
 class AddressController extends BaseController{
 
+
+    //get address
     static getAddress = BaseController.asyncHandler(
         async(req,res)=>{
             const id = req.userId
@@ -24,6 +27,19 @@ class AddressController extends BaseController{
 
         }
     )
+
+
+    //add address
+
+    static addAddress = BaseController.asyncHandler(
+        async(req,res)=>{   
+            const id = req.userId
+            const validateData = BaseController.validateRequest(AddressValidation,req.body)
+
+            const result = await Addressservice.addAddress(id,validateData)
+        }
+    )
+    
 
 }
 

@@ -41,9 +41,12 @@ const Address = () => {
 
       {!showForm ? (
         <>
-          <button onClick={handleAdd}>
-            + Add Address
-          </button>
+         <button
+  disabled={address.length === 2}
+  onClick={handleAdd}
+>
+  + Add Address
+</button>
 
           {address.length === 0 ? (
             <p>No address found. Add an address.</p>

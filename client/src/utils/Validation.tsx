@@ -105,3 +105,27 @@ export const passwordSchema = z.object({
 
 
 export type { RegisterData, RegisterRequest };
+
+
+export const AddressSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
+
+  phone: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number is too long"),
+
+  address: z.string().min(5, "Address is required"),
+
+  city: z.string().min(2, "City is required"),
+
+  state: z.string().min(2, "State is required"),
+
+  country: z.string().min(2, "Country is required"),
+
+  zipCode: z.string().min(4, "ZIP code is required"),
+
+  type: z.string().min(1, "Address type is required"),
+})
+
+export type AddressFormData = z.infer<typeof AddressSchema>

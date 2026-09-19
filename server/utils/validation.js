@@ -109,6 +109,70 @@ const resetPassValidation = Joi.object({
   })
 })
 
+const AddressValidation = Joi.object({
+  fullName: Joi.string()
+    .min(2)
+    .required()
+    .messages({
+      "string.empty": "Full name is required",
+      "string.min": "Full name must be at least 2 characters",
+    }),
+
+  phone: Joi.string()
+    .min(10)
+    .max(15)
+    .required()
+    .messages({
+      "string.empty": "Phone number is required",
+      "string.min": "Phone number must be at least 10 digits",
+      "string.max": "Phone number cannot exceed 15 digits",
+    }),
+
+  address: Joi.string()
+    .min(5)
+    .required()
+    .messages({
+      "string.empty": "Address is required",
+      "string.min": "Address must be at least 5 characters",
+    }),
+
+  city: Joi.string()
+    .min(2)
+    .required()
+    .messages({
+      "string.empty": "City is required",
+    }),
+
+  state: Joi.string()
+    .min(2)
+    .required()
+    .messages({
+      "string.empty": "State is required",
+    }),
+
+  country: Joi.string()
+    .min(2)
+    .required()
+    .messages({
+      "string.empty": "Country is required",
+    }),
+
+  zipCode: Joi.string()
+    .min(4)
+    .required()
+    .messages({
+      "string.empty": "ZIP code is required",
+    }),
+
+  type: Joi.string()
+    .valid("Home", "Work", "Other")
+    .required()
+    .messages({
+      "any.only": "Type must be Home, Work, or Other",
+      "string.empty": "Address type is required",
+    }),
+})
+
 
 
 module.exports = {
@@ -116,5 +180,6 @@ module.exports = {
   OTPValidation,
   loginValidate,
   EmailValidation,
-  resetPassValidation
+  resetPassValidation,
+  AddressValidation
 };
