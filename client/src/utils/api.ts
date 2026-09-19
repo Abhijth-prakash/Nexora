@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
-import type {  RegisterRequest,LoginData, forgetpassDAta } from '../utils/Validation'
-import type { AddressResponse, ApiResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,Resetpass,resetpassResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData } from '../utils/Validation'
+import type { addAddressResponse, AddressResponse, ApiResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,Resetpass,resetpassResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 
 
 const ClientApi = axios.create({
@@ -55,7 +55,12 @@ export const addressApi = {
   getAddress: async (): Promise<ApiResponse<AddressResponse>> =>{
     const response = await ClientApi.get<ApiResponse <AddressResponse>>('/profile/address')
     return response.data
-  }
+  },
+  addAddress: async (addressData:AddressFormData): Promise<ApiResponse<addAddressResponse>> =>{
+    const response = await ClientApi.post<ApiResponse <addAddressResponse>>('/profile/address',addressData)
+    return response.data
+  },
+
 }
 
 

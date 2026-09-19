@@ -47,3 +47,5 @@ export type resetpassResponse = null
 export type AddressResponse = {
   address: BaseAddress[]
 }
+
+export type addAddressResponse = null

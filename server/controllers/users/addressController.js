@@ -36,7 +36,15 @@ class AddressController extends BaseController{
             const id = req.userId
             const validateData = BaseController.validateRequest(AddressValidation,req.body)
 
-            const result = await Addressservice.addAddress(id,validateData)
+             await Addressservice.addAddress(id,validateData)
+
+             return this.sendSuccessResponse(
+      res,
+      "address added  for user",
+      null,
+      200
+    )
+
         }
     )
     
