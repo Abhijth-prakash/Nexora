@@ -1,8 +1,8 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, isRejectedWithValue } from "@reduxjs/toolkit";
 import axios from "axios";
 import type { BaseAddress } from "../../utils/baseTypes";
 import { addressApi } from "../../utils/api";
-import type { AddressFormData } from "../../utils/Validation";
+import type { AddressFormData, Addressid } from "../../utils/Validation";
 
 
 type AddressState = {
@@ -65,6 +65,30 @@ export const addAddress = createAsyncThunk(
     }
 )
 
+
+//delete address
+ export const deleteAddress = createAsyncThunk(
+    'profile/deleteAddress',
+    async (id:Addressid,{rejectWithValue})=>{
+        try{
+            const response = await addressApi.deleteAddress(id)
+            return response.data
+
+        }catch(error){
+        if (axios.isAxiosError(error)) {
+      return rejectWithValue(
+        error.response?.data?.error?.message ||
+        "failed to delete address. Please try again."
+      );
+    }
+
+    return rejectWithValue(
+      "failed to delete address. Please try again."
+    );
+        }
+    }
+ )
+
 const addressSlice = createSlice({
     name:"addressSlice",
     initialState,
@@ -93,6 +117,17 @@ const addressSlice = createSlice({
             state.loading = false
         })
         .addCase(addAddress.rejected,(state,action)=>{
+            state.error = action.payload as string
+        })
+
+        //deleteAddress
+        .addCase(deleteAddress.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(deleteAddress.fulfilled,(state)=>{
+            state.loading = false
+        })
+        .addCase(deleteAddress.rejected,(state,action)=>{
             state.error = action.payload as string
         })
 

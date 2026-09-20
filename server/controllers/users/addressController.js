@@ -47,6 +47,27 @@ class AddressController extends BaseController{
 
         }
     )
+
+    //delete address
+
+
+    static deleteAddress = BaseController.asyncHandler(
+        async(req,res)=>{
+            const {id} = req.body
+            const user = req.userId
+
+         await Addressservice.deleteAddress(id,user)   
+
+      return this.sendSuccessResponse(
+      res,
+      "Address deleted successfully",
+      null,
+      200
+    )
+        }
+
+        
+    )
     
 
 }

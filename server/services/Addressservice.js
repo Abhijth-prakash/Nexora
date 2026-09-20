@@ -13,6 +13,7 @@ const {
 
 
 
+
 class Addressservice{
 
     //get address
@@ -62,6 +63,31 @@ class Addressservice{
   } catch (error) {
 
     logger.error("Adding address failed", error)
+
+    throw error
+  }
+}
+
+
+static async deleteAddress(id, user) {
+  try {
+
+    const result = await Address.findOneAndDelete({
+      _id: id,
+      user: user,
+    })
+
+    if (!result) {
+      throw new NotFoundError("Address not found")
+    }
+
+    logger.info(`Address deleted for user: ${user}`)
+
+    return true
+
+  } catch (error) {
+
+    logger.error("Deleting address failed", error)
 
     throw error
   }

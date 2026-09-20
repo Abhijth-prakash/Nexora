@@ -1,17 +1,25 @@
 import { Link } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import { useEffect, useState } from "react"
-import { getAddress } from "../../redux/features/addressSlice"
+import { deleteAddress, getAddress } from "../../redux/features/addressSlice"
 import AddressForm from "./AddressForm"
 import type { BaseAddress } from "../../utils/baseTypes"
+import DeleteAddress from "./DeleteAddress"
+import type { Addressid } from "../../utils/Validation"
 
 const Address = () => {
-  const { address } = useAppSelector((state) => state.addressData)
+  const { address, error } = useAppSelector(
+    (state) => state.addressData
+  )
 
   const dispatch = useAppDispatch()
 
   const [showForm, setShowForm] = useState(false)
-  const [editingAddress, setEditingAddress] = useState<BaseAddress | null>(null)
+  const [editingAddress, setEditingAddress] =
+    useState<BaseAddress | null>(null)
+
+  const [showDelete, setShowDelete] = useState(false)
+  const [id,setId] = useState("")
 
   useEffect(() => {
     dispatch(getAddress())
@@ -30,6 +38,11 @@ const Address = () => {
   const handleClose = () => {
     setShowForm(false)
     setEditingAddress(null)
+  }
+
+  const handleDelete = (id:Addressid) => {
+    setShowDelete(true)
+    setId(id)
   }
 
   return (
@@ -61,23 +74,20 @@ const Address = () => {
                 </p>
               </div>
 
-              <button
-                disabled={address.length >= 2}
-                onClick={handleAdd}
-                className={`rounded-lg px-5 py-2.5 text-sm font-medium transition ${
-                  address.length >= 2
-                    ? "cursor-not-allowed bg-gray-200 text-gray-400"
-                    : "bg-gray-900 text-white hover:bg-gray-800"
-                }`}
-              >
-                + Add Address
-              </button>
+              {address.length < 2 && (
+                <button
+                  onClick={handleAdd}
+                  className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+                >
+                  + Add Address
+                </button>
+              )}
 
             </div>
 
-
             {/* Address count */}
             <div className="mb-5 flex items-center justify-between">
+
               <p className="text-sm text-gray-600">
                 Saved addresses
               </p>
@@ -85,11 +95,12 @@ const Address = () => {
               <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
                 {address.length} / 2
               </span>
-            </div>
 
+            </div>
 
             {/* Empty state */}
             {address.length === 0 ? (
+
               <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
 
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
@@ -112,12 +123,14 @@ const Address = () => {
                 </button>
 
               </div>
+
             ) : (
 
               /* Address cards */
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
                 {address.map((item) => (
+
                   <div
                     key={item._id}
                     className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
@@ -142,7 +155,6 @@ const Address = () => {
 
                     </div>
 
-
                     {/* Address */}
                     <div className="space-y-1 text-sm text-gray-600">
 
@@ -158,10 +170,8 @@ const Address = () => {
 
                     </div>
 
-
                     {/* Divider */}
                     <div className="my-5 border-t border-gray-100" />
-
 
                     {/* Actions */}
                     <div className="flex items-center justify-end gap-3">
@@ -174,6 +184,7 @@ const Address = () => {
                       </button>
 
                       <button
+                        onClick={()=>handleDelete(item._id)}
                         className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
                       >
                         Delete
@@ -182,11 +193,14 @@ const Address = () => {
                     </div>
 
                   </div>
+
                 ))}
 
               </div>
             )}
+
           </>
+
         ) : (
 
           /* Address form */
@@ -199,9 +213,33 @@ const Address = () => {
 
       </div>
 
+      {/* Redux Error */}
+      {error && (
+        <p className="mt-4 text-center text-sm text-red-500">
+          {error}
+        </p>
+      )}
+
+      {/* Delete Modal */}
+      {showDelete && (
+        <DeleteAddress
+          onClose={() => setShowDelete(false)}
+          onConfirm={async () => {
+              try{
+                await dispatch(deleteAddress(id)).unwrap()
+                dispatch(getAddress()).unwrap()
+                setShowDelete(false)
+              }
+              catch(error){
+                console.log('delete address failed',error)
+              }
+            
+          }}
+        />
+      )}
+
     </div>
   )
 }
 
 export default Address
-

@@ -49,3 +49,5 @@ export type AddressResponse = {
 }
 
 export type addAddressResponse = null
+
+export type deleteAddressResponse = null
