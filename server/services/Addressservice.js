@@ -92,6 +92,51 @@ static async deleteAddress(id, user) {
     throw error
   }
 }
+
+//update Address
+static async updateAddress(userId, id, data) {
+  try {
+    const userAddress = await Address.findOne({
+      _id: id,
+      user: userId
+    })
+
+    if (!userAddress) {
+      throw new NotFoundError("address not found")
+    }
+
+    const update = await Address.updateOne(
+      {
+        _id: id,
+        user: userId
+      },
+      {
+        $set: {
+          type: data.type,
+          fullName: data.fullName,
+          phone: data.phone,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          country: data.country,
+          zipCode: data.zipCode,
+        }
+      }
+    )
+
+    if (update.matchedCount === 0) {
+      throw new NotFoundError("update failed")
+    }
+
+    logger.info(`address updated for ${data.fullName}`)
+
+    return true
+
+  } catch (error) {
+    logger.error("update address failed", error)
+    throw error
+  }
+}
 }
 
 module.exports = Addressservice

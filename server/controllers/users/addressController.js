@@ -2,6 +2,7 @@ const Address = require('../../models/Address');
 const BaseController = require('../baseController');
 const Addressservice = require('../../services/Addressservice');
 const { AddressValidation } = require('../../utils/validation');
+const AuthService = require('../../services/Authservice');
 
 
 class AddressController extends BaseController{
@@ -47,6 +48,33 @@ class AddressController extends BaseController{
 
         }
     )
+
+    //edit address
+
+static updateAddress = BaseController.asyncHandler(
+  async (req, res) => {
+    const userId = req.userId
+    const id = req.params.id
+
+    const validateData = BaseController.validateRequest(
+      AddressValidation,
+      req.body
+    )
+
+    await Addressservice.updateAddress(
+      userId,
+      id,
+      validateData
+    )
+
+    return this.sendSuccessResponse(
+      res,
+      "address updated for user",
+      null,
+      200
+    )
+  }
+)
 
     //delete address
 
