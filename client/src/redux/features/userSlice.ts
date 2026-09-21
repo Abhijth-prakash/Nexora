@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
-import type {  RegisterRequest,LoginData, forgetpassDAta, Email } from '../../utils/Validation'
+import type {  RegisterRequest,LoginData, forgetpassDAta, Email, passData } from '../../utils/Validation'
 import axios from "axios"
 import type {  Resetpass, VerifyOtpRequest } from "../../utils/apiTypes"
 import type { BaseUser } from "../../utils/baseTypes"
@@ -237,6 +237,34 @@ export const resendOtp = createAsyncThunk(
   }
 )
 
+
+//change password
+
+export const changePassword = createAsyncThunk(
+  'user/changePassword',
+  async (passwords:passData,{rejectWithValue})=>{
+    try{
+
+    const response = await AUTH_Api.changepassword(passwords)
+    return response.data
+
+    }catch(error){
+      
+        if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "failed to change password"
+        );
+      }
+
+      return rejectWithValue(
+        "failed to change password"
+      );
+
+    }
+  }
+)
+
 const userSlice = createSlice({
   name: "userSlice",
   initialState,
@@ -380,6 +408,24 @@ const userSlice = createSlice({
         state.loading = false
         state.error = action.payload as string
       })
+
+
+      //change passowrd
+         .addCase(changePassword.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(changePassword.fulfilled, (state) => {
+        state.loading = false
+      })
+
+      .addCase(changePassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+      
+
       
   }
 })

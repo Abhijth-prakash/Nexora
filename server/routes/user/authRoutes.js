@@ -13,6 +13,7 @@ router.get("/logout",authController.logout)
 router.post("/forgetpassword",authController.forgetpassword)
 router.post('/resetpassword',authController.resetPassword)
 router.post('/resendOtp',authController.resendOtp)
+router.post('/changePassword',authenticate,authController.changepassword)
 router.get("/user",authenticate,authController.userDetails)
 
 

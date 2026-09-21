@@ -1,20 +1,38 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { ChangepassValidation, type ChangePassData } from "../../utils/Validation"
+import { useAppDispatch, useAppSelector } from "../../redux/hooks"
+import { changePassword } from "../../redux/features/userSlice"
+import { useNavigate } from "react-router-dom"
 
 
 
 
 const ChangePass = () => {
+
+    const dispatch = useAppDispatch()
    
     const {register,handleSubmit,formState:{errors}} = useForm({
         resolver:zodResolver(ChangepassValidation)
     })
 
+    const {error} = useAppSelector(state=> state.userData)
+    const navigate = useNavigate()
+const dataHandle = async (data: ChangePassData) => {
+  try {
+    const { currentpassword, newpassword } = data
 
-    const dataHandle = (data:ChangePassData)=>{
-        console.log(data)
+    const passwords = {
+      currentpassword,
+      newpassword,
     }
+
+    await dispatch(changePassword(passwords)).unwrap()
+    navigate('/auth/login')
+  } catch (error) {
+    console.log("failed to changepassword", error)
+  }
+}
 
 
   return (
@@ -32,6 +50,8 @@ const ChangePass = () => {
 
         <input type="submit" />
     </form>
+
+    {error && <p>{error}</p>}
       
     </div>
   )

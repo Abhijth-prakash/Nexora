@@ -293,6 +293,52 @@ static async resendOtp(email) {
   }
 }
 
+
+//change password
+
+static async changePassword(data, id) {
+  try {
+    console.log(id)
+    const user = await Users.findById(id)
+
+    if (!user) {
+      throw new AuthenticationError("no user found")
+    }
+
+    const checkpass = await bcrypt.compare(
+      data.currentpassword,
+      user.password
+    )
+
+    if (!checkpass) {
+      throw new AuthenticationError("Invalid email or password")
+    }
+
+    const prevPassword = await bcrypt.compare(
+      data.newpassword,
+      user.password
+    )
+
+    if (prevPassword) {
+      throw new ConflictError(
+        "Please choose a different password. You cannot reuse your current password."
+      )
+    }
+
+    user.password = data.newpassword
+
+    await user.save()
+
+    logger.info(`successfully changed password for ${user.name}`)
+
+    return true
+
+  } catch (error) {
+    logger.error("Unable to change password", error)
+    throw error
+  }
+}
+
 }
 
 module.exports = AuthService;

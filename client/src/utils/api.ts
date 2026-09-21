@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
-import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, ApiResponse, deleteAddressResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData } from '../utils/Validation'
+import type { addAddressResponse, AddressResponse, ApiResponse, changepasswordresponse, deleteAddressResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 
 
 const ClientApi = axios.create({
@@ -47,6 +47,11 @@ export const AUTH_Api = {
 },
   resendOtp: async (userEmail: Email): Promise<ApiResponse<resendOtpResponse>> => {
    const response = await ClientApi.post<ApiResponse<resendOtpResponse>>( "/auth/resendOtp", { email: userEmail })
+
+  return response.data
+},
+  changepassword: async (passwords:passData): Promise<ApiResponse<changepasswordresponse>> => {
+   const response = await ClientApi.post<ApiResponse<changepasswordresponse>>( "/auth/changePassword", passwords)
 
   return response.data
 },

@@ -7,7 +7,8 @@ const {
   OTPValidation,
   loginValidate,
   EmailValidation,
-  resetPassValidation
+  resetPassValidation,
+  changepasswordValidation
 } = require("../../utils/validation");
 const config = require('../../config/config')
 
@@ -247,6 +248,25 @@ static resendOtp = BaseController.asyncHandler(
     return this.sendSuccessResponse(
       res,
       "new otp has been send succesfully",
+      null,
+      200
+    );
+
+  }
+)
+
+//user/changepassword
+static changepassword = BaseController.asyncHandler(
+  async (req,res)=>{
+
+     const id = req.userId
+      const validatedData = BaseController.validateRequest(changepasswordValidation,req.body)
+
+    await Authservice.changePassword(validatedData,id)
+
+    return this.sendSuccessResponse(
+      res,
+      "password changed succesfully",
       null,
       200
     );

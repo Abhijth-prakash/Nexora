@@ -161,3 +161,8 @@ export const ChangepassValidation = z.object({
 
 
 export type ChangePassData = z.infer<typeof ChangepassValidation>
+
+export type passData = {
+  currentpassword:string,
+  newpassword:string
+}

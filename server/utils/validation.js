@@ -109,6 +109,17 @@ const resetPassValidation = Joi.object({
   })
 })
 
+const changepasswordValidation = Joi.object({
+  currentpassword: Joi.string()
+  .min(1)
+  .required()
+  .messages({
+    "string.empty": "Password is required",
+    "any.required": "Password is required",
+  }),  
+  newpassword:commonPatterns.password
+})
+
 const AddressValidation = Joi.object({
   fullName: Joi.string()
     .min(2)
@@ -181,5 +192,6 @@ module.exports = {
   loginValidate,
   EmailValidation,
   resetPassValidation,
-  AddressValidation
+  AddressValidation,
+  changepasswordValidation
 };
