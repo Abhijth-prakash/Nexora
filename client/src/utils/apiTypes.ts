@@ -52,4 +52,6 @@ export type addAddressResponse = null
 
 export type deleteAddressResponse = null
 
+export type updateAddressResponse = null
+
 export type resendOtpResponse = null

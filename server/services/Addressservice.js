@@ -93,7 +93,7 @@ static async deleteAddress(id, user) {
   }
 }
 
-//update Address
+//update address
 static async updateAddress(userId, id, data) {
   try {
     const userAddress = await Address.findOne({

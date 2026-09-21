@@ -66,6 +66,32 @@ export const addAddress = createAsyncThunk(
 )
 
 
+
+//update address
+
+
+export const updateAddress = createAsyncThunk(
+  "profile/updateAddress",
+  async ({ data, id }: { data: AddressFormData; id: string }, { rejectWithValue }) => {
+    try {
+      const response = await addressApi.updateAddress(data, id)
+
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to update address. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to update address. Please try again."
+      )
+    }
+  }
+)
+
 //delete address
  export const deleteAddress = createAsyncThunk(
     'profile/deleteAddress',
@@ -128,6 +154,17 @@ const addressSlice = createSlice({
             state.loading = false
         })
         .addCase(deleteAddress.rejected,(state,action)=>{
+            state.error = action.payload as string
+        })
+
+        //update address
+        .addCase(updateAddress.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(updateAddress.fulfilled,(state)=>{
+            state.loading = false
+        })
+        .addCase(updateAddress.rejected,(state,action)=>{
             state.error = action.payload as string
         })
 

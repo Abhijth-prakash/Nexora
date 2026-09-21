@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, ApiResponse, deleteAddressResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, ApiResponse, deleteAddressResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 
 
 const ClientApi = axios.create({
@@ -65,6 +65,12 @@ export const addressApi = {
     const response = await ClientApi.post<ApiResponse <addAddressResponse>>('/profile/address',addressData)
     return response.data
   },
+  updateAddress: async (updateData: AddressFormData,id: string): Promise<ApiResponse<updateAddressResponse>> => {
+  const response = await ClientApi.patch<ApiResponse<updateAddressResponse>>(`/profile/address/${id}`,updateData
+  )
+
+  return response.data
+},
   deleteAddress: async (id: Addressid): Promise<ApiResponse<deleteAddressResponse>> => {
   const response = await ClientApi.delete<ApiResponse<deleteAddressResponse>>("/profile/address", {data: { id }})
   return response.data

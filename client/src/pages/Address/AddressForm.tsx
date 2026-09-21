@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { AddressSchema, type AddressFormData } from "../../utils/Validation"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import { useNavigate } from "react-router-dom"
-import { addAddress, getAddress } from "../../redux/features/addressSlice"
+import { addAddress, getAddress, updateAddress } from "../../redux/features/addressSlice"
+import { toast } from "react-toastify"
 
 type Props = {
   address: BaseAddress | null
@@ -41,18 +42,33 @@ const AddressForm = ({ address, onClose }: Props) => {
 
   const onSubmit = async (data: AddressFormData) => {
     try {
-      await dispatch(addAddress(data)).unwrap()
-      await dispatch(getAddress()).unwrap() 
-      onClose()
-      navigate("/profile/address")
+      if (address) {
+        const id = address._id
+
+        await dispatch(updateAddress({ data, id })).unwrap()
+        await dispatch(getAddress()).unwrap()
+
+        toast.success("Address updated successfully!")
+
+        onClose()
+        navigate("/profile/address")
+      } else {
+        await dispatch(addAddress(data)).unwrap()
+        await dispatch(getAddress()).unwrap()
+
+        toast.success("Address added successfully!")
+
+        onClose()
+        navigate("/profile/address")
+      }
     } catch (error) {
       console.log("Failed ", error)
+      toast.error("Failed to save address. Please try again.")
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
-
       <div className="mx-auto max-w-2xl">
 
         {/* Card */}
@@ -109,7 +125,6 @@ const AddressForm = ({ address, onClose }: Props) => {
                 )}
               </div>
 
-
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
                   Phone
@@ -135,7 +150,6 @@ const AddressForm = ({ address, onClose }: Props) => {
 
             </div>
 
-
             {/* Address */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
@@ -159,7 +173,6 @@ const AddressForm = ({ address, onClose }: Props) => {
                 </p>
               )}
             </div>
-
 
             {/* City + State */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -187,7 +200,6 @@ const AddressForm = ({ address, onClose }: Props) => {
                 )}
               </div>
 
-
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
                   State
@@ -212,7 +224,6 @@ const AddressForm = ({ address, onClose }: Props) => {
               </div>
 
             </div>
-
 
             {/* Country + ZIP */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -240,7 +251,6 @@ const AddressForm = ({ address, onClose }: Props) => {
                 )}
               </div>
 
-
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
                   ZIP Code
@@ -265,7 +275,6 @@ const AddressForm = ({ address, onClose }: Props) => {
               </div>
 
             </div>
-
 
             {/* Address Type */}
             <div>
@@ -293,7 +302,6 @@ const AddressForm = ({ address, onClose }: Props) => {
               )}
             </div>
 
-
             {/* Buttons */}
             <div className="flex flex-col-reverse gap-3 pt-3 sm:flex-row sm:justify-end">
 
@@ -317,12 +325,9 @@ const AddressForm = ({ address, onClose }: Props) => {
           </form>
 
         </div>
-
       </div>
-
     </div>
   )
 }
 
 export default AddressForm
-

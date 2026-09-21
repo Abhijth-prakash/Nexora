@@ -16,7 +16,7 @@ class AddressController extends BaseController{
             const result =  await Addressservice.getAddress(id)
 
              BaseController.logAction(
-                  `address fetched for user `
+                  `address fetched for user ${id}`
                 )
 
         return this.sendSuccessResponse(
