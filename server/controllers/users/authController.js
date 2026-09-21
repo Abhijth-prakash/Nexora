@@ -150,7 +150,9 @@ static userDetails = BaseController.asyncHandler(
     return this.sendSuccessResponse(
       res,
       "Profile fetched",
-      { user: result.user },
+      {
+        user: result.user,
+      },
       200
     )
   }

@@ -10,6 +10,7 @@ import Forgetpass from "./pages/Forgetpass"
 import Resetpass from "./pages/Resetpass"
 import Profile from "./pages/Profile"
 import Address from "./pages/Address/Address"
+import ChangePass from "./pages/Profile/ChangePass"
 
 function App() {
   return (
@@ -51,6 +52,13 @@ function App() {
           path="/profile/address"
           element={<Address />}
         />
+
+        <Route
+          path="/profile/changePasswprd"
+          element={<ChangePass />}
+        />
+
+
       </Routes>
 
       <ToastContainer

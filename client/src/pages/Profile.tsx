@@ -25,19 +25,18 @@ const Profile = () => {
     dispatch(UserProfile())
   }, [dispatch])
 
-  const { user, error } = useAppSelector(
+  const { user, error,google } = useAppSelector(
     (state) => state.userData
   )
 
   const isLoading = !user && !error
 
-  const logoutHandle = async () =>{
-    try{
-       await dispatch(logout()).unwrap()
-       navigate('/auth/login')
-
-    }catch(error){
-        console.log("logout failed",error)
+  const logoutHandle = async () => {
+    try {
+      await dispatch(logout()).unwrap()
+      navigate("/auth/login")
+    } catch (error) {
+      console.log("logout failed", error)
     }
   }
 
@@ -47,7 +46,6 @@ const Profile = () => {
       {/* ================= NAVBAR ================= */}
 
       <Navbar />
-
 
       {/* ================= PAGE ================= */}
 
@@ -71,11 +69,9 @@ const Profile = () => {
 
         </div>
 
-
         {/* ================= MAIN LAYOUT ================= */}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-
 
           {/* ================================================= */}
           {/* SIDEBAR */}
@@ -95,7 +91,6 @@ const Profile = () => {
                   {getInitials(user?.name)}
                 </div>
 
-
                 {/* User information */}
 
                 <div className="min-w-0">
@@ -114,11 +109,9 @@ const Profile = () => {
 
             </div>
 
-
             {/* ================= NAVIGATION ================= */}
 
             <div className="p-3">
-
 
               {/* ================================================= */}
               {/* MANAGE ACCOUNT */}
@@ -129,7 +122,6 @@ const Profile = () => {
                 <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
                   Manage Account
                 </p>
-
 
                 {/* Profile - Active */}
 
@@ -159,38 +151,42 @@ const Profile = () => {
 
                 </div>
 
-
                 {/* Address Book */}
 
-          <Link
-  to="/profile/address"
-  className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
->
-  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
-    <svg
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 21s7-5.25 7-11a7 7 0 10-14 0c0 5.75 7 11 7 11z"
-      />
+                <Link
+                  to="/profile/address"
+                  className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
 
-      <circle
-        cx="12"
-        cy="10"
-        r="2.2"
-      />
-    </svg>
-  </div>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 21s7-5.25 7-11a7 7 0 10-14 0c0 5.75 7 11 7 11z"
+                      />
 
-  <span>Address Book</span>
-</Link>
+                      <circle
+                        cx="12"
+                        cy="10"
+                        r="2.2"
+                      />
 
+                    </svg>
+
+                  </div>
+
+                  <span>
+                    Address Book
+                  </span>
+
+                </Link>
 
                 {/* Wallet */}
 
@@ -228,7 +224,6 @@ const Profile = () => {
 
               </div>
 
-
               {/* ================================================= */}
               {/* ORDERS */}
               {/* ================================================= */}
@@ -238,7 +233,6 @@ const Profile = () => {
                 <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
                   Orders
                 </p>
-
 
                 {/* All Orders */}
 
@@ -274,7 +268,6 @@ const Profile = () => {
 
                 </div>
 
-
                 {/* Returns */}
 
                 <div className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
@@ -302,7 +295,6 @@ const Profile = () => {
                   </span>
 
                 </div>
-
 
                 {/* Cancellations */}
 
@@ -334,7 +326,6 @@ const Profile = () => {
 
               </div>
 
-
               {/* ================================================= */}
               {/* SETTINGS */}
               {/* ================================================= */}
@@ -345,10 +336,46 @@ const Profile = () => {
                   Settings
                 </p>
 
+                {/* Security */}
+
+{!google && (
+  <Link
+    to="/profile/changePasswprd"
+    className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+  >
+    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
+      <svg
+        className="h-4 w-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      >
+        <rect
+          x="5"
+          y="10"
+          width="14"
+          height="10"
+          rx="2"
+        />
+
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 10V7a4 4 0 018 0v3"
+        />
+      </svg>
+    </div>
+
+    <span>
+      Security
+    </span>
+  </Link>
+)}
 
                 {/* Payment Methods */}
 
-                <div className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
+                <div className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
 
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
 
@@ -379,13 +406,12 @@ const Profile = () => {
 
                 </div>
 
-
                 {/* Logout */}
 
                 <button
                   type="button"
                   onClick={() => {
-                        logoutHandle()
+                    logoutHandle()
                   }}
                   className="mt-1 flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-gray-500 transition hover:bg-red-50 hover:text-red-500"
                 >
@@ -427,7 +453,6 @@ const Profile = () => {
 
           </aside>
 
-
           {/* ================================================= */}
           {/* MAIN CONTENT */}
           {/* ================================================= */}
@@ -454,11 +479,9 @@ const Profile = () => {
 
               </div>
 
-
               {/* Error */}
 
               {error && (
-
                 <div className="mb-8 rounded-xl border border-red-100 bg-red-50 px-4 py-4">
 
                   <p className="text-sm font-semibold text-red-700">
@@ -470,9 +493,7 @@ const Profile = () => {
                   </p>
 
                 </div>
-
               )}
-
 
               {/* Profile */}
 
@@ -489,15 +510,11 @@ const Profile = () => {
                   <div className="min-w-0">
 
                     {isLoading ? (
-
                       <div className="h-6 w-36 animate-pulse rounded bg-gray-200" />
-
                     ) : (
-
                       <h2 className="truncate text-lg font-semibold text-gray-900">
                         {user?.name || "Welcome back"}
                       </h2>
-
                     )}
 
                     <p className="mt-1 text-sm text-gray-400">
@@ -507,7 +524,6 @@ const Profile = () => {
                   </div>
 
                 </div>
-
 
                 {/* Details */}
 
@@ -535,7 +551,6 @@ const Profile = () => {
 
                   </div>
 
-
                   {/* Email */}
 
                   <div className="flex flex-col gap-2 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -559,7 +574,6 @@ const Profile = () => {
                   </div>
 
                 </div>
-
 
                 {/* Edit */}
 

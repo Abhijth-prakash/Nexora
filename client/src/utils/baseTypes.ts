@@ -4,7 +4,8 @@ export type BaseUser = {
   email: string
   Verified: boolean
   createdAt: string
-  updatedAt: string
+  updatedAt: string,
+  googleId: string
 }
 
 export type BaseAddress = {

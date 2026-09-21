@@ -10,14 +10,16 @@ type UserState = {
   user: BaseUser | null
   loading: boolean,
   logged: boolean,
-  error: string | null
+  error: string | null,
+  google: boolean
 }
 
 const initialState: UserState = {
   user: null,
   loading: false,
   logged:false,
-  error: null
+  error: null,
+  google:false
 }
 
 //registering user
@@ -300,6 +302,7 @@ const userSlice = createSlice({
       .addCase(UserProfile.fulfilled, (state, action) => {
         state.loading = false
         state.logged = true
+       state.google = !!action.payload.googleId
         state.user = action.payload
       })
 

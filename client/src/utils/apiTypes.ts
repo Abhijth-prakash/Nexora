@@ -29,7 +29,7 @@ export type LoginResponse = {
 }
 
 export type profileResponse = {
-  user: BaseUser
+  user: BaseUser,
 }
 
 export type LogoutResponse = null

@@ -173,6 +173,7 @@ static async UserProfile(id) {
       throw new NotFoundError("User not found");
     }
 
+
     return {
       user: user.getProfile(),
     };
