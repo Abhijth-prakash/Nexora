@@ -133,3 +133,31 @@ export type AddressFormData = z.infer<typeof AddressSchema>
 export type Addressid = string
 
 export type Email = string
+
+
+export const ChangepassValidation = z.object({
+    currentpassword: z
+    .string()
+    .min(1, "Password is required"),
+
+      newpassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128, "Password cannot exceed 128 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+        "Password must contain uppercase, lowercase, number and special character"
+      ),
+
+    confirmpassword: z
+      .string()
+      .min(8, "Confirm password must be at least 8 characters")
+      .max(128, "Confirm password cannot exceed 128 characters"),
+  })
+  .refine((data) => data.newpassword === data.confirmpassword, {
+    message: "Passwords don't match",
+    path: ["confirmpassword"],
+})
+
+
+export type ChangePassData = z.infer<typeof ChangepassValidation>
