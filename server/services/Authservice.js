@@ -259,6 +259,39 @@ static async resetPassword(data){
   }
 }
 
+static async resendOtp(email) {
+  try {
+    const User = await Users.findOne({
+      email: email,
+    });
+
+    if (!User) {
+      throw new AuthenticationError("User not found");
+    }
+
+    if (User.verified) {
+      throw new AuthenticationError("User already verified");
+    }
+
+    const otp = Mail.generateOTP();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    User.otp = otp;
+    User.otpExpiry = otpExpiry;
+
+    await User.save();
+
+    await Mail.sendOTP(User.email, otp, User.name);
+
+    logger.info(`New OTP has been sent to ${User.email}`);
+
+    return true;
+  } catch (error) {
+    logger.error("Unable to send new OTP", error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = AuthService;

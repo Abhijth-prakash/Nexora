@@ -3,10 +3,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { OtpValidate } from "../utils/Validation"
 
-import { veirifyingOtp } from "../redux/features/userSlice"
-import { useAppDispatch } from "../redux/hooks"
+import { resendOtp, veirifyingOtp } from "../redux/features/userSlice"
+import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { useNavigate,useLocation } from "react-router-dom"
 import type { VerifyOtpRequest } from "../utils/apiTypes"
+import type { Email } from "../utils/Validation"
 
 type OtpForm = {
   otp: string,
@@ -20,7 +21,7 @@ const OtpVerify = () => {
   const email = location.state?.email
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-
+  const {error} = useAppSelector(state=> state.userData)
   const {
     handleSubmit,
     setValue,
@@ -77,11 +78,21 @@ const OtpVerify = () => {
         ...data,email
       }
 
-    await dispatch(veirifyingOtp(verifyData))
+    await dispatch(veirifyingOtp(verifyData)).unwrap()
     navigate('/')
 
     }catch(error){
       console.log(error,"verification failed")
+    }
+  }
+
+  const sendOTp = async ()=>{
+    try{
+
+      await dispatch(resendOtp(email)).unwrap()
+      console.log("new otp has been send")
+    }catch(error){
+      console.log('resend otp failed',error)
     }
   }
 
@@ -144,14 +155,14 @@ const OtpVerify = () => {
             Didn't receive the OTP?
           </p>
 
-          <button
+          <button onClick={()=>resendOtp()}
             type="button"
             className="mt-2 font-medium text-blue-600 hover:text-blue-700"
           >
             Resend OTP
           </button>
         </div>
-
+          {error&& <p>{error}</p>}
       </div>
     </div>
   )

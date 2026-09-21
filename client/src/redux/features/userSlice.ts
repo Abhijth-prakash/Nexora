@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
-import type {  RegisterRequest,LoginData, forgetpassDAta } from '../../utils/Validation'
+import type {  RegisterRequest,LoginData, forgetpassDAta, Email } from '../../utils/Validation'
 import axios from "axios"
 import type {  Resetpass, VerifyOtpRequest } from "../../utils/apiTypes"
 import type { BaseUser } from "../../utils/baseTypes"
@@ -210,6 +210,32 @@ export const resetPass = createAsyncThunk(
 );
 
 
+export const resendOtp = createAsyncThunk(
+  'user/resendOtp',
+
+  async (useremail:Email,{rejectWithValue})=>{
+    try{  
+
+      const response = await AUTH_Api.resendOtp(useremail)
+      return response.data
+
+    }catch(error){
+
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "resned otp failed.."
+        );
+      }
+
+      return rejectWithValue(
+        "resned otp failed"
+      );
+
+    }
+  }
+)
+
 const userSlice = createSlice({
   name: "userSlice",
   initialState,
@@ -330,6 +356,25 @@ const userSlice = createSlice({
       })
 
       .addCase(resetPass.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+
+
+      //resend otp 
+
+
+         .addCase(resendOtp.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(resendOtp.fulfilled, (state) => {
+        state.loading = false
+        state.logged = false
+      })
+
+      .addCase(resendOtp.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload as string
       })

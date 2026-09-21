@@ -229,6 +229,29 @@ static resetPassword = BaseController.asyncHandler(
   }
 )
 
+
+//user/resendOtp
+
+static resendOtp = BaseController.asyncHandler(
+  async (req,res)=>{
+    const validatedData = BaseController.validateRequest(EmailValidation,req.body)
+
+    await Authservice.resendOtp(validatedData.email)
+
+     BaseController.logAction(
+      `new otp has been send succesfully `
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "new otp has been send succesfully",
+      null,
+      200
+    );
+
+  }
+)
+
 }
 
 module.exports = AuthController;

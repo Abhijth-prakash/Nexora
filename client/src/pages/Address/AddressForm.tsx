@@ -46,7 +46,7 @@ const AddressForm = ({ address, onClose }: Props) => {
       onClose()
       navigate("/profile/address")
     } catch (error) {
-      console.log("Failed to add address", error)
+      console.log("Failed ", error)
     }
   }
 

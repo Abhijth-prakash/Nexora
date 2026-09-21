@@ -131,3 +131,5 @@ export const AddressSchema = z.object({
 export type AddressFormData = z.infer<typeof AddressSchema>
 
 export type Addressid = string
+
+export type Email = string
