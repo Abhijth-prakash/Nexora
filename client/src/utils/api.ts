@@ -46,7 +46,8 @@ export const AUTH_Api = {
   return response.data
 },
   resendOtp: async (userEmail: Email): Promise<ApiResponse<resendOtpResponse>> => {
-  const response = await ClientApi.post<ApiResponse<resendOtpResponse>>("/auth/resendOtp",userEmail)
+   const response = await ClientApi.post<ApiResponse<resendOtpResponse>>( "/auth/resendOtp", { email: userEmail })
+
   return response.data
 },
 

@@ -215,7 +215,6 @@ export const resendOtp = createAsyncThunk(
 
   async (useremail:Email,{rejectWithValue})=>{
     try{  
-
       const response = await AUTH_Api.resendOtp(useremail)
       return response.data
 

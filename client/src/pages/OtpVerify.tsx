@@ -1,16 +1,16 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { OtpValidate } from "../utils/Validation"
 
 import { resendOtp, veirifyingOtp } from "../redux/features/userSlice"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
-import { useNavigate,useLocation } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import type { VerifyOtpRequest } from "../utils/apiTypes"
-import type { Email } from "../utils/Validation"
+import { toast } from "react-toastify"
 
 type OtpForm = {
-  otp: string,
+  otp: string
 }
 
 const OtpVerify = () => {
@@ -21,7 +21,9 @@ const OtpVerify = () => {
   const email = location.state?.email
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const {error} = useAppSelector(state=> state.userData)
+
+  const { error } = useAppSelector((state) => state.userData)
+
   const {
     handleSubmit,
     setValue,
@@ -30,6 +32,8 @@ const OtpVerify = () => {
     resolver: zodResolver(OtpValidate),
     mode: "onSubmit",
   })
+
+  const [timeLeft, setTimeLeft] = useState(180)
 
   const handleOtpChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return
@@ -68,31 +72,50 @@ const OtpVerify = () => {
     }
   }
 
-  const dataHandle = async (data: OtpForm) => {
-    try{
+  useEffect(() => {
+    if (timeLeft <= 0) return
 
-       if (!email) {
-      throw new Error("Email not found")
-    }
-      const verifyData:VerifyOtpRequest = {
-        ...data,email
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [timeLeft])
+
+  const dataHandle = async (data: OtpForm) => {
+    try {
+      if (!email) {
+        throw new Error("Email not found")
       }
 
-    await dispatch(veirifyingOtp(verifyData)).unwrap()
-    navigate('/')
+      const verifyData: VerifyOtpRequest = {
+        ...data,
+        email,
+      }
 
-    }catch(error){
-      console.log(error,"verification failed")
+      await dispatch(veirifyingOtp(verifyData)).unwrap()
+
+      toast.success("OTP verified successfully!")
+
+      navigate("/")
+    } catch (error) {
+      console.log(error, "verification failed")
+      toast.error("OTP verification failed. Please try again.")
     }
   }
 
-  const sendOTp = async ()=>{
-    try{
-
+  const sendOTp = async () => {
+    try {
       await dispatch(resendOtp(email)).unwrap()
+
+      setTimeLeft(180)
+
+      toast.success("New OTP has been sent!")
+
       console.log("new otp has been send")
-    }catch(error){
-      console.log('resend otp failed',error)
+    } catch (error) {
+      console.log("resend otp failed", error)
+      toast.error("Failed to resend OTP. Please try again.")
     }
   }
 
@@ -155,14 +178,24 @@ const OtpVerify = () => {
             Didn't receive the OTP?
           </p>
 
-          <button onClick={()=>resendOtp()}
-            type="button"
-            className="mt-2 font-medium text-blue-600 hover:text-blue-700"
-          >
-            Resend OTP
-          </button>
+          {timeLeft > 0 ? (
+            <p className="mt-2 text-sm text-gray-500">
+              Resend OTP in {Math.floor(timeLeft / 60)}:
+              {String(timeLeft % 60).padStart(2, "0")}
+            </p>
+          ) : (
+            <button
+              onClick={() => sendOTp()}
+              type="button"
+              className="mt-2 font-medium text-blue-600 hover:text-blue-700"
+            >
+              Resend OTP
+            </button>
+          )}
         </div>
-          {error&& <p>{error}</p>}
+
+        {error && <p>{error}</p>}
+
       </div>
     </div>
   )

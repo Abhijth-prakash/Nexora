@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,6 +6,7 @@ import type { RegisterData } from '../utils/Validation'
 import { registerUser } from '../redux/features/userSlice'
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { useNavigate, Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 const Register = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterData>({
@@ -22,15 +22,21 @@ const Register = () => {
   const dataHandle = async (data: RegisterData) => {
     try {
       const { confirmpassword, ...registerData } = data
+
       await dispatch(registerUser(registerData)).unwrap()
+
+       toast.success("Registration successful! OTP sent to your email.")
 
       navigate("/auth/verify", {
         state: {
           email: registerData.email,
         },
       })
+
     } catch (error) {
       console.log("Registration failed", error)
+
+      toast.error("Registration failed. Please try again.")
     }
   }
 
@@ -74,6 +80,7 @@ const Register = () => {
 
         {/* Hero content */}
         <div className="relative z-10 max-w-lg my-14">
+
           <p
             className="text-sm text-[#E8785A] mb-5 italic"
             style={{ fontFamily: "'Fraunces', serif" }}
@@ -87,6 +94,7 @@ const Register = () => {
           >
             Create your
             <br />
+
             <span className="italic font-normal">
               own style
             </span>
@@ -96,6 +104,7 @@ const Register = () => {
             Join thousands of shoppers discovering premium products made
             for modern living.
           </p>
+
         </div>
 
         {/* Stats */}
@@ -145,6 +154,7 @@ const Register = () => {
           </div>
 
         </div>
+
       </div>
 
 
@@ -155,6 +165,7 @@ const Register = () => {
 
           {/* Login link */}
           <div className="flex justify-end mb-10">
+
             <p className="text-[13px] text-[#8B8377]">
               Already have an account?{" "}
 
@@ -164,7 +175,9 @@ const Register = () => {
               >
                 Sign in
               </Link>
+
             </p>
+
           </div>
 
 
@@ -200,6 +213,7 @@ const Register = () => {
 
             {/* ================= NAME ================= */}
             <div>
+
               <label className="block text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4D4943] mb-2.5">
                 Full Name
               </label>
@@ -230,11 +244,13 @@ const Register = () => {
                   {errors.name.message}
                 </p>
               )}
+
             </div>
 
 
             {/* ================= EMAIL ================= */}
             <div>
+
               <label className="block text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4D4943] mb-2.5">
                 Email Address
               </label>
@@ -265,11 +281,13 @@ const Register = () => {
                   {errors.email.message}
                 </p>
               )}
+
             </div>
 
 
             {/* ================= PASSWORD ================= */}
             <div>
+
               <label className="block text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4D4943] mb-2.5">
                 Password
               </label>
@@ -321,11 +339,13 @@ const Register = () => {
                   {errors.password.message}
                 </p>
               )}
+
             </div>
 
 
             {/* ================= CONFIRM PASSWORD ================= */}
             <div>
+
               <label className="block text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4D4943] mb-2.5">
                 Confirm Password
               </label>
@@ -377,6 +397,7 @@ const Register = () => {
                   {errors.confirmpassword.message}
                 </p>
               )}
+
             </div>
 
 
@@ -404,6 +425,7 @@ const Register = () => {
                 <span className="text-[#C1583C] font-medium cursor-pointer hover:text-[#8B3E2A]">
                   Privacy Policy
                 </span>
+
               </label>
 
             </div>
@@ -437,9 +459,11 @@ const Register = () => {
           {/* ================= ERROR ================= */}
           {error && (
             <div className="mt-5 px-4 py-3 rounded-sm bg-[#B3453A]/5 border border-[#B3453A]/20">
+
               <p className="text-center text-sm text-[#B3453A]">
                 {error}
               </p>
+
             </div>
           )}
 
@@ -482,8 +506,12 @@ const Register = () => {
                 hover:shadow-sm
               "
             >
-              <span className="text-base font-bold">G</span>
+              <span className="text-base font-bold">
+                G
+              </span>
+
               Continue with Google
+
             </a>
 
           </div>

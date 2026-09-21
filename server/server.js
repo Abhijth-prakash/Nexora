@@ -21,28 +21,27 @@ class Server {
     this.port = config.PORT;
   }
 
-  initialize() {
-    this.app.use(express.json());
+initialize() {
+  this.app.use(
+    cors({
+      origin: config.CORS.ORIGIN,
+      credentials: config.CORS.CREDENTIALS,
+      methods: config.CORS.METHODS,
+      allowedHeaders: config.CORS.ALLOWED_HEADERS,
+    })
+  );
 
-    
-    this.app.use(cookieParser());
+  this.app.use(express.json());
 
-      this.app.use(
-      cors({
-        origin: config.CORS.ORIGIN,
-        credentials: config.CORS.CREDENTIALS,
-        methods: config.CORS.METHODS,
-        allowedHeaders: config.CORS.ALLOWED_HEADERS,
-      })
-    );
+  this.app.use(cookieParser());
 
-      this.app.use(passport.initialize());
-      setupRoutes(this.app);
-      this.app.use(notFound);
-      this.app.use(errorHandler);
+  this.app.use(passport.initialize());
 
+  setupRoutes(this.app);
 
-  }
+  this.app.use(notFound);
+  this.app.use(errorHandler);
+}
 
   async start() {
     await mongodb.connect();
