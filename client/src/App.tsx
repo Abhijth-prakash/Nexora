@@ -11,6 +11,7 @@ import Resetpass from "./pages/Resetpass"
 import Profile from "./pages/Profile"
 import Address from "./pages/Address/Address"
 import ChangePass from "./pages/Profile/ChangePass"
+import EditProfile from "./pages/Profile/EditProfile"
 
 function App() {
   return (
@@ -54,8 +55,13 @@ function App() {
         />
 
         <Route
-          path="/profile/changePasswprd"
+          path="/profile/changePassword"
           element={<ChangePass />}
+        />
+
+        <Route
+          path="/profile/editProfile"
+          element={<EditProfile />}
         />
 
 

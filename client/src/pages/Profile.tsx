@@ -340,7 +340,7 @@ const Profile = () => {
 
 {!google && (
   <Link
-    to="/profile/changePasswprd"
+    to="/profile/changePassword"
     className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
   >
     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
@@ -579,12 +579,14 @@ const Profile = () => {
 
                 <div className="mt-7 flex justify-end">
 
-                  <button
-                    type="button"
+                 {!google &&(
+                  <Link to={'/profile/editProfile'}
+                  
                     className="rounded-xl bg-[#ff5a1f] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e64f19] hover:shadow-md"
                   >
                     Edit details
-                  </button>
+                 </Link>
+                 )} 
 
                 </div>
 
