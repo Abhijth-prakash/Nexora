@@ -41,19 +41,19 @@ const Profile = () => {
     }
   }
 
-const handleVerification = async () => {
-  if (!user?.email) return
+  const handleVerification = async () => {
+    if (!user?.email) return
 
-  try {
-    await dispatch(resendOtp(user.email)).unwrap()
+    try {
+      await dispatch(resendOtp(user.email)).unwrap()
 
-    toast.success("OTP has been sent to your mail")
+      toast.success("OTP has been sent to your mail")
 
-    navigate("/auth/verify")
-  } catch (error) {
-    console.log("failed to send ", error)
+      navigate("/auth/verify")
+    } catch (error) {
+      console.log("failed to send ", error)
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-[#f6f6f6] text-[#111111]">
@@ -80,6 +80,7 @@ const handleVerification = async () => {
 
                   {user?.verified && (
                     <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-green-500">
+
                       <svg
                         className="h-3 w-3 text-white"
                         fill="none"
@@ -93,6 +94,7 @@ const handleVerification = async () => {
                           d="M5 12l4 4L19 6"
                         />
                       </svg>
+
                     </div>
                   )}
 
@@ -120,7 +122,9 @@ const handleVerification = async () => {
 
                   {user?.verified && (
                     <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-600">
+
                       <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-green-500 text-white">
+
                         <svg
                           className="h-2.5 w-2.5"
                           fill="none"
@@ -134,7 +138,9 @@ const handleVerification = async () => {
                             d="M5 12l4 4L19 6"
                           />
                         </svg>
+
                       </span>
+
                       Verified account
                     </div>
                   )}
@@ -557,17 +563,21 @@ const handleVerification = async () => {
 
                   {/* ACCOUNT STATUS */}
 
-                  <div className={`flex items-center gap-3 rounded-xl px-5 py-4 shadow-sm ring-1 ${
-                    user?.verified
-                      ? "bg-green-50 ring-green-100"
-                      : "bg-orange-50 ring-orange-100"
-                  }`}>
-
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                  <div
+                    className={`flex items-center gap-3 rounded-xl px-5 py-4 shadow-sm ring-1 ${
                       user?.verified
-                        ? "bg-green-100 text-green-600"
-                        : "bg-orange-100 text-[#ff5a1f]"
-                    }`}>
+                        ? "bg-green-50 ring-green-100"
+                        : "bg-orange-50 ring-orange-100"
+                    }`}
+                  >
+
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                        user?.verified
+                          ? "bg-green-100 text-green-600"
+                          : "bg-orange-100 text-[#ff5a1f]"
+                      }`}
+                    >
 
                       {user?.verified ? (
                         <svg
@@ -618,12 +628,16 @@ const handleVerification = async () => {
                         Account status
                       </p>
 
-                      <p className={`mt-0.5 text-sm font-semibold ${
-                        user?.verified
-                          ? "text-green-700"
-                          : "text-[#ff5a1f]"
-                      }`}>
-                        {user?.verified ? "Verified" : "Verification required"}
+                      <p
+                        className={`mt-0.5 text-sm font-semibold ${
+                          user?.verified
+                            ? "text-green-700"
+                            : "text-[#ff5a1f]"
+                        }`}
+                      >
+                        {user?.verified
+                          ? "Verified"
+                          : "Verification required"}
                       </p>
 
                     </div>
@@ -637,11 +651,11 @@ const handleVerification = async () => {
               {/* VERIFICATION BANNER */}
 
               {!user?.verified && (
-<button
-  type="button"
-  onClick={()=>handleVerification()}
-  className="group mt-5 flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-[#fff7f2] to-white px-5 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:shadow-md active:translate-y-0"
->
+                <button
+                  type="button"
+                  onClick={() => handleVerification()}
+                  className="group mt-5 flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-[#fff7f2] to-white px-5 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:shadow-md active:translate-y-0"
+                >
 
                   <div className="flex items-center gap-4">
 
@@ -901,69 +915,71 @@ const handleVerification = async () => {
 
                   {/* SECURITY */}
 
-                  <Link
-                    to="/profile/changePassword"
-                    className="group flex min-h-[96px] items-center justify-between rounded-2xl border border-gray-200 bg-white px-6 py-5 text-gray-900 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:shadow-lg"
-                  >
-
-                    <div className="flex items-center gap-4">
-
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100">
-
-                        <svg
-                          className="h-5 w-5 text-gray-600"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        >
-                          <rect
-                            x="5"
-                            y="10"
-                            width="14"
-                            height="10"
-                            rx="2"
-                          />
-
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M8 10V7a4 4 0 018 0v3"
-                          />
-
-                        </svg>
-
-                      </div>
-
-                      <div>
-
-                        <p className="text-base font-semibold">
-                          Security
-                        </p>
-
-                        <p className="mt-0.5 text-sm text-gray-400">
-                          Manage your password and security
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                    <svg
-                      className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1 group-hover:text-gray-700"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
+                  {!google && user?.verified && (
+                    <Link
+                      to="/profile/changePassword"
+                      className="group flex min-h-[96px] items-center justify-between rounded-2xl border border-gray-200 bg-white px-6 py-5 text-gray-900 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:shadow-lg"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 12h14M13 6l6 6-6 6"
-                      />
-                    </svg>
 
-                  </Link>
+                      <div className="flex items-center gap-4">
+
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100">
+
+                          <svg
+                            className="h-5 w-5 text-gray-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <rect
+                              x="5"
+                              y="10"
+                              width="14"
+                              height="10"
+                              rx="2"
+                            />
+
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M8 10V7a4 4 0 018 0v3"
+                            />
+
+                          </svg>
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-base font-semibold">
+                            Security
+                          </p>
+
+                          <p className="mt-0.5 text-sm text-gray-400">
+                            Manage your password and security
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      <svg
+                        className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1 group-hover:text-gray-700"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 12h14M13 6l6 6-6 6"
+                        />
+                      </svg>
+
+                    </Link>
+                  )}
 
                 </div>
               )}

@@ -339,6 +339,33 @@ static async changePassword(data, id) {
   }
 }
 
+static async updateProfile(data, id) {
+  try {
+    const user = await Users.findById(id)
+
+    if (!user) {
+      throw new NotFoundError("user not found")
+    }
+
+    if (user.email !== data.email) {
+      user.email = data.email
+      user.verified = false
+    }
+
+    user.name = data.name
+
+    await user.save()
+
+    logger.info(`successfully updated profile for ${user.name}`)
+
+    return true
+
+  } catch (error) {
+    logger.error("Unable to update profile", error)
+    throw error
+  }
+}
+
 }
 
 module.exports = AuthService;

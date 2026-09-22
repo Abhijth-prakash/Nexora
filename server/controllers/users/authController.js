@@ -8,7 +8,8 @@ const {
   loginValidate,
   EmailValidation,
   resetPassValidation,
-  changepasswordValidation
+  changepasswordValidation,
+  ProfileValidation
 } = require("../../utils/validation");
 const config = require('../../config/config')
 
@@ -271,6 +272,30 @@ static changepassword = BaseController.asyncHandler(
       200
     );
 
+  }
+)
+
+//user/editProfile
+
+static editProfile = BaseController.asyncHandler(
+  async (req,res)=>{
+
+      const id = req.userId
+
+      const validatedData = BaseController.validateRequest(ProfileValidation,req.body)
+
+      await Authservice.updateProfile(validatedData,id)
+
+      BaseController.logAction(
+      `profile updated succesfully of ${validatedData.name} `
+    );
+
+     return this.sendSuccessResponse(
+      res,
+      "profile updated succesfully",
+      null,
+      200
+    );
   }
 )
 

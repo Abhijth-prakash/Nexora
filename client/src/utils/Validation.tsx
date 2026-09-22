@@ -166,3 +166,22 @@ export type passData = {
   currentpassword:string,
   newpassword:string
 }
+
+export const ProfileSchema = z.object({
+
+    name: z
+      .string()
+      .trim()
+      .min(2, "Name must be at least 2 characters")
+      .max(100, "Name cannot exceed 100 characters"),
+
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("Please provide a valid email address"),
+
+})
+
+
+export type ProfileData = z.infer<typeof ProfileSchema>

@@ -14,6 +14,7 @@ router.post("/forgetpassword",authController.forgetpassword)
 router.post('/resetpassword',authController.resetPassword)
 router.post('/resendOtp',authController.resendOtp)
 router.post('/changePassword',authenticate,authController.changepassword)
+router.post('/editProfile',authenticate,authController.editProfile)
 router.get("/user",authenticate,authController.userDetails)
 
 

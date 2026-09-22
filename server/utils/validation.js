@@ -185,6 +185,11 @@ const AddressValidation = Joi.object({
 })
 
 
+const ProfileValidation = Joi.object({
+  name:commonPatterns.name,
+  email:commonPatterns.email,
+})
+
 
 module.exports = {
   registerValidate,
@@ -193,5 +198,6 @@ module.exports = {
   EmailValidation,
   resetPassValidation,
   AddressValidation,
-  changepasswordValidation
+  changepasswordValidation,
+  ProfileValidation
 };

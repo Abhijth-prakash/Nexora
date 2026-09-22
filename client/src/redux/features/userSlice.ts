@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AUTH_Api } from "../../utils/api"
-import type {  RegisterRequest,LoginData, forgetpassDAta, Email, passData } from '../../utils/Validation'
+import type {  RegisterRequest,LoginData, forgetpassDAta, Email, passData, ProfileData } from '../../utils/Validation'
 import axios from "axios"
 import type {  Resetpass, VerifyOtpRequest } from "../../utils/apiTypes"
 import type { BaseUser } from "../../utils/baseTypes"
@@ -265,6 +265,33 @@ export const changePassword = createAsyncThunk(
   }
 )
 
+
+//edit profile
+
+export const editProfile = createAsyncThunk(
+  'user/editprofile',
+  async (profileData:ProfileData,{rejectWithValue})=>{
+    try{
+
+      const response = await AUTH_Api.editProfile(profileData)
+      return response.data
+    }catch(error){
+
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "failed to change password"
+        );
+      }
+
+      return rejectWithValue(
+        "failed to change password"
+      );
+
+    }
+  }
+)
+
 const userSlice = createSlice({
   name: "userSlice",
   initialState,
@@ -424,6 +451,24 @@ const userSlice = createSlice({
         state.loading = false
         state.error = action.payload as string
       })
+
+
+      //editProfile
+
+         .addCase(editProfile.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(editProfile.fulfilled, (state) => {
+        state.loading = false
+      })
+
+      .addCase(editProfile.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+
       
 
       

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
-import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, ApiResponse, changepasswordresponse, deleteAddressResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
+import type { addAddressResponse, AddressResponse, ApiResponse, changepasswordresponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 
 
 const ClientApi = axios.create({
@@ -52,6 +52,11 @@ export const AUTH_Api = {
 },
   changepassword: async (passwords:passData): Promise<ApiResponse<changepasswordresponse>> => {
    const response = await ClientApi.post<ApiResponse<changepasswordresponse>>( "/auth/changePassword", passwords)
+
+  return response.data
+},
+  editProfile: async (profileData:ProfileData): Promise<ApiResponse<editProfileResponse>> => {
+   const response = await ClientApi.post<ApiResponse<editProfileResponse>>( "/auth/editProfile", profileData)
 
   return response.data
 },
