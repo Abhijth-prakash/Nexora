@@ -31,7 +31,7 @@ class AuthService {
         ...userData,
         otp,
         otpExpiry,
-        Verified: false,
+        verified: false,
       });
       await user.save();
 
@@ -58,7 +58,7 @@ class AuthService {
       throw new NotFoundError("User not found");
     }
 
-    if (user.Verified) {
+    if (user.verified) {
       throw new ConflictError("already verified");
     }
 
@@ -102,7 +102,7 @@ class AuthService {
     }
 
     user.otpAttempts = 0;
-    user.Verified = true;
+    user.verified = true;
     user.otp = null;
     user.otpExpiry = null;
     user.lastLogin = new Date();
@@ -112,7 +112,7 @@ class AuthService {
     const token = generateUserToken({
       id: user._id,
       email: user.email,
-      Verified: true,
+      verified: true,
       banned: user.banned,
     });
 
@@ -151,7 +151,7 @@ static async login(userData) {
     const token = generateUserToken({
       id: user._id,
       email: user.email,
-      Verified: user.Verified,
+      verified: user.verified,
       banned: user.banned,
     });
 

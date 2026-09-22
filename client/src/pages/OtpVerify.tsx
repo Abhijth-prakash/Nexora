@@ -18,12 +18,12 @@ const OtpVerify = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
-  const email = location.state?.email
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const { error } = useAppSelector((state) => state.userData)
-
+  const { error,user } = useAppSelector((state) => state.userData)
+  
+  const email = location.state?.email || user?.email
   const {
     handleSubmit,
     setValue,
@@ -82,42 +82,53 @@ const OtpVerify = () => {
     return () => clearInterval(timer)
   }, [timeLeft])
 
-  const dataHandle = async (data: OtpForm) => {
-    try {
-      if (!email) {
-        throw new Error("Email not found")
-      }
 
-      const verifyData: VerifyOtpRequest = {
-        ...data,
-        email,
-      }
 
-      await dispatch(veirifyingOtp(verifyData)).unwrap()
 
-      toast.success("OTP verified successfully!")
-
-      navigate("/")
-    } catch (error) {
-      console.log(error, "verification failed")
-      toast.error("OTP verification failed. Please try again.")
+const dataHandle = async (data: OtpForm) => {
+  try {
+    if (!email) {
+      toast.error("Email not found. Please try again.")
+      return
     }
-  }
 
-  const sendOTp = async () => {
-    try {
-      await dispatch(resendOtp(email)).unwrap()
-
-      setTimeLeft(180)
-
-      toast.success("New OTP has been sent!")
-
-      console.log("new otp has been send")
-    } catch (error) {
-      console.log("resend otp failed", error)
-      toast.error("Failed to resend OTP. Please try again.")
+    const verifyData: VerifyOtpRequest = {
+      ...data,
+      email,
     }
+
+    await dispatch(veirifyingOtp(verifyData)).unwrap()
+
+    toast.success("OTP verified successfully!")
+
+    navigate("/")
+  } catch (error) {
+    console.log(error, "verification failed")
+    toast.error("OTP verification failed. Please try again.")
   }
+}
+
+
+
+const sendOTp = async () => {
+  try {
+    if (!email) {
+      toast.error("Email not found. Please try again.")
+      return
+    }
+
+    await dispatch(resendOtp(email)).unwrap()
+
+    setTimeLeft(180)
+
+    toast.success("New OTP has been sent!")
+  } catch (error) {
+    console.log("resend otp failed", error)
+    toast.error("Failed to resend OTP. Please try again.")
+  }
+}
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">

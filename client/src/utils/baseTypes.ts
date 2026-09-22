@@ -2,7 +2,7 @@ export type BaseUser = {
   _id: string
   name: string
   email: string
-  Verified: boolean
+  verified: boolean
   createdAt: string
   updatedAt: string,
   googleId: string

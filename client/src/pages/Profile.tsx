@@ -1,8 +1,9 @@
 import { useEffect } from "react"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
-import { logout, UserProfile } from "../redux/features/userSlice"
+import { logout, resendOtp, UserProfile } from "../redux/features/userSlice"
 import Navbar from "../components/Navbar"
 import { Link, useNavigate } from "react-router-dom"
+import { toast } from "react-toastify"
 
 const getInitials = (name?: string) => {
   if (!name) return "?"
@@ -40,42 +41,103 @@ const Profile = () => {
     }
   }
 
+const handleVerification = async () => {
+  if (!user?.email) return
+
+  try {
+    await dispatch(resendOtp(user.email)).unwrap()
+
+    toast.success("OTP has been sent to your mail")
+
+    navigate("/auth/verify")
+  } catch (error) {
+    console.log("failed to send ", error)
+  }
+}
+
   return (
     <div className="min-h-screen bg-[#f6f6f6] text-[#111111]">
 
-      {/* ================= NAVBAR ================= */}
-
       <Navbar />
-
-      {/* ================= PAGE ================= */}
 
       <div className="w-full px-3 py-4 sm:px-4 lg:px-5">
 
-        {/* ================= MAIN LAYOUT ================= */}
-
         <div className="grid min-h-[calc(100vh-105px)] w-full grid-cols-1 gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
 
-          {/* ================================================= */}
           {/* SIDEBAR */}
-          {/* ================================================= */}
 
           <aside className="flex h-full min-h-[calc(100vh-105px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:sticky lg:top-5">
 
-            {/* ================= USER CARD ================= */}
+            {/* USER */}
 
             <div className="border-b border-gray-100 px-6 py-6">
 
               <div className="flex items-center gap-4">
 
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f] text-lg font-bold text-white shadow-sm">
+                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f] text-lg font-bold text-white shadow-sm">
+
                   {getInitials(user?.name)}
+
+                  {user?.verified && (
+                    <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-green-500">
+                      <svg
+                        className="h-3 w-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 12l4 4L19 6"
+                        />
+                      </svg>
+                    </div>
+                  )}
+
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
 
-                  <p className="truncate text-base font-semibold text-gray-900">
-                    {user?.name || "My Account"}
-                  </p>
+                  <div className="flex items-center gap-2">
+
+                    <p className="truncate text-base font-semibold text-gray-900">
+                      {user?.name || "My Account"}
+                    </p>
+
+                  </div>
+
+                  {!user?.verified && (
+                    <Link
+                      to="/veirification"
+                      className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-[#ff5a1f] transition hover:bg-orange-100"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a1f]" />
+                      Verification required
+                    </Link>
+                  )}
+
+                  {user?.verified && (
+                    <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-600">
+                      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-green-500 text-white">
+                        <svg
+                          className="h-2.5 w-2.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 12l4 4L19 6"
+                          />
+                        </svg>
+                      </span>
+                      Verified account
+                    </div>
+                  )}
 
                   <p className="mt-1 truncate text-xs text-gray-400">
                     {user?.email || "Manage your account"}
@@ -87,13 +149,11 @@ const Profile = () => {
 
             </div>
 
-            {/* ================= NAVIGATION ================= */}
+            {/* NAVIGATION */}
 
             <div className="flex-1 p-5">
 
-              {/* ================================================= */}
               {/* MANAGE ACCOUNT */}
-              {/* ================================================= */}
 
               <div className="mb-7">
 
@@ -129,7 +189,7 @@ const Profile = () => {
 
                 </div>
 
-                {/* Address Book */}
+                {/* Address */}
 
                 <Link
                   to="/profile/address"
@@ -203,17 +263,13 @@ const Profile = () => {
 
               </div>
 
-              {/* ================================================= */}
               {/* ORDERS */}
-              {/* ================================================= */}
 
               <div className="mb-7">
 
                 <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
                   Orders
                 </p>
-
-                {/* All Orders */}
 
                 <div className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
 
@@ -247,8 +303,6 @@ const Profile = () => {
 
                 </div>
 
-                {/* Returns */}
-
                 <div className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
 
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
@@ -274,8 +328,6 @@ const Profile = () => {
                   </span>
 
                 </div>
-
-                {/* Cancellations */}
 
                 <div className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
 
@@ -305,17 +357,13 @@ const Profile = () => {
 
               </div>
 
-              {/* ================================================= */}
               {/* SETTINGS */}
-              {/* ================================================= */}
 
               <div>
 
                 <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
                   Settings
                 </p>
-
-                {/* Payment Methods */}
 
                 <div className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
 
@@ -347,8 +395,6 @@ const Profile = () => {
                   </span>
 
                 </div>
-
-                {/* Logout */}
 
                 <button
                   type="button"
@@ -395,15 +441,13 @@ const Profile = () => {
 
           </aside>
 
-          {/* ================================================= */}
           {/* MAIN CONTENT */}
-          {/* ================================================= */}
 
           <main className="min-w-0 w-full rounded-2xl border border-gray-200 bg-white shadow-sm">
 
             <div className="flex h-full min-h-[calc(100vh-105px)] flex-col p-6 sm:p-7 lg:p-9">
 
-              {/* ================= HEADER ================= */}
+              {/* HEADER */}
 
               <div className="flex items-center justify-between border-b border-gray-100 pb-6">
 
@@ -439,7 +483,7 @@ const Profile = () => {
 
               </div>
 
-              {/* ================= ERROR ================= */}
+              {/* ERROR */}
 
               {error && (
                 <div className="mt-5 rounded-xl border border-red-100 bg-red-50 px-5 py-4">
@@ -455,18 +499,38 @@ const Profile = () => {
                 </div>
               )}
 
-              {/* ================= PROFILE CARD ================= */}
+              {/* PROFILE CARD */}
 
               <div className="mt-5 rounded-2xl border border-gray-200 bg-gradient-to-r from-white via-white to-[#fff8f5] p-6">
 
                 <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
 
-                  {/* USER */}
-
                   <div className="flex items-center gap-4">
 
-                    <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-full bg-[#ff5a1f] text-2xl font-bold text-white shadow-md">
+                    <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#ff5a1f] text-2xl font-bold text-white shadow-md">
+
                       {getInitials(user?.name)}
+
+                      {user?.verified && (
+                        <div className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-green-500">
+
+                          <svg
+                            className="h-3.5 w-3.5 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 12l4 4L19 6"
+                            />
+                          </svg>
+
+                        </div>
+                      )}
+
                     </div>
 
                     <div className="min-w-0">
@@ -493,9 +557,95 @@ const Profile = () => {
 
                   {/* ACCOUNT STATUS */}
 
-                  <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-4 shadow-sm ring-1 ring-gray-100">
+                  <div className={`flex items-center gap-3 rounded-xl px-5 py-4 shadow-sm ring-1 ${
+                    user?.verified
+                      ? "bg-green-50 ring-green-100"
+                      : "bg-orange-50 ring-orange-100"
+                  }`}>
 
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                      user?.verified
+                        ? "bg-green-100 text-green-600"
+                        : "bg-orange-100 text-[#ff5a1f]"
+                    }`}>
+
+                      {user?.verified ? (
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                          />
+
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M8 12l2.5 2.5L16 9"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                          />
+
+                          <path
+                            strokeLinecap="round"
+                            d="M12 8v4M12 16h.01"
+                          />
+                        </svg>
+                      )}
+
+                    </div>
+
+                    <div>
+
+                      <p className="text-xs text-gray-400">
+                        Account status
+                      </p>
+
+                      <p className={`mt-0.5 text-sm font-semibold ${
+                        user?.verified
+                          ? "text-green-700"
+                          : "text-[#ff5a1f]"
+                      }`}>
+                        {user?.verified ? "Verified" : "Verification required"}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* VERIFICATION BANNER */}
+
+              {!user?.verified && (
+<button
+  type="button"
+  onClick={()=>handleVerification()}
+  className="group mt-5 flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-[#fff7f2] to-white px-5 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:shadow-md active:translate-y-0"
+>
+
+                  <div className="flex items-center gap-4">
+
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#ff5a1f] text-white shadow-sm">
 
                       <svg
                         className="h-5 w-5"
@@ -507,13 +657,13 @@ const Profile = () => {
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M9 12l2 2 4-4"
+                          d="M12 3l8 4v5c0 4.5-3.1 7.8-8 9-4.9-1.2-8-4.5-8-9V7l8-4z"
                         />
 
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="9"
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 12l2 2 4-4"
                         />
 
                       </svg>
@@ -522,23 +672,40 @@ const Profile = () => {
 
                     <div>
 
-                      <p className="text-xs text-gray-400">
-                        Account status
+                      <p className="text-sm font-bold text-gray-900">
+                        Verify your account
                       </p>
 
-                      <p className="mt-0.5 text-sm font-semibold text-gray-900">
-                        Active
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        Complete verification to secure your account
                       </p>
 
                     </div>
 
                   </div>
 
-                </div>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-gray-400 shadow-sm transition group-hover:translate-x-1 group-hover:text-[#ff5a1f]">
 
-              </div>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 12h14M13 6l6 6-6 6"
+                      />
+                    </svg>
 
-              {/* ================= DETAILS ================= */}
+                  </div>
+
+                </button>
+              )}
+
+              {/* DETAILS */}
 
               <div className="mt-6">
 
@@ -663,7 +830,7 @@ const Profile = () => {
 
               </div>
 
-              {/* ================= ACTIONS ================= */}
+              {/* ACTIONS */}
 
               {!google && (
                 <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -814,4 +981,3 @@ const Profile = () => {
 }
 
 export default Profile
-
