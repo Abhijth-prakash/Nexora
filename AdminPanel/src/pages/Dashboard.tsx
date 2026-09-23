@@ -126,7 +126,7 @@ const Dashboard = () => {
                 {/* USERS */}
 
                 <Link
-                  to="/admin/users"
+                  to="/admin/users/view"
                   className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
                 >
 

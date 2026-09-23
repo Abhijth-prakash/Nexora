@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { BaseAdmin } from "../../utils/apiTypes";
+import type { BaseAdmin } from "../../utils/BaseType";
 import type { Email, LoginData,  Resetpassdata } from "../../utils/validation";
 import axios from "axios";
 import { Admin_Api } from "../../utils/api";
@@ -8,13 +8,15 @@ import { Admin_Api } from "../../utils/api";
 type AdminState = {
   admin: BaseAdmin | null
   loading: boolean,
+  Authenticated : boolean,
   error: string | null
 }
 
 const initialState: AdminState = {
   admin: null,
   loading: false,
-  error: null
+  error: null,
+  Authenticated:false
 }
 
 //admin login
@@ -116,6 +118,7 @@ const adminSLice = createSlice({
         .addCase(login.fulfilled,(state,action)=>{
             state.loading = false
             state.admin = action.payload
+            state.Authenticated = true
             state.error = null
         })
         .addCase(login.rejected,(state,action)=>{

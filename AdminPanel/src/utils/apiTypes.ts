@@ -1,10 +1,4 @@
-export type BaseAdmin={
-  _id: string
-  name: string
-  email: string
-  createdAt: string
-  updatedAt: string
-}
+import type { BaseAdmin, BaseUser } from "./BaseType"
 
 
 export type ApiResponse<T> = {
@@ -20,3 +14,15 @@ export type LoginResponse = {
 
 export type Forgetpass = null
 export type Resetpass = null
+
+
+export type GetUsersResponse = {
+  data:{
+  users:[]
+  totalUsers: number,
+  totalPages: number,
+  currentPage: number,
+  limit: number
+  } 
+  users: BaseUser[]
+}

@@ -35,8 +35,19 @@ const generateAdminToken = (payload) => {
   }
 };
 
+
+const verifyAdminToken = (token) => {
+  try {
+    return jwt.verify(token, config.JWT.ADMIN_SECRET);
+  } catch (error) {
+    logger.error("Admin Token verification error:", error);
+    throw error;
+  }
+};
+
 module.exports = {
     generateUserToken,
     verifyUserToken,
-    generateAdminToken
+    generateAdminToken,
+    verifyAdminToken
 }
