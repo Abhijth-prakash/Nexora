@@ -57,7 +57,7 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
     banned:{
-      type:String,
+      type:Boolean,
       default:false
     }
   },
