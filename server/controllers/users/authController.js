@@ -119,7 +119,7 @@ static googleCallback = BaseController.asyncHandler(
       banned: user.banned,
     });
 
-    res.cookie("token", token, {
+    res.cookie("userToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -164,7 +164,7 @@ static userDetails = BaseController.asyncHandler(
 
 static logout = BaseController.asyncHandler(
   async (req, res) => {
-    res.clearCookie("token", {
+    res.clearCookie("userToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

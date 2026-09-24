@@ -14,7 +14,7 @@ class AdminController extends BaseController{
            const validatedData = BaseController.validateRequest(loginValidate,req.body)
            const result = await Adminservice.login(validatedData)
 
-    res.cookie("token", result.token, {
+    res.cookie("adminToken", result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -84,7 +84,7 @@ static Resetpassword = BaseController.asyncHandler(
 
 static Logout = BaseController.asyncHandler(
   async(req,res)=>{
-     res.clearCookie("token", {
+     res.clearCookie("adminToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
