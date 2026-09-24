@@ -27,6 +27,7 @@ static async getUsers(id, page) {
         const skip = (currentPage - 1) * limit
 
         const totalUsers = await Users.countDocuments()
+        const totalPages = Math.ceil(totalUsers/limit)
 
         const users = await Users
             .find()
@@ -38,6 +39,7 @@ static async getUsers(id, page) {
         return {
             totalUsers,
             currentPage,
+            totalPages,
             users
         }
 
