@@ -3,7 +3,8 @@ const router = express.Router()
 const AdminController = require('../../controllers/Admin/adminController')
 
 
-router.post('/login',AdminController.login)
+router.post('/login',AdminController.Login)
+router.get('/logout',AdminController.Logout)
 router.post('/forgetpass',AdminController.Forgetpassword)
 router.post('/resetpass',AdminController.Resetpassword)
 

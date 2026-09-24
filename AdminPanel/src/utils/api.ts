@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { Email, LoginData,  Resetpassdata } from "./validation";
-import type { ApiResponse,BlockUserresponse,Forgetpass,GetUsersResponse,LoginResponse, Resetpass, UnBlockUserresponse } from "./apiTypes";
+import type { ApiResponse,BlockUserresponse,Forgetpass,GetUsersResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse } from "./apiTypes";
 
 
 const ClientApi = axios.create({
@@ -17,6 +17,10 @@ const ClientApi = axios.create({
 export const Admin_Api = {
   login: async (AdminData:LoginData ): Promise<ApiResponse<LoginResponse>> => {
     const response = await ClientApi.post<ApiResponse<LoginResponse>>("/admin/login", AdminData)
+    return response.data
+  },
+  logout: async ( ): Promise<ApiResponse<LogoutResponse>> => {
+    const response = await ClientApi.get<ApiResponse<LogoutResponse>>("/admin/logout")
     return response.data
   },
   Forgetpass: async (Email:Email ): Promise<ApiResponse<Forgetpass>> => {

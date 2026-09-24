@@ -8,6 +8,8 @@ const config = require('../../config/config')
 router.post("/register", authController.register);
 router.post("/verify", authController.Verify);
 router.get("/google",passport.authenticate("google", {scope: ["profile", "email"],}),);
+
+
 router.get("/google/callback", (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user, info) => {
     if (err) {
@@ -26,6 +28,8 @@ router.get("/google/callback", (req, res, next) => {
     next();
   })(req, res, next);
 }, authController.googleCallback);
+
+
 router.post("/login",authController.login)
 router.get("/logout",authController.logout)
 router.post("/forgetpassword",authController.forgetpassword)

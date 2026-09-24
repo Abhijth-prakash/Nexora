@@ -8,7 +8,7 @@ const BaseController = require('../baseController');
 class AdminController extends BaseController{
 
   //login
-    static login = BaseController.asyncHandler(
+    static Login = BaseController.asyncHandler(
         
         async(req,res)=>{
            const validatedData = BaseController.validateRequest(loginValidate,req.body)
@@ -76,6 +76,30 @@ static Resetpassword = BaseController.asyncHandler(
       200
     );
 
+  }
+)
+
+//logout
+
+
+static Logout = BaseController.asyncHandler(
+  async(req,res)=>{
+     res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    BaseController.logAction(
+      "admin logout successfully"
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "admin logout successfully",
+      null,
+      200
+    );
   }
 )
 

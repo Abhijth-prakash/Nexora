@@ -1,6 +1,22 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useAppDispatch } from "../redux/hooks"
+import { Logout } from "../redux/features/adminSlice"
+
+
 
 const Dashboard = () => {
+  const dispatch = useAppDispatch()
+const navigate = useNavigate()
+  const handleLogout = async() => {
+    try{
+      console.log('button clicked')
+      await dispatch(Logout()).unwrap()
+      navigate('/')
+    }catch(error){
+      console.log(error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#f6f6f6] text-[#111111]">
 
@@ -354,6 +370,50 @@ const Dashboard = () => {
                 </p>
 
               </div>
+
+
+              {/* LOGOUT */}
+
+              <button
+                type="button"
+                onClick={()=>handleLogout()}
+                className="mt-3 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-500 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+              >
+
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50">
+
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"
+                    />
+
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16 17l5-5-5-5"
+                    />
+
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 12H9"
+                    />
+
+                  </svg>
+
+                </div>
+
+                <span>Logout</span>
+
+              </button>
 
             </div>
 

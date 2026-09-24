@@ -101,6 +101,32 @@ export const resetPass = createAsyncThunk(
 )
 
 
+//logout admin
+
+export const Logout = createAsyncThunk(
+    'admin/logout',
+    async(_,{rejectWithValue})=>{
+        try{
+            const response = await Admin_Api.logout()
+            return response.data
+
+        }catch(error){
+             if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "logout failed. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "logout failed. Please try again."
+      );
+
+        }
+    }
+)
+
+
 
 const adminSLice = createSlice({
     name:"adminslice",
@@ -150,6 +176,20 @@ const adminSLice = createSlice({
             state.error = null
         })
         .addCase(resetPass.rejected,(state,action)=>{
+            state.loading= false
+            state.error = action.payload as string
+        })
+
+        //logout
+        .addCase(Logout.pending,(state)=>{
+            state.loading = true
+            state.error = null
+        })
+        .addCase(Logout.fulfilled,(state)=>{
+            state.loading = false
+            state.error = null
+        })
+        .addCase(Logout.rejected,(state,action)=>{
             state.loading= false
             state.error = action.payload as string
         })

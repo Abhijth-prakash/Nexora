@@ -41,20 +41,9 @@ const ViewUsers = () => {
 
   return (
     <div className="flex min-h-full w-full flex-col bg-[#f4f4f5] p-4 sm:p-6 lg:p-8">
-      {/* Hero header */}
-      <input type="text" placeholder="search" value={search} onChange={(e)=> setSearch(e.target.value)} />
-
-        <select
-        value={filter}
-        onChange={(e)=> setFilter(e.target.value)}
-        className="bg-[#0e0e10] border border-white/10 text-white/60 rounded-xl px-3 py-1.5 text-xs outline-none hover:border-[#c8f04b]/40 hover:text-white transition-all cursor-pointer"
-    >
-        <option value="" className="bg-[#0e0e10] text-white/70">Relevance</option>
-        <option value="verified" className="bg-[#0e0e10] text-white/70"> Verified</option>
-        <option value="active" className="bg-[#0e0e10] text-white/70">active </option>
-        <option value="banned" className="bg-[#0e0e10] text-white/70">Banned </option>
-    </select>
       {showBlockuser && <BlockUsers onClose={onclose} page={page} userId={id} banned={banned} search={search} filter={filter}></BlockUsers>}
+
+      {/* Hero header */}
       <div className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#ff5a1f] via-[#ff6f2f] to-[#ff9a4d] px-6 py-7 shadow-lg shadow-orange-200/60 sm:px-10 sm:py-9">
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -bottom-24 right-40 h-52 w-52 rounded-full bg-white/10" />
@@ -99,6 +88,57 @@ const ViewUsers = () => {
               )}
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Toolbar: search + filter */}
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Search */}
+        <div className="relative flex-1">
+          <svg
+            viewBox="0 0 24 24"
+            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search by name or email"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 hover:border-orange-200 focus:border-[#ff5a1f] focus:ring-2 focus:ring-orange-100"
+          />
+        </div>
+
+        {/* Filter */}
+        <div className="relative sm:w-56">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-10 text-sm font-medium text-gray-700 shadow-sm outline-none transition hover:border-orange-200 focus:border-[#ff5a1f] focus:ring-2 focus:ring-orange-100"
+          >
+            <option value="">Relevance</option>
+            <option value="verified">Verified</option>
+            <option value="active">Active</option>
+            <option value="banned">Banned</option>
+          </select>
+          <svg
+            viewBox="0 0 24 24"
+            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
         </div>
       </div>
 

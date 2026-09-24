@@ -12,6 +12,8 @@ export type LoginResponse = {
     admin:BaseAdmin
 }
 
+export type LogoutResponse = null
+
 export type Forgetpass = null
 export type Resetpass = null
 
