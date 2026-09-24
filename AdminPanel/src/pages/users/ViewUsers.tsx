@@ -10,6 +10,7 @@ const ViewUsers = () => {
     (state) => state.UsersData
   )
   const [showBlockuser,setShowBlockuser] = useState(false)
+  const [banned,setBanned] = useState(false)
   const [id,setId] = useState("")
   useEffect(() => {
     dispatch(getUser(page))
@@ -21,6 +22,8 @@ const ViewUsers = () => {
 
   const onclose = ()=>{
     setShowBlockuser(false)
+    setId("")
+    setBanned(false)
   }
 
 
@@ -28,7 +31,7 @@ const ViewUsers = () => {
   return (
     <div className="flex min-h-full w-full flex-col bg-[#f4f4f5] p-4 sm:p-6 lg:p-8">
       {/* Hero header */}
-      {showBlockuser && <BlockUsers onClose={onclose} page={page} userId={id}></BlockUsers>}
+      {showBlockuser && <BlockUsers onClose={onclose} page={page} userId={id} banned={banned}></BlockUsers>}
       <div className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#ff5a1f] via-[#ff6f2f] to-[#ff9a4d] px-6 py-7 shadow-lg shadow-orange-200/60 sm:px-10 sm:py-9">
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -bottom-24 right-40 h-52 w-52 rounded-full bg-white/10" />
@@ -231,7 +234,11 @@ const ViewUsers = () => {
                     <button
                       type="button" onClick={()=> {
                           setId(item._id)
+                           if(item.banned){
+                            setBanned(true)
+                        }
                         setShowBlockuser(true)
+                       
                       }
                       }
                       className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${

@@ -28,3 +28,4 @@ export type GetUsersResponse = {
 }
 
 export type BlockUserresponse = null
+export type UnBlockUserresponse = null

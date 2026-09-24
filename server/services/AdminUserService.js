@@ -54,7 +54,7 @@ static async getUsers(id, page) {
 
 //block users
 
-static async blockUser(id, userId) {
+static async unblockUser(id, userId) {
   try {
     const admin = await Admin.findById(id)
 
@@ -68,19 +68,19 @@ static async blockUser(id, userId) {
       throw new NotFoundError("User not found")
     }
 
-    if (user.banned) {
+    if (!user.banned) {
       return true
     }
 
-    user.banned = true
+    user.banned = false
     await user.save()
 
-    logger.info(`Blocked user ${user.name} by admin ${admin.email}`)
+    logger.info(`unBlocked user ${user.name} by admin ${admin.email}`)
 
     return {email:admin.email,userName:user.name}
 
   } catch (error) {
-    logger.error("Failed to block user", error)
+    logger.error("Failed to unblock user", error)
     throw error
   }
 }

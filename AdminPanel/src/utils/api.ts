@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { Email, LoginData,  Resetpassdata } from "./validation";
-import type { ApiResponse,BlockUserresponse,Forgetpass,GetUsersResponse,LoginResponse, Resetpass } from "./apiTypes";
+import type { ApiResponse,BlockUserresponse,Forgetpass,GetUsersResponse,LoginResponse, Resetpass, UnBlockUserresponse } from "./apiTypes";
 
 
 const ClientApi = axios.create({
@@ -38,8 +38,13 @@ export const user_APi = {
   const response = await ClientApi.post<ApiResponse<BlockUserresponse>>("/admin/users/block",{userId})
   return response.data
   },
+  UnblockUser: async (userId: string): Promise<ApiResponse<UnBlockUserresponse>> => {
+  const response = await ClientApi.post<ApiResponse<UnBlockUserresponse>>("/admin/users/unblock",{userId})
+  return response.data
+  },
 
 }
+
 
 
 

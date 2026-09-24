@@ -44,6 +44,26 @@ static blockUser = BaseController.asyncHandler(
     )
   }
 )
+
+//unblock
+
+static unblockUser = BaseController.asyncHandler(
+    async (req,res)=>{
+        const id = req.AdminId
+        const {userId} = req.body
+
+         const result = await AdminUserService.unblockUser(id, userId)
+
+     BaseController.logAction(`User ${result.userName} unblocked successfully by ${result.email}`);
+
+    BaseController.sendSuccessResponse(
+      res,
+      `User ${result.userName} unblocked successfully by ${result.email}`,
+      null,
+      200
+    )
+    }
+)
 }
 
 

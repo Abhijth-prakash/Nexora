@@ -64,12 +64,37 @@ export const blockuser = createAsyncThunk(
         if (axios.isAxiosError(error)) {
         return rejectWithValue(
           error.response?.data?.error?.message ||
-          "Failed to get users. Please try again."
+          "Failed to block user. Please try again."
         )
       }
 
       return rejectWithValue(
-        "Failed to get users. Please try again."
+        "Failed to block user. Please try again."
+      )
+    }
+  }
+)
+
+
+//unblock user
+
+export const unblockUser = createAsyncThunk(
+  'admin/unblockuser',
+  async(userId:string,{rejectWithValue})=>{
+    try{
+      const response = await user_APi.UnblockUser(userId)
+      return response.data
+    }catch(error){
+
+        if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to block user. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to block user. Please try again."
       )
     }
   }
@@ -137,6 +162,7 @@ const UserSlice = createSlice({
 
       })
 
+      //block user
       .addCase(blockuser.pending,(state)=>{
         state.loading = true
       })
@@ -144,6 +170,18 @@ const UserSlice = createSlice({
         state.loading = false
       })
       .addCase(blockuser.rejected,(state,action)=>{
+        state.loading = false
+        state.error = action.payload as string
+      })
+
+      //unblock user
+      .addCase(unblockUser.pending,(state)=>{
+        state.loading = true
+      })
+      .addCase(unblockUser.fulfilled,(state)=>{
+        state.loading = false
+      })
+      .addCase(unblockUser.rejected,(state,action)=>{
         state.loading = false
         state.error = action.payload as string
       })

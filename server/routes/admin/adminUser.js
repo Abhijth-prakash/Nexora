@@ -7,5 +7,6 @@ router.use(authenticateAdmin)
 
 router.get('/users/view',AdminUserController.getUsers)
 router.post('/users/block',AdminUserController.blockUser)
+router.post('/users/unblock',AdminUserController.unblockUser)
 
 module.exports = router
