@@ -11,8 +11,9 @@ static getUsers = BaseController.asyncHandler(
 
         const id = req.AdminId
         const page = req.query.page
+        const search = req.query.search
 
-        const result = await AdminUserService.getUsers(id, page)
+        const result = await AdminUserService.getUsers(id, page,search)
 
         BaseController.sendSuccessResponse(
             res,

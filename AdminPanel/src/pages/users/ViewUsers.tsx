@@ -3,6 +3,7 @@ import { addPage,  getUser, minusPage } from "../../redux/features/userSlice"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import BlockUsers from "./BlockUsers"
 
+
 const ViewUsers = () => {
   const dispatch = useAppDispatch()
 
@@ -11,10 +12,19 @@ const ViewUsers = () => {
   )
   const [showBlockuser,setShowBlockuser] = useState(false)
   const [banned,setBanned] = useState(false)
+  const [search,setSearch] = useState("")
   const [id,setId] = useState("")
+
+
   useEffect(() => {
-    dispatch(getUser(page))
-  }, [dispatch, page])
+     const timer = setTimeout(() => {
+            dispatch(getUser({ page, search }))
+        }, 300)
+
+        return () => clearTimeout(timer)
+  }, [dispatch, page,search])
+
+   
 
   const columns = "md:grid-cols-[3fr_2.5fr_1.3fr_2.4fr]"
 
@@ -31,7 +41,8 @@ const ViewUsers = () => {
   return (
     <div className="flex min-h-full w-full flex-col bg-[#f4f4f5] p-4 sm:p-6 lg:p-8">
       {/* Hero header */}
-      {showBlockuser && <BlockUsers onClose={onclose} page={page} userId={id} banned={banned}></BlockUsers>}
+      <input type="text" placeholder="search" value={search} onChange={(e)=> setSearch(e.target.value)} />
+      {showBlockuser && <BlockUsers onClose={onclose} page={page} userId={id} banned={banned} search={search}></BlockUsers>}
       <div className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#ff5a1f] via-[#ff6f2f] to-[#ff9a4d] px-6 py-7 shadow-lg shadow-orange-200/60 sm:px-10 sm:py-9">
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -bottom-24 right-40 h-52 w-52 rounded-full bg-white/10" />
@@ -123,7 +134,10 @@ const ViewUsers = () => {
         {/* Users */}
         {!loading && user.length > 0 && (
           <div className="flex flex-col gap-3">
-            {user.map((item) => (
+            {user
+            .filter(item=> item.name.toLowerCase().includes((search).toLowerCase()))
+            .filter(item=> item.email.toLowerCase().includes((search).toLowerCase()))
+            .map((item) => (
               <div
                 key={item._id}
                 className={`group relative grid grid-cols-1 gap-4 overflow-hidden rounded-2xl border bg-white px-5 py-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:px-8 md:items-center md:gap-6 ${columns} ${

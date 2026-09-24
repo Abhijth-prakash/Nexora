@@ -30,8 +30,8 @@ export const Admin_Api = {
 }
 
 export const user_APi = {
-  getusers: async (page: number): Promise<ApiResponse<GetUsersResponse>> => {
-  const response = await ClientApi.get<ApiResponse<GetUsersResponse>>("/admin/users/view",{params: {page}})
+  getusers: async (page:number,search:string): Promise<ApiResponse<GetUsersResponse>> => {
+  const response = await ClientApi.get<ApiResponse<GetUsersResponse>>("/admin/users/view",{params: {page,search}})
   return response.data
   },
   blockUser: async (userId: string): Promise<ApiResponse<BlockUserresponse>> => {
