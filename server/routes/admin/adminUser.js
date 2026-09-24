@@ -6,5 +6,6 @@ const AdminUserController = require('../../controllers/Admin/adminUserController
 router.use(authenticateAdmin)
 
 router.get('/users/view',AdminUserController.getUsers)
+router.post('/users/block',AdminUserController.blockUser)
 
 module.exports = router

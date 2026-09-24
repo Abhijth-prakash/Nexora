@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { Email, LoginData,  Resetpassdata } from "./validation";
-import type { ApiResponse,Forgetpass,GetUsersResponse,LoginResponse, Resetpass } from "./apiTypes";
+import type { ApiResponse,BlockUserresponse,Forgetpass,GetUsersResponse,LoginResponse, Resetpass } from "./apiTypes";
 
 
 const ClientApi = axios.create({
@@ -32,9 +32,13 @@ export const Admin_Api = {
 export const user_APi = {
   getusers: async (page: number): Promise<ApiResponse<GetUsersResponse>> => {
   const response = await ClientApi.get<ApiResponse<GetUsersResponse>>("/admin/users/view",{params: {page}})
-  console.log('this is from apis',response.data)
   return response.data
-  }
+  },
+  blockUser: async (userId: string): Promise<ApiResponse<BlockUserresponse>> => {
+  const response = await ClientApi.post<ApiResponse<BlockUserresponse>>("/admin/users/block",{userId})
+  return response.data
+  },
+
 }
 
 

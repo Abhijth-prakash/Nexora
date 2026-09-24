@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { addPage, getUser, minusPage } from "../../redux/features/userSlice"
+import { addPage, blockuser, getUser, minusPage } from "../../redux/features/userSlice"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 
 const ViewUsers = () => {
@@ -14,6 +14,15 @@ const ViewUsers = () => {
   }, [dispatch, page])
 
   const columns = "md:grid-cols-[3fr_2.5fr_1.3fr_2.4fr]"
+
+  const blockHandle = async (userId:string)=>{
+        try{
+          await dispatch(blockuser(userId)).unwrap()
+          dispatch(getUser(page))
+        }catch(error){
+          console.log('failed to block user',error)
+        }
+  }
 
   return (
     <div className="flex min-h-full w-full flex-col bg-[#f4f4f5] p-4 sm:p-6 lg:p-8">
@@ -218,7 +227,7 @@ const ViewUsers = () => {
 
                     {/* UI only: add your onClick handler here */}
                     <button
-                      type="button"
+                      type="button" onClick={()=> blockHandle(item._id)}
                       className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
                         item.banned
                           ? "border-gray-200 text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-400"

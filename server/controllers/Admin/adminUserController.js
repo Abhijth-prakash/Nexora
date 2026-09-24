@@ -4,6 +4,8 @@ const BaseController = require("../baseController");
 
 class AdminUserController extends BaseController{
 
+
+//get all users
 static getUsers = BaseController.asyncHandler(
     async (req, res) => {
 
@@ -21,6 +23,26 @@ static getUsers = BaseController.asyncHandler(
             200
         )
     }
+)
+
+//block user
+
+static blockUser = BaseController.asyncHandler(
+  async (req, res) => {
+    const id = req.AdminId
+    const { userId } = req.body
+
+    const result = await AdminUserService.blockUser(id, userId)
+
+     BaseController.logAction(`User ${result.userName} blocked successfully by ${result.email}`);
+
+    BaseController.sendSuccessResponse(
+      res,
+      `User ${result.userName} blocked successfully by ${result.email}`,
+      null,
+      200
+    )
+  }
 )
 }
 

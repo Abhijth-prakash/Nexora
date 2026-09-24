@@ -1029,7 +1029,7 @@ const Dashboard = () => {
 
 
                   <Link
-                    to="/admin/users"
+                    to="/admin/users/view"
                     className="group flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-4 transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
                   >
 

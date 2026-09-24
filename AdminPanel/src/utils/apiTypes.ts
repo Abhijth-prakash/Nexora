@@ -26,3 +26,5 @@ export type GetUsersResponse = {
   } 
   users: BaseUser[]
 }
+
+export type BlockUserresponse = null
