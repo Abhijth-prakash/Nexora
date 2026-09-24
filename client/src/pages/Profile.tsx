@@ -1,9 +1,11 @@
-import { useEffect } from "react"
+
+import { useEffect, useState } from "react"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { logout, resendOtp, UserProfile } from "../redux/features/userSlice"
 import Navbar from "../components/Navbar"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
+
 
 const getInitials = (name?: string) => {
   if (!name) return "?"
@@ -18,13 +20,29 @@ const getInitials = (name?: string) => {
   return initials.toUpperCase()
 }
 
+
 const Profile = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [isSendingOtp, setIsSendingOtp] = useState(false)
+  const [time, setTime] = useState(0)
 
   useEffect(() => {
     dispatch(UserProfile())
   }, [dispatch])
+
+
+  // Timer
+  useEffect(() => {
+    if (time > 0) {
+      const timer = setTimeout(() => {
+        setTime(0)
+      }, time)
+
+      return () => clearTimeout(timer)
+    }
+  }, [time])
+
 
   const { user, error, google } = useAppSelector(
     (state) => state.userData
@@ -32,28 +50,38 @@ const Profile = () => {
 
   const isLoading = !user && !error
 
+
   const logoutHandle = async () => {
     try {
       await dispatch(logout()).unwrap()
+      setTime(10000)
       navigate("/auth/login")
     } catch (error) {
       console.log("logout failed", error)
     }
   }
 
-  const handleVerification = async () => {
-    if (!user?.email) return
 
-    try {
-      await dispatch(resendOtp(user.email)).unwrap()
+const handleVerification = async () => {
+  if (!user?.email || isSendingOtp) return
 
-      toast.success("OTP has been sent to your mail")
+  try {
+    setIsSendingOtp(true)
 
-      navigate("/auth/verify")
-    } catch (error) {
-      console.log("failed to send ", error)
-    }
+    await dispatch(resendOtp(user.email)).unwrap()
+
+    toast.success("OTP has been sent to your mail")
+
+    setTime(100000)
+
+    navigate("/auth/verify")
+  } catch (error) {
+    console.log("failed to send ", error)
+  } finally {
+    setIsSendingOtp(false)
   }
+}
+
 
   return (
     <div className="min-h-screen bg-[#f6f6f6] text-[#111111]">
@@ -155,6 +183,7 @@ const Profile = () => {
 
             </div>
 
+
             {/* NAVIGATION */}
 
             <div className="flex-1 p-5">
@@ -166,6 +195,7 @@ const Profile = () => {
                 <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
                   Manage Account
                 </p>
+
 
                 {/* Profile */}
 
@@ -195,11 +225,22 @@ const Profile = () => {
 
                 </div>
 
-                {/* Address */}
+
+                {/* Address (disabled until the account is verified) */}
 
                 <Link
                   to="/profile/address"
-                  className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+                  aria-disabled={!user?.verified}
+                  tabIndex={user?.verified ? undefined : -1}
+                  title={user?.verified ? undefined : "Verify your account to manage addresses"}
+                  onClick={(e) => {
+                    if (!user?.verified) e.preventDefault()
+                  }}
+                  className={`mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
+                    user?.verified
+                      ? "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                      : "cursor-not-allowed text-gray-400 opacity-50"
+                  }`}
                 >
 
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
@@ -232,6 +273,7 @@ const Profile = () => {
                   </span>
 
                 </Link>
+
 
                 {/* Wallet */}
 
@@ -268,6 +310,7 @@ const Profile = () => {
                 </div>
 
               </div>
+
 
               {/* ORDERS */}
 
@@ -363,6 +406,7 @@ const Profile = () => {
 
               </div>
 
+
               {/* SETTINGS */}
 
               <div>
@@ -447,6 +491,7 @@ const Profile = () => {
 
           </aside>
 
+
           {/* MAIN CONTENT */}
 
           <main className="min-w-0 w-full rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -481,13 +526,14 @@ const Profile = () => {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0"
+                      d="M15.75 6a3.75 3.75 0 11-7.5 0z"
                     />
                   </svg>
 
                 </div>
 
               </div>
+
 
               {/* ERROR */}
 
@@ -504,6 +550,7 @@ const Profile = () => {
 
                 </div>
               )}
+
 
               {/* PROFILE CARD */}
 
@@ -560,6 +607,7 @@ const Profile = () => {
                     </div>
 
                   </div>
+
 
                   {/* ACCOUNT STATUS */}
 
@@ -648,12 +696,14 @@ const Profile = () => {
 
               </div>
 
+
               {/* VERIFICATION BANNER */}
 
               {!user?.verified && (
                 <button
-                  type="button"
-                  onClick={() => handleVerification()}
+  type="button"
+  disabled={time > 0 || isSendingOtp}
+  onClick={handleVerification}
                   className="group mt-5 flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-[#fff7f2] to-white px-5 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#ff5a1f]/40 hover:shadow-md active:translate-y-0"
                 >
 
@@ -719,6 +769,7 @@ const Profile = () => {
                 </button>
               )}
 
+
               {/* DETAILS */}
 
               <div className="mt-6">
@@ -734,6 +785,7 @@ const Profile = () => {
                   </p>
 
                 </div>
+
 
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 
@@ -784,6 +836,7 @@ const Profile = () => {
                     </div>
 
                   </div>
+
 
                   {/* EMAIL */}
 
@@ -843,6 +896,7 @@ const Profile = () => {
                 </div>
 
               </div>
+
 
               {/* ACTIONS */}
 
@@ -912,6 +966,7 @@ const Profile = () => {
                     </svg>
 
                   </Link>
+
 
                   {/* SECURITY */}
 
@@ -997,3 +1052,6 @@ const Profile = () => {
 }
 
 export default Profile
+
+
+
