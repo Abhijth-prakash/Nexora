@@ -146,6 +146,10 @@ static async login(userData) {
       throw new AuthenticationError("Invalid email or password");
     }
 
+    if(user.banned){
+      throw new AuthenticationError('your account is banned ')
+    }
+
     logger.info(`${user.name} logged in successfully, ${user.email}`);
 
     const token = generateUserToken({

@@ -21,6 +21,13 @@ passport.use(
         });
 
         if (user) {
+          // Check if user is banned
+          if (user.banned) {
+            return done(null, false, {
+              message: "Your account has been banned",
+            });
+          }
+
           return done(null, user);
         }
 

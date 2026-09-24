@@ -27,10 +27,10 @@ const initialState: UserState = {
 export const getUser = createAsyncThunk(
   "users/getUsers",
 
-  async ({page,search}:{page:number,search:string}, { rejectWithValue }) => {
+  async ({page,search,filter}:{page:number,search:string,filter:string}, { rejectWithValue }) => {
     try {
 
-      const response = await user_APi.getusers(page,search)
+      const response = await user_APi.getusers(page,search,filter)
       return response.data
 
     } catch (error) {

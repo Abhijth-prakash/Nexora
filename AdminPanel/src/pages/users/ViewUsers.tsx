@@ -14,15 +14,16 @@ const ViewUsers = () => {
   const [banned,setBanned] = useState(false)
   const [search,setSearch] = useState("")
   const [id,setId] = useState("")
+  const [filter,setFilter] =useState("")
 
 
   useEffect(() => {
      const timer = setTimeout(() => {
-            dispatch(getUser({ page, search }))
+            dispatch(getUser({ page, search ,filter}))
         }, 300)
 
         return () => clearTimeout(timer)
-  }, [dispatch, page,search])
+  }, [dispatch, page,search,filter])
 
    
 
@@ -42,7 +43,18 @@ const ViewUsers = () => {
     <div className="flex min-h-full w-full flex-col bg-[#f4f4f5] p-4 sm:p-6 lg:p-8">
       {/* Hero header */}
       <input type="text" placeholder="search" value={search} onChange={(e)=> setSearch(e.target.value)} />
-      {showBlockuser && <BlockUsers onClose={onclose} page={page} userId={id} banned={banned} search={search}></BlockUsers>}
+
+        <select
+        value={filter}
+        onChange={(e)=> setFilter(e.target.value)}
+        className="bg-[#0e0e10] border border-white/10 text-white/60 rounded-xl px-3 py-1.5 text-xs outline-none hover:border-[#c8f04b]/40 hover:text-white transition-all cursor-pointer"
+    >
+        <option value="" className="bg-[#0e0e10] text-white/70">Relevance</option>
+        <option value="verified" className="bg-[#0e0e10] text-white/70"> Verified</option>
+        <option value="active" className="bg-[#0e0e10] text-white/70">active </option>
+        <option value="banned" className="bg-[#0e0e10] text-white/70">Banned </option>
+    </select>
+      {showBlockuser && <BlockUsers onClose={onclose} page={page} userId={id} banned={banned} search={search} filter={filter}></BlockUsers>}
       <div className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#ff5a1f] via-[#ff6f2f] to-[#ff9a4d] px-6 py-7 shadow-lg shadow-orange-200/60 sm:px-10 sm:py-9">
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -bottom-24 right-40 h-52 w-52 rounded-full bg-white/10" />

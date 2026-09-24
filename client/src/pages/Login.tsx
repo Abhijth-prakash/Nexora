@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { LoginSchema } from "../utils/Validation"
 import type { LoginData } from "../utils/Validation"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link, useSearchParams } from "react-router-dom"
 import { useAppDispatch } from "../redux/hooks"
 import { Loginuser } from "../redux/features/userSlice"
 import { toast } from "react-toastify"
@@ -18,6 +18,17 @@ const Login = () => {
   const dispatch = useAppDispatch()
 
   const [showPassword, setShowPassword] = useState(false)
+
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    const error = searchParams.get("error")
+
+    if (error) {
+      toast.error(error)
+    }
+  }, [searchParams])
+
 
   const datahandle = async (data: LoginData) => {
     try {
@@ -289,3 +300,4 @@ const Login = () => {
 }
 
 export default Login
+

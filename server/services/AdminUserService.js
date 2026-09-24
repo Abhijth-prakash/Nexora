@@ -16,7 +16,7 @@ class AdminUserService {
 
 
 //get all users
-static async getUsers(id, page, search) {
+static async getUsers(id, page, search,filter) {
   try {
     const admin = await Admin.findById(id)
 
@@ -28,20 +28,32 @@ static async getUsers(id, page, search) {
     const currentPage = Number(page) || 1
     const skip = (currentPage - 1) * limit
 
-    const searchQuery = search
-      ? {
-          $or: [
-            { name: { $regex: search, $options: "i" } },
-            { email: { $regex: search, $options: "i" } }
-          ]
-        }
-      : {}
 
-    const totalUsers = await Users.countDocuments(searchQuery)
+    const query = {}
+
+if (search) {
+  query.$or = [
+    { name: { $regex: search, $options: "i" } },
+    { email: { $regex: search, $options: "i" } }
+  ]
+}
+
+if (filter) {
+  if (filter === "verified") {
+    query.verified = true
+  } else if (filter === "active") {
+    query.banned = false
+  } else if (filter === "banned") {
+    query.banned = true
+  }
+}
+    
+
+    const totalUsers = await Users.countDocuments(query)
     const totalPages = Math.ceil(totalUsers / limit)
 
     const users = await Users
-      .find(searchQuery)
+      .find(query)
       .skip(skip)
       .limit(limit)
 
@@ -63,6 +75,41 @@ static async getUsers(id, page, search) {
 
 //block users
 
+
+static async blockUser(id, userId) {
+  try {
+    const admin = await Admin.findById(id)
+
+    if (!admin) {
+      throw new AuthenticationError("Authorization required")
+    }
+
+    const user = await Users.findById(userId)
+
+    if (!user) {
+      throw new NotFoundError("User not found")
+    }
+
+    if (user.banned) {
+      return true
+    }
+
+    user.banned = true
+    await user.save()
+
+    logger.info(`Blocked user ${user.name} by admin ${admin.email}`)
+
+    return {email:admin.email,userName:user.name}
+
+  } catch (error) {
+    logger.error("Failed to block user", error)
+    throw error
+  }
+}
+
+
+
+//unblock user
 static async unblockUser(id, userId) {
   try {
     const admin = await Admin.findById(id)

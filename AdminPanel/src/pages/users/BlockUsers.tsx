@@ -6,10 +6,11 @@ type Props = {
   page: number
   userId: string
   banned: boolean,
-  search:string
+  search:string,
+  filter: string
 }
 
-const BlockUsers = ({ onClose, page, userId, banned,search }: Props) => {
+const BlockUsers = ({ onClose, page, userId, banned,search,filter }: Props) => {
   const dispatch = useAppDispatch()
 
   const blockHandle = async () => {
@@ -19,7 +20,7 @@ const BlockUsers = ({ onClose, page, userId, banned,search }: Props) => {
       } else {
         await dispatch(blockuser(userId)).unwrap()
       }
-     dispatch(getUser({ page, search }))
+     dispatch(getUser({ page, search, filter }))
       onClose()
     } catch (error) {
       console.log("failed to update user", error)
