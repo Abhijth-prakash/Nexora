@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, isRejectedWithValue } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import type { BaseAddress } from "../../utils/baseTypes";
 import { addressApi } from "../../utils/api";
@@ -8,13 +8,16 @@ import type { AddressFormData, Addressid } from "../../utils/Validation";
 type AddressState = {
   address: BaseAddress[] 
   loading: boolean,
-  error: string | null
+  error: string | null,
+  fetched:boolean
 }
 
 const initialState: AddressState = {
   address: [],
   loading: false,
-  error: null
+  error: null,
+  fetched:false
+
 }
 
 
@@ -129,6 +132,7 @@ const addressSlice = createSlice({
         .addCase(getAddress.fulfilled,(state,action)=>{
             state.address = action.payload
             state.loading = false
+            state.fetched = true
         })
         .addCase(getAddress.rejected,(state,action)=>{
             state.error = action.payload as string

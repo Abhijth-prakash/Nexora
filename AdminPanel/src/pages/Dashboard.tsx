@@ -11,7 +11,7 @@ const navigate = useNavigate()
     try{
       console.log('button clicked')
       await dispatch(Logout()).unwrap()
-      navigate('/')
+      navigate("/", { replace: true })
     }catch(error){
       console.log(error)
     }

@@ -11,7 +11,8 @@ type UserState = {
   loading: boolean,
   logged: boolean,
   error: string | null,
-  google: boolean
+  google: boolean,
+  isStale:boolean
 }
 
 const initialState: UserState = {
@@ -19,7 +20,8 @@ const initialState: UserState = {
   loading: false,
   logged:false,
   error: null,
-  google:false
+  google:false,
+  isStale:true
 }
 
 //registering user
@@ -359,6 +361,7 @@ const userSlice = createSlice({
         state.logged = true
        state.google = !!action.payload.googleId
         state.user = action.payload
+        state.isStale = false
       })
 
       .addCase(UserProfile.rejected, (state, action) => {
@@ -462,6 +465,7 @@ const userSlice = createSlice({
 
       .addCase(editProfile.fulfilled, (state) => {
         state.loading = false
+        state.isStale=true 
       })
 
       .addCase(editProfile.rejected, (state, action) => {

@@ -10,10 +10,13 @@ import Navbar from "../../components/Navbar"
 
 const EditProfile = () => {
     const dispatch = useAppDispatch()
-    const {user} = useAppSelector(state=> state.userData)
+    const {user,isStale} = useAppSelector(state=> state.userData)
     const navigate = useNavigate()
     useEffect(()=>{
-        dispatch(UserProfile())
+        if(isStale){
+             dispatch(UserProfile())
+        }
+       
     },[dispatch])
 
 

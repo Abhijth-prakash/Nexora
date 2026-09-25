@@ -28,7 +28,10 @@ const Profile = () => {
   const [time, setTime] = useState(0)
 
   useEffect(() => {
-    dispatch(UserProfile())
+    if(isStale){
+      dispatch(UserProfile())
+    }
+
   }, [dispatch])
 
 
@@ -44,7 +47,7 @@ const Profile = () => {
   }, [time])
 
 
-  const { user, error, google } = useAppSelector(
+  const { user, error, google,isStale } = useAppSelector(
     (state) => state.userData
   )
 

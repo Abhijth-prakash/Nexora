@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { LoginSchema } from "../utils/Validation"
 import type { LoginData } from "../utils/Validation"
 import { useNavigate, Link, useSearchParams } from "react-router-dom"
-import { useAppDispatch } from "../redux/hooks"
+import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { Loginuser } from "../redux/features/userSlice"
 import { toast } from "react-toastify"
 
@@ -13,6 +13,7 @@ const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginData>({
     resolver: zodResolver(LoginSchema)
   })
+  const {error} = useAppSelector(state=> state.userData)
 
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -30,23 +31,24 @@ const Login = () => {
   }, [searchParams])
 
 
-  const datahandle = async (data: LoginData) => {
-    try {
+const datahandle = async (data: LoginData) => {
+  try {
+    await dispatch(Loginuser(data)).unwrap()
 
-      await dispatch(Loginuser(data)).unwrap()
+    toast.success("Login successful!")
 
-      toast.success("Login successful!")
+    navigate("/", { replace: true })
 
-      navigate('/')
+  } catch (error: any) {
+    console.log(error)
 
-    } catch (error) {
-
-      console.log(error)
-
-      toast.error("Login failed. Please check your email and password.")
-
-    }
+    toast.error(
+      typeof error === "string"
+        ? error
+        : error?.message || "Login failed"
+    )
   }
+}
 
   return (
     <div

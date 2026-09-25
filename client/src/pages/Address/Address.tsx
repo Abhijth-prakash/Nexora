@@ -8,7 +8,7 @@ import type { Addressid } from "../../utils/Validation"
 import Navbar from "../../components/Navbar"
 
 const Address = () => {
-  const { address, error } = useAppSelector(
+  const { address, error,fetched } = useAppSelector(
     (state) => state.addressData
   )
 
@@ -21,8 +21,12 @@ const Address = () => {
   const [showDelete, setShowDelete] = useState(false)
   const [id, setId] = useState("")
 
+
+  //fetching data from backend
   useEffect(() => {
-    dispatch(getAddress())
+    if(!fetched){
+       dispatch(getAddress())
+    }
   }, [dispatch])
 
   const handleAdd = () => {
