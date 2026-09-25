@@ -10,6 +10,11 @@ type UserState = {
   pages: number | null
   totalUsers: number
   error: string | null
+  lastQuery: {
+  page: number
+  search: string
+  filter: string
+} | null
 }
 
 const initialState: UserState = {
@@ -19,6 +24,7 @@ const initialState: UserState = {
   page: 1,
   pages: null,
   totalUsers: 0,
+  lastQuery:null
 }
 
 
@@ -149,6 +155,7 @@ const UserSlice = createSlice({
         state.pages = action.payload.data.totalPages
 
         state.totalUsers = action.payload.data.totalUsers
+        state.lastQuery = action.meta.arg
 
       })
 
@@ -160,7 +167,9 @@ const UserSlice = createSlice({
           (action.payload as string) ||
           "Failed to get users"
 
+
       })
+    
 
       //block user
       .addCase(blockuser.pending,(state)=>{

@@ -7,7 +7,7 @@ import BlockUsers from "./BlockUsers"
 const ViewUsers = () => {
   const dispatch = useAppDispatch()
 
-  const { user, page, pages, loading } = useAppSelector(
+  const { user, page, pages, loading,lastQuery } = useAppSelector(
     (state) => state.UsersData
   )
   const [showBlockuser,setShowBlockuser] = useState(false)
@@ -18,6 +18,15 @@ const ViewUsers = () => {
 
 
   useEffect(() => {
+
+    const sameQuery =
+    lastQuery?.page === page &&
+    lastQuery?.search === search &&
+    lastQuery?.filter === filter
+
+  if (sameQuery) {
+    return
+  }
      const timer = setTimeout(() => {
             dispatch(getUser({ page, search ,filter}))
         }, 300)
