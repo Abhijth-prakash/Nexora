@@ -55,7 +55,7 @@ const Profile = () => {
     try {
       await dispatch(logout()).unwrap()
       setTime(10000)
-      navigate("/auth/login")
+      navigate("/auth/login", { replace: true });
     } catch (error) {
       console.log("logout failed", error)
     }

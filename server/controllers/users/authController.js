@@ -47,7 +47,7 @@ class AuthController extends BaseController {
     );
 
   
-    res.cookie("token", result.token, {
+    res.cookie("userToken", result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -85,7 +85,7 @@ static login = BaseController.asyncHandler(
 
     const result = await Authservice.login(validatedData);
 
-    res.cookie("token", result.token, {
+    res.cookie("userToken", result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
