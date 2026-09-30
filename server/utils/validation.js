@@ -191,6 +191,15 @@ const ProfileValidation = Joi.object({
 })
 
 
+const CategoryValidation =Joi.object({
+    name:commonPatterns.name,
+    description: Joi.string().max(500).trim().allow("").messages({
+    "string.max": "Description cannot exceed 500 characters",
+  }),
+    subCategory:commonPatterns.name
+})
+
+
 module.exports = {
   registerValidate,
   OTPValidation,
@@ -199,5 +208,6 @@ module.exports = {
   resetPassValidation,
   AddressValidation,
   changepasswordValidation,
-  ProfileValidation
+  ProfileValidation,
+  CategoryValidation
 };
