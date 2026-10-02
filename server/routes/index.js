@@ -8,6 +8,7 @@ const addressRoutes = require('./user/addressRoutes')
 const adminRoutes = require('./admin/adminRoutes')
 const adminUserRoutes = require('./admin/adminUser')
 const category = require('./admin/Category')
+const test = require('./admin/Test')
 
 const setupRoutes = (app) => {
   //user
@@ -19,6 +20,7 @@ const setupRoutes = (app) => {
   app.use("/api/admin",adminRoutes)
   app.use("/api/admin",adminUserRoutes)
   app.use("/api/admin",category)
+  app.use("/api/test",test)
  
 };
 

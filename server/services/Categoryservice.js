@@ -14,13 +14,14 @@ const {
 class CategoryService {
 
     //addingcategory
-   static async addCategory(data) {
+static async addCategory(data) {
     try {
-
+        console.log(data,'this is from service')
         const existingCategory = await Category.findOne({
             name: data.name
         });
 
+        // Category already exists
         if (existingCategory) {
 
             const existingSubCategory = await Subcategory.findOne({
@@ -36,11 +37,21 @@ class CategoryService {
                 });
 
                 await newSubCategory.save();
+
+                logger.info(
+                    `created a new sub category ${data.subCategory}`
+                );
+
+                 return {
+        type: "subcategory",
+        name: newSubCategory.name
+    };
             }
 
             throw new ConflictError("Already existing category");
         }
 
+        // Category doesn't exist
         const newCat = new Category({
             name: data.name,
             description: data.description
@@ -48,20 +59,46 @@ class CategoryService {
 
         await newCat.save();
 
+        if (data.subCategory) {
+
+            const newSub = new Subcategory({
+                name: data.subCategory,
+                category: newCat._id
+            });
+
+            await newSub.save();
+        }
+
         logger.info(`created a new category ${data.name}`);
 
-        return {
-            name: newCat.name,
-            description: newCat.description,
-            productCount: newCat.productCount,
-            isVisible: newCat.isVisible
-        };
+       return {
+    type: "category",
+    name: newCat.name
+};
 
     } catch (error) {
 
         logger.error("failed to add category", error);
         throw error;
     }
+}
+
+
+//getting all categories
+
+static async getcategories(){
+    try{
+    const categories = await Category.find()
+    if(!categories){
+        throw new NotFoundError('failed to get categories')
+    }
+    logger.info('succefully fetched all categories')
+    return categories
+    }catch(error){
+        logger.error('failed to get categories',error);
+        throw error
+    }
+    
 }
 
 

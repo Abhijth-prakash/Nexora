@@ -5,6 +5,7 @@ const CategoryController = require('../../controllers/Admin/CategoryController')
 
 router.use(authenticateAdmin)
 
-router.post('/category',CategoryController.addCategorry)
+router.post('/category',CategoryController.addCategory)
+router.get('/category',CategoryController.getCategories)
 
 module.exports = router

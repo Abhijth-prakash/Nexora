@@ -35,15 +35,13 @@ const categorySchema = new mongoose.Schema(
 );
 
 
-categorySchema.pre("save", function (next) {
-  if (this.isModified("name")) {
-    this.slug = this.name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-");
-  }
-
-  next();
+categorySchema.pre("save", function () {
+    if (this.isModified("name")) {
+        this.slug = this.name
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, "-");
+    }
 });
 
 
@@ -78,7 +76,7 @@ const subcategorySchema = new mongoose.Schema(
   }
 );
 
-subcategorySchema.pre("save", function (next) {
+subcategorySchema.pre("save", function () {
   if (this.isModified("name")) {
     this.slug = this.name
       .toLowerCase()
@@ -86,7 +84,6 @@ subcategorySchema.pre("save", function (next) {
       .replace(/\s+/g, "-");
   }
 
-  next();
 });
 
 subcategorySchema.index(
