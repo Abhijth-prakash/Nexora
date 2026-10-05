@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { Email, LoginData,  Resetpassdata } from "./validation";
-import type { ApiResponse,BlockUserresponse,Forgetpass,GetUsersResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse } from "./apiTypes";
+import type { ApiResponse,BlockUserresponse,Forgetpass,GetCategoryResponse,GetUsersResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse } from "./apiTypes";
 
 
 const ClientApi = axios.create({
@@ -13,7 +13,7 @@ const ClientApi = axios.create({
   timeout: 30000,
 });
 
-
+//adminAuth
 export const Admin_Api = {
   login: async (AdminData:LoginData ): Promise<ApiResponse<LoginResponse>> => {
     const response = await ClientApi.post<ApiResponse<LoginResponse>>("/admin/login", AdminData)
@@ -32,7 +32,7 @@ export const Admin_Api = {
     return response.data
   },
 }
-
+//adminuserApi
 export const user_APi = {
   getusers: async (page:number,search:string,filter:string): Promise<ApiResponse<GetUsersResponse>> => {
   const response = await ClientApi.get<ApiResponse<GetUsersResponse>>("/admin/users/view",{params: {page,search,filter}})
@@ -47,6 +47,14 @@ export const user_APi = {
   return response.data
   },
 
+}
+
+
+export const Categroy_APi = {
+  getCategories: async (): Promise<ApiResponse<GetCategoryResponse>> =>{
+    const response = await ClientApi.get<ApiResponse<GetCategoryResponse>>("/admin/category")
+    return response.data
+  }
 }
 
 

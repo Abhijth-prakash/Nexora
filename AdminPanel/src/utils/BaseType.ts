@@ -14,3 +14,13 @@ export type BaseAdmin={
   createdAt: string
   updatedAt: string
 }
+
+
+export type Basecategory={
+    _id: string
+    name:string
+    description:string
+    isVisible:boolean
+    productCount:number
+    slug:string
+}

@@ -1,4 +1,4 @@
-import type { BaseAdmin, BaseUser } from "./BaseType"
+import type { BaseAdmin, Basecategory, BaseUser } from "./BaseType"
 
 
 export type ApiResponse<T> = {
@@ -31,3 +31,7 @@ export type GetUsersResponse = {
 
 export type BlockUserresponse = null
 export type UnBlockUserresponse = null
+
+
+
+export type GetCategoryResponse = Basecategory[]

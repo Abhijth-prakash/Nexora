@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard"
 import ForgetPassword from "./pages/ForgetPassword"
 import ResetPassword from "./pages/ResetPassword"
 import ViewUsers from "./pages/users/ViewUsers"
+import Category from "./pages/category/Category"
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
       <Route path="/resetpassword" element={<ResetPassword></ResetPassword>}></Route>
 
       <Route path="/admin/users/view" element={<ViewUsers></ViewUsers>}></Route>
+      <Route path="/admin/category" element={<Category></Category>}></Route>
 
     </Routes>
      

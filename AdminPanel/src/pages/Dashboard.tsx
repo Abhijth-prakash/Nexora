@@ -271,7 +271,7 @@ const navigate = useNavigate()
                 {/* CATEGORIES */}
 
                 <Link
-                  to="/admin/categories"
+                  to="/admin/category"
                   className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
                 >
 
