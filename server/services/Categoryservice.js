@@ -16,7 +16,6 @@ class CategoryService {
     //addingcategory
 static async addCategory(data) {
     try {
-        console.log(data,'this is from service')
         const existingCategory = await Category.findOne({
             name: data.name
         });
