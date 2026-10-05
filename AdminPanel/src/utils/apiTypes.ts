@@ -35,3 +35,4 @@ export type UnBlockUserresponse = null
 
 
 export type GetCategoryResponse = Basecategory[]
+export type AddCategoryResponse = null
