@@ -1,4 +1,4 @@
-import type { BaseAdmin, Basecategory, BaseUser } from "./BaseType"
+import type { BaseAdmin, Basecategory, BaseUser,BaseSubcategory } from "./BaseType"
 
 
 export type ApiResponse<T> = {
@@ -36,3 +36,9 @@ export type UnBlockUserresponse = null
 
 export type GetCategoryResponse = Basecategory[]
 export type AddCategoryResponse = null
+export type GetCategoryByidResponse = {
+  category: Basecategory;
+  subCategories: BaseSubcategory[];
+};
+
+

@@ -24,3 +24,9 @@ export type Basecategory={
     productCount:number
     slug:string
 }
+
+export type BaseSubcategory={
+    _id: string
+    name:string
+    isVisible:boolean
+}

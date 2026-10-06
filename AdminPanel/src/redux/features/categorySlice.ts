@@ -1,19 +1,23 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { Basecategory } from "../../utils/BaseType";
+import type { Basecategory, BaseSubcategory } from "../../utils/BaseType";
 import { Categroy_APi } from "../../utils/api";
 import axios from "axios";
 import type { categoryData } from "../../utils/validation";
 
 export type CategoryState = {
     categories: Basecategory[];
+    category:Basecategory |null
     loading: boolean;
     error: string | null;
+    subCategories:BaseSubcategory[]
 };
 
 const initialState: CategoryState = {
     categories: [],
     loading: false,
     error: null,
+    subCategories:[],
+    category:null
 };
 
 
@@ -66,6 +70,33 @@ export const addCategory = createAsyncThunk(
     }
 )
 
+//get categroy by id 
+
+export const getCategory = createAsyncThunk(
+    'admin/getCategory',
+    async (id:string,{rejectWithValue})=>{
+        try{
+
+            const response = await Categroy_APi.getCategory(id)
+            return response.data
+
+        }catch(error){
+
+             if (axios.isAxiosError(error)) {
+                return rejectWithValue(
+                    error.response?.data?.error?.message ||
+                    "Failed to get category. Please try again."
+                );
+            }
+
+            return rejectWithValue(
+                "Failed to get category. Please try again."
+            );
+
+        }
+    }
+)
+
 const categorySlice = createSlice({
     name: "categorySlice",
 
@@ -106,7 +137,26 @@ const categorySlice = createSlice({
             .addCase(addCategory.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
-            });
+            })
+
+
+             //get category by id
+            .addCase(getCategory.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+
+            .addCase(getCategory.fulfilled, (state,action) => {
+                    state.category = action.payload.category
+                    state.subCategories = action.payload.subCategories
+            })
+
+            .addCase(getCategory.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+
+           
     }
 });
 
