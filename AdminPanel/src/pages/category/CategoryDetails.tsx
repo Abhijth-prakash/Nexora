@@ -7,7 +7,7 @@ import { getCategory } from "../../redux/features/categorySlice"
 const CategoryDetails = () => {
 const { id } = useParams();
 const dispatch = useAppDispatch();
-const {category,subCategories} = useAppSelector(state=> state.categoryData)
+const {category,subCategories,fetchByid,Catid} = useAppSelector(state=> state.categoryData)
 
 const listItems = subCategories && subCategories.map(item=> <li key={item._id}>
     <span>{item.name}</span>
@@ -16,9 +16,12 @@ const listItems = subCategories && subCategories.map(item=> <li key={item._id}>
 </li>)
 
 useEffect(() => {
-    if (id) {
+    if(!fetchByid || Catid!==id){
+          if (id) {
         dispatch(getCategory(id));
     }
+    }
+  
 }, [id, dispatch]);
   return (
     <div>

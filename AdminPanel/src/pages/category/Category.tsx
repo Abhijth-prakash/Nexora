@@ -5,11 +5,14 @@ import { getAllCategories } from "../../redux/features/categorySlice"
 import CategoryForm from "./CategoryForm"
 
 const Category = () => {
-    const { categories } = useAppSelector(state => state.categoryData)
+    const { categories,fetched } = useAppSelector(state => state.categoryData)
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        dispatch(getAllCategories())
+        if(!fetched){
+             dispatch(getAllCategories())
+        }
+       
     }, [])
 
     const listItems = categories && categories.map(item =>

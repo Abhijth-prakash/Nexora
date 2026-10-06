@@ -10,6 +10,9 @@ export type CategoryState = {
     loading: boolean;
     error: string | null;
     subCategories:BaseSubcategory[]
+    fetched:boolean 
+    fetchByid:boolean
+    Catid:string|null
 };
 
 const initialState: CategoryState = {
@@ -17,7 +20,10 @@ const initialState: CategoryState = {
     loading: false,
     error: null,
     subCategories:[],
-    category:null
+    category:null,
+    fetched:false,
+    fetchByid:false,
+    Catid:null
 };
 
 
@@ -116,6 +122,7 @@ const categorySlice = createSlice({
 
             .addCase(getAllCategories.fulfilled, (state, action) => {
                 state.loading = false;
+                state.fetched = true
                 state.categories = action.payload
             })
 
@@ -141,15 +148,19 @@ const categorySlice = createSlice({
 
 
              //get category by id
-            .addCase(getCategory.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-
-            .addCase(getCategory.fulfilled, (state,action) => {
-                    state.category = action.payload.category
-                    state.subCategories = action.payload.subCategories
-            })
+         .addCase(getCategory.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+    state.category = null;
+    state.subCategories = [];
+})
+         .addCase(getCategory.fulfilled, (state, action) => {
+    state.loading = false;
+    state.category = action.payload.category;
+    state.subCategories = action.payload.subCategories;
+    state.fetchByid = true;
+    state.Catid = action.payload.category._id;
+})
 
             .addCase(getCategory.rejected, (state, action) => {
                 state.loading = false;
