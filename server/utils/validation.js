@@ -202,7 +202,9 @@ const CategoryValidation = Joi.object({
             "string.max": "Description cannot exceed 500 characters",
         }),
 
-    subCategory: commonPatterns.name.optional()
+    subCategory: commonPatterns.name
+        .optional()
+        .allow("")
 });
 
 

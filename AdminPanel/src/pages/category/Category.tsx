@@ -19,15 +19,30 @@ const Category = () => {
 
     const [showdelete, setShowdelete] = useState(false)
     const [id, setId] = useState('')
+    const [editid,setEditid] = useState('')
+    const [form, setForm] = useState(false)
 
     const deleteHandle = (id: string) => {
         setShowdelete(true)
         setId(id)
     }
 
+
+    //deleteclose
     const Close = () => {
         setShowdelete(false)
         setId("")
+    }
+
+    const editHandle =(id:string)=>{
+        setEditid(id)
+         setForm(true)
+    }
+
+    //add or edit close 
+    const onCLose = () => {
+        setForm(false)
+        setEditid('')
     }
 
 
@@ -135,7 +150,7 @@ const Category = () => {
                     View
                 </Link>
 
-                <button
+                <button onClick={()=>editHandle(item._id)}
                     className="text-xs font-semibold text-[#5f5652] transition hover:text-[#171717]"
                 >
                     Edit
@@ -154,11 +169,7 @@ const Category = () => {
     )
 
 
-    const [form, setForm] = useState(false)
 
-    const onCLose = () => {
-        setForm(false)
-    }
 
 
     return (
@@ -412,7 +423,7 @@ const Category = () => {
                         </div>
 
                         <div className="p-6">
-                            <CategoryForm onClose={onCLose} />
+                            <CategoryForm onClose={onCLose} editid={editid} />
                         </div>
 
                     </div>

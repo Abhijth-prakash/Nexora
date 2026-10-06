@@ -41,4 +41,5 @@ export type GetCategoryByidResponse = {
   subCategories: BaseSubcategory[];
 };
 export type deleteCategoryResponse = null
+export type updateCategoryResponse = null
 

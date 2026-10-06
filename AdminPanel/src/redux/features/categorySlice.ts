@@ -104,15 +104,45 @@ export const deleteCategory = createAsyncThunk(
                   if (axios.isAxiosError(error)) {
         return rejectWithValue(
           error.response?.data?.error?.message ||
-            "Failed to get category. Please try again.",
+            "Failed to delete category. Please try again.",
         );
       }
 
-      return rejectWithValue("Failed to get category. Please try again.");
+      return rejectWithValue("Failed to delte category. Please try again.");
 
         }
     }
 )
+
+//update category
+
+export const updateCategory = createAsyncThunk(
+    "admin/updateCategory",
+    async (
+        { data, id }: { data: categoryData; id: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await Categroy_APi.updateCategory(data, id)
+
+            return response.data
+
+        } catch (error) {
+
+            if (axios.isAxiosError(error)) {
+                return rejectWithValue(
+                    error.response?.data?.error?.message ||
+                    "Failed to update category. Please try again."
+                )
+            }
+
+            return rejectWithValue(
+                "Failed to update category. Please try again."
+            )
+        }
+    }
+)
+
 
 const categorySlice = createSlice({
   name: "categorySlice",

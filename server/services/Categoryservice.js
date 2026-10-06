@@ -9,7 +9,8 @@ const {
   ValidationError,
   OTPError,
 } = require("../utils/errors");
-const config = require('../config/config')
+const config = require('../config/config');
+const { notFound } = require("../middilewares/errorHandler");
 
 class CategoryService {
 
@@ -158,6 +159,51 @@ static async deleteCategory(id) {
     throw error;
   }
 }
+
+
+//update category
+
+static async UpdateCategory(data, id) {
+    try {
+        const category = await Category.findById(id)
+
+        if (!category) {
+            throw new NotFoundError("category not found")
+        }
+
+        await Category.updateOne(
+            { _id: id },
+            {
+                $set: {
+                    name: data.name,
+                    description: data.description
+                }
+            }
+        )
+
+        if (data.subCategory) {
+
+            const subcategory = await Subcategory.findOne({name:data.subCategory})
+            if(!subcategory){
+                const newSub = new Subcategory({
+                name: data.subCategory,
+                category: id
+            })
+
+            await newSub.save()
+            }
+          
+        }
+
+        logger.info(`${data.name} updated successfully`)
+
+        return true
+
+    } catch (error) {
+        logger.error("failed to update category", error)
+        throw error
+    }
+} 
 
 }
 

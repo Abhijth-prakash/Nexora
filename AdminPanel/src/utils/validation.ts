@@ -56,9 +56,11 @@ export const passwordSchema = z.object({
 
 
 export const CategorySchema = z.object({
-      name: z.string().min(1,"name is required"),
-      description: z.string().min(1,"description is required"),
-      subCategory: z.string().min(1,"subcategory is required")
+    name: z.string().min(1, "name is required"),
+
+    description: z.string().min(1, "description is required"),
+
+    subCategory: z.string().optional()
 })
 
 export type categoryData = z.infer<typeof CategorySchema>

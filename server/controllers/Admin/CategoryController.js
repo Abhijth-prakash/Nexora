@@ -86,6 +86,24 @@ static deleteCategory = BaseController.asyncHandler(
 
     }
 )
+
+//edit category
+
+static editCategory = BaseController.asyncHandler(
+    async(req,res)=>{
+        const id = req.params.id
+        const validateData = BaseController.validateRequest(CategoryValidation,req.body)
+
+        const result = await CategoryService.UpdateCategory(validateData,id)
+
+          BaseController.sendSuccessResponse(
+            res,
+            ` successfully updated category`  ,
+            null,
+            200
+        )
+    }
+)
         
     
 }
