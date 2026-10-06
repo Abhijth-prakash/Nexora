@@ -4,11 +4,13 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import { getAllCategories } from "../../redux/features/categorySlice"
 import CategoryForm from "./CategoryForm"
 import CategoryDelete from "./CategoryDelete"
-
+import CategoryVisiblity from "./CategoryVisiblity"
 
 const Category = () => {
+    const { categories, fetched } = useAppSelector(
+        state => state.categoryData
+    )
 
-    const { categories, fetched } = useAppSelector(state => state.categoryData)
     const dispatch = useAppDispatch()
 
     useEffect(() => {
@@ -19,32 +21,46 @@ const Category = () => {
 
     const [showdelete, setShowdelete] = useState(false)
     const [id, setId] = useState('')
-    const [editid,setEditid] = useState('')
+    const [editid, setEditid] = useState('')
     const [form, setForm] = useState(false)
+    const [visibleForm, setVisibleForm] = useState(false)
+    const [visible, setVisible] = useState<boolean>(false)
+    
 
     const deleteHandle = (id: string) => {
         setShowdelete(true)
         setId(id)
     }
 
-
-    //deleteclose
+    // delete close
     const Close = () => {
         setShowdelete(false)
         setId("")
     }
 
-    const editHandle =(id:string)=>{
+    const editHandle = (id: string) => {
         setEditid(id)
-         setForm(true)
+        setForm(true)
     }
 
-    //add or edit close 
+    // add or edit close
     const onCLose = () => {
         setForm(false)
         setEditid('')
     }
 
+    // visible close
+
+    const handleVisible = (value:boolean,id:string)=>{
+        setId(id)
+        setVisibleForm(true)
+        setVisible(value)
+    }
+    const visibleClose = () => {
+        setId("")
+        setVisible(false)
+        setVisibleForm(false)
+    }
 
     const listItems = categories && categories.map(item =>
         <li
@@ -103,23 +119,23 @@ const Category = () => {
             {/* Visibility */}
             <div className="col-span-1">
 
-                <div
-                    className={`relative h-6 w-11 rounded-full transition ${
-                        item.isVisible
-                            ? "bg-[#ff624d]"
-                            : "bg-[#d8d3d0]"
-                    }`}
-                >
-
-                    <div
-                        className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
-                            item.isVisible
-                                ? "right-1"
-                                : "left-1"
-                        }`}
-                    />
-
-                </div>
+                {item.isVisible ? (
+                    <button
+                        onClick={()=>handleVisible(item.isVisible,item._id)}
+                        type="button"
+                        className="relative h-6 w-11 rounded-full bg-[#ff624d] transition hover:opacity-90"
+                    >
+                        <div className="absolute right-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm" />
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                         onClick={()=>handleVisible(item.isVisible,item._id)}
+                        className="relative h-6 w-11 rounded-full bg-[#d8d3d0] transition hover:opacity-90"
+                    >
+                        <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm" />
+                    </button>
+                )}
 
             </div>
 
@@ -150,7 +166,8 @@ const Category = () => {
                     View
                 </Link>
 
-                <button onClick={()=>editHandle(item._id)}
+                <button
+                    onClick={() => editHandle(item._id)}
                     className="text-xs font-semibold text-[#5f5652] transition hover:text-[#171717]"
                 >
                     Edit
@@ -169,12 +186,10 @@ const Category = () => {
     )
 
 
-
-
-
     return (
-
         <div className="min-h-screen w-full bg-[#faf8f7] text-[#171717]">
+
+            {visibleForm && <CategoryVisiblity onClose={visibleClose} visible={visible} id={id}></CategoryVisiblity>}
 
             {/* Delete Modal */}
             {showdelete && (
@@ -186,7 +201,6 @@ const Category = () => {
 
 
             <main className="w-full px-5 py-6 sm:px-7 lg:px-9">
-
 
                 {/* Header */}
                 <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -230,7 +244,6 @@ const Category = () => {
 
                 {/* Main Card */}
                 <div className="w-full overflow-hidden rounded-2xl border border-[#e8e1de] bg-white shadow-[0_2px_12px_rgba(50,30,20,0.03)]">
-
 
                     {/* Card Header */}
                     <div className="flex flex-col gap-4 border-b border-[#eee8e5] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -300,7 +313,6 @@ const Category = () => {
                     <div className="w-full overflow-x-auto">
 
                         <div className="min-w-[950px]">
-
 
                             {/* Table Header */}
                             <div className="grid grid-cols-12 items-center bg-[#faf8f7] px-6 py-3.5">
@@ -413,17 +425,22 @@ const Category = () => {
                         <div className="border-b border-[#eee8e5] px-6 py-4">
 
                             <h2 className="text-base font-bold text-[#171717]">
-                                Add Category
+                                {editid ? "Edit Category" : "Add Category"}
                             </h2>
 
                             <p className="mt-1 text-xs text-[#9a8780]">
-                                Create a new category for your store.
+                                {editid
+                                    ? "Update your category information."
+                                    : "Create a new category for your store."}
                             </p>
 
                         </div>
 
                         <div className="p-6">
-                            <CategoryForm onClose={onCLose} editid={editid} />
+                            <CategoryForm
+                                onClose={onCLose}
+                                editid={editid}
+                            />
                         </div>
 
                     </div>

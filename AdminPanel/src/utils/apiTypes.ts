@@ -42,4 +42,6 @@ export type GetCategoryByidResponse = {
 };
 export type deleteCategoryResponse = null
 export type updateCategoryResponse = null
+export type hideCategoryResponse = null
+export type unHideCategoryResponse = null
 

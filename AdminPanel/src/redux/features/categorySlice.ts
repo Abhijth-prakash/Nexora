@@ -143,6 +143,63 @@ export const updateCategory = createAsyncThunk(
     }
 )
 
+//hide category
+export const hideCategory = createAsyncThunk(
+    "admin/hideCategory",
+    async (
+        id:string,
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await Categroy_APi.hideCategory(id)
+
+            return response.data
+
+        } catch (error) {
+
+            if (axios.isAxiosError(error)) {
+                return rejectWithValue(
+                    error.response?.data?.error?.message ||
+                    "Failed to hide category. Please try again."
+                )
+            }
+
+            return rejectWithValue(
+                "Failed to hide category. Please try again."
+            )
+        }
+    }
+)
+
+
+export const unhideCategory = createAsyncThunk(
+    "admin/unhideCategory",
+    async (
+        id:string,
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await Categroy_APi.unhideCategory(id)
+
+            return response.data
+
+        } catch (error) {
+
+            if (axios.isAxiosError(error)) {
+                return rejectWithValue(
+                    error.response?.data?.error?.message ||
+                    "Failed to unhide category. Please try again."
+                )
+            }
+
+            return rejectWithValue(
+                "Failed to unhide category. Please try again."
+            )
+        }
+    }
+)
+
+
 
 const categorySlice = createSlice({
   name: "categorySlice",
@@ -213,14 +270,49 @@ const categorySlice = createSlice({
         state.error = null;
     
       })
-      .addCase(deleteCategory.fulfilled, (state, action) => {
+      .addCase(deleteCategory.fulfilled, (state) => {
         state.loading = false;
       })
 
       .addCase(deleteCategory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+
+      //hide category
+      .addCase(hideCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+    
+      })
+      .addCase(hideCategory.fulfilled, (state) => {
+        state.loading = false;
+      })
+
+      .addCase(hideCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+
+
+        //unhide category
+      .addCase(unhideCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+    
+      })
+      .addCase(unhideCategory.fulfilled, (state) => {
+        state.loading = false;
+      })
+
+      .addCase(unhideCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+
+    
   },
 });
 

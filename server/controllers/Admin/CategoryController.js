@@ -104,6 +104,37 @@ static editCategory = BaseController.asyncHandler(
         )
     }
 )
+
+static Hidecategory  = BaseController.asyncHandler(
+    async(req,res)=>{
+        const id = req.params.id
+        await CategoryService.hideCategory(id)
+
+         BaseController.sendSuccessResponse(
+            res,
+            ` successfully hide category`  ,
+            null,
+            200
+        )
+        
+    }
+)
+
+
+static unHidecategory = BaseController.asyncHandler(
+    async(req,res)=>{
+        const id = req.params.id
+        await CategoryService.unHidecategory(id)
+
+         BaseController.sendSuccessResponse(
+            res,
+            ` successfully unhide category`  ,
+            null,
+            200
+        )
+        
+    }
+)
         
     
 }

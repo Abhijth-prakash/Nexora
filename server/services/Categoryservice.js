@@ -130,36 +130,48 @@ static async getCategory(id) {
 }
 
 
-// delete category
 static async deleteCategory(id) {
   try {
     const uncategorisedId = config.UncategorisedId;
 
-    await Subcategory.updateMany(
-      { category: id },
-      {
-        $set: {
-          category: uncategorisedId
-        }
-      }
-    );
+    if (String(id) === String(uncategorisedId)) {
+      throw new AuthorizationError("Uncategorised category cannot be deleted");
+    }
 
-    const deleted = await Category.findByIdAndDelete(id);
-
-    if (!deleted) {
+   
+    const category = await Category.findById(id);
+    if (!category) {
       throw new NotFoundError("category not found");
     }
 
+    const subs = await Subcategory.find({ category: id });
+
+    for (const sub of subs) {
+      
+      let name = sub.name;
+      let n = 0;
+      while (await Subcategory.exists({ category: uncategorisedId, name })) {
+        n++;
+        name =
+          n === 1
+            ? `${sub.name} (${category.name})`
+            : `${sub.name} (${category.name} ${n})`;
+      }
+
+      sub.name = name;
+      sub.category = uncategorisedId;
+      await sub.save();
+    }
+
+    await category.deleteOne();
+
     logger.info("successfully deleted category");
-
     return true;
-
   } catch (error) {
     logger.error("failed to delete category", error);
     throw error;
   }
 }
-
 
 //update category
 
@@ -183,16 +195,19 @@ static async UpdateCategory(data, id) {
 
         if (data.subCategory) {
 
-            const subcategory = await Subcategory.findOne({name:data.subCategory})
-            if(!subcategory){
-                const newSub = new Subcategory({
+            const subcategory = await Subcategory.findOne({
                 name: data.subCategory,
                 category: id
             })
 
-            await newSub.save()
+            if (!subcategory) {
+                const newSub = new Subcategory({
+                    name: data.subCategory,
+                    category: id
+                })
+
+                await newSub.save()
             }
-          
         }
 
         logger.info(`${data.name} updated successfully`)
@@ -203,7 +218,55 @@ static async UpdateCategory(data, id) {
         logger.error("failed to update category", error)
         throw error
     }
-} 
+}
+
+
+//visibility
+
+static async hideCategory(id){
+    try{
+        const category = await Category.findById(id)
+        if(!category){
+           throw new NotFoundError('category not found')
+        }
+
+        category.isVisible = false
+        await category.save()
+
+        logger.info('succesfully hide the category')
+        return true
+    }catch(error){
+        logger.error('failed to hide category',error)
+        throw error
+    }
+}
+
+static async unHidecategory(id){
+    try{
+        const uncategorisedId = config.UncategorisedId;
+
+    if (String(id) === String(uncategorisedId)) {
+      throw new AuthorizationError(
+    "The Uncategorised category must remain hidden."
+);
+    }
+ 
+        const category = await Category.findById(id)
+        if(!category){
+           throw new NotFoundError('category not found')
+        }
+
+        category.isVisible = true
+        await category.save()
+
+        logger.info('succesfully unhide the category')
+        return true
+
+    }catch(error){
+        logger.error('failed to unhide category',error)
+        throw error
+    }
+}
 
 }
 

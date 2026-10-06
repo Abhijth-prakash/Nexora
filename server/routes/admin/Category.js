@@ -11,4 +11,7 @@ router.get('/category/:id',CategoryController.getCategory)
 router.delete('/category/:id',CategoryController.deleteCategory)
 router.patch('/category/:id',CategoryController.editCategory)
 
+router.post('/category/hide/:id',CategoryController.Hidecategory)
+router.post('/category/unhide/:id',CategoryController.unHidecategory)
+
 module.exports = router

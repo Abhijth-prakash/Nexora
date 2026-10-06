@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, updateCategoryResponse } from "./apiTypes";
+import type { AddCategoryResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse } from "./apiTypes";
 
 
 const ClientApi = axios.create({
@@ -49,7 +49,7 @@ export const user_APi = {
 
 }
 
-
+//category
 export const Categroy_APi = {
   getCategories: async (): Promise<ApiResponse<GetCategoryResponse>> =>{
     const response = await ClientApi.get<ApiResponse<GetCategoryResponse>>("/admin/category")
@@ -69,6 +69,14 @@ export const Categroy_APi = {
   },
 updateCategory: async (Data: categoryData,id: string): Promise<ApiResponse<updateCategoryResponse>> => {
     const response = await ClientApi.patch<ApiResponse<updateCategoryResponse>>(`/admin/category/${id}`,Data)
+    return response.data
+},
+hideCategory: async (id: string): Promise<ApiResponse<hideCategoryResponse>> => {
+    const response = await ClientApi.post<ApiResponse<hideCategoryResponse>>(`/admin/category/hide/${id}`)
+    return response.data
+},
+unhideCategory: async (id: string): Promise<ApiResponse<unHideCategoryResponse>> => {
+    const response = await ClientApi.post<ApiResponse<unHideCategoryResponse>>(`/admin/category/unhide/${id}`)
     return response.data
 },
 }
