@@ -1,6 +1,6 @@
 const AdminUserService = require("../../services/AdminUserService");
 const CategoryService = require("../../services/Categoryservice");
-const { CategoryValidation } = require("../../utils/validation");
+const { CategoryValidation, Idvalidation } = require("../../utils/validation");
 const BaseController = require("../baseController");
 
 
@@ -43,6 +43,26 @@ class CategoryController extends BaseController{
                BaseController.sendSuccessResponse(
             res,
             ` successfully get all categories`  ,
+            result,
+            200
+        )
+        }
+    )
+
+
+    //get category by id
+
+    static getCategory = BaseController.asyncHandler(
+        async(req,res)=>{
+            const id = req.params.id
+            const validateData = BaseController.validateRequest(Idvalidation,id)
+            const result = await CategoryService.getCategory(validateData)
+
+
+
+               BaseController.sendSuccessResponse(
+            res,
+            ` successfully get category`  ,
             result,
             200
         )

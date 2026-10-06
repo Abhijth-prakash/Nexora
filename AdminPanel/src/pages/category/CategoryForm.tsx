@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form"
 import { CategorySchema, type categoryData } from "../../utils/validation"
 import { useAppDispatch } from "../../redux/hooks"
 import { addCategory, getAllCategories } from "../../redux/features/categorySlice"
+import { toast } from "react-toastify";
 
 
 export type props ={
@@ -18,11 +19,17 @@ const CategoryForm = ({onClose}:props) => {
 
     const handleData = async (data:categoryData)=>{
         try{
-            dispatch(addCategory(data)).unwrap()
+            const modData = {
+                name:data.name.toLowerCase(),
+                description:data.description.toLowerCase(),
+                subCategory:data.subCategory.toLowerCase()
+            }
+           await  dispatch(addCategory(modData)).unwrap()
+            toast.success("Category added successfully");
             dispatch(getAllCategories())
             onClose()
         }catch(error){
-
+            toast.error("Failed to add category");
         }
     }
   return (

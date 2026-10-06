@@ -206,6 +206,8 @@ const CategoryValidation = Joi.object({
 });
 
 
+const Idvalidation = Joi.string().required();
+
 module.exports = {
   registerValidate,
   OTPValidation,
@@ -215,5 +217,6 @@ module.exports = {
   AddressValidation,
   changepasswordValidation,
   ProfileValidation,
-  CategoryValidation
+  CategoryValidation,
+  Idvalidation
 };

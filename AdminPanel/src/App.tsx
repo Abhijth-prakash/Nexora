@@ -6,6 +6,10 @@ import ResetPassword from "./pages/ResetPassword"
 import ViewUsers from "./pages/users/ViewUsers"
 import Category from "./pages/category/Category"
 
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+import CategoryDetails from "./pages/category/CategoryDetails"
+
 
 function App() {
 
@@ -22,8 +26,14 @@ function App() {
 
       <Route path="/admin/users/view" element={<ViewUsers></ViewUsers>}></Route>
       <Route path="/admin/category" element={<Category></Category>}></Route>
+      <Route path="/admin/category/:id" element={<CategoryDetails></CategoryDetails>}></Route>
 
     </Routes>
+          <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        theme="light"
+      />
      
     </>
   )

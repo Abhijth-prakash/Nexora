@@ -7,5 +7,6 @@ router.use(authenticateAdmin)
 
 router.post('/category',CategoryController.addCategory)
 router.get('/category',CategoryController.getCategories)
+router.get('/category/:id',CategoryController.getCategories)
 
 module.exports = router

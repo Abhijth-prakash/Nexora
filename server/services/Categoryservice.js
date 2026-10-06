@@ -101,6 +101,33 @@ static async getcategories(){
 }
 
 
+//get category by id
+
+static async getCategory(id) {
+    try {
+        const category = await Category.findById(id);
+
+        if (!category) {
+            throw new NotFoundError("category not found");
+        }
+
+        const subCategories = await Subcategory.find({
+            category: category._id
+        });
+
+        logger.info("successfully fetched category");
+
+        return {
+            category,
+            subCategories
+        };
+
+    } catch (error) {
+        logger.error("failed to get category", error);
+        throw error;
+    }
+}
+
 }
 
 
