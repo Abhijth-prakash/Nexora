@@ -40,7 +40,10 @@ module.exports = {
   admin:{
     EMAil:process.env.ADMIN_EMAIL,
     PASSWORD:process.env.ADMIN_PASSWORD
-  }
+  },
+
+  UncategorisedId: process.env.UncategorisedId
+  
 
 
 };

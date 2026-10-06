@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, ApiResponse,BlockUserresponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse } from "./apiTypes";
+import type { AddCategoryResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse } from "./apiTypes";
 
 
 const ClientApi = axios.create({
@@ -61,6 +61,10 @@ export const Categroy_APi = {
   },
   addCategory: async (data:categoryData): Promise<ApiResponse<AddCategoryResponse>> =>{
     const response = await ClientApi.post<ApiResponse<AddCategoryResponse>>("/admin/category",data)
+    return response.data
+  },
+    deleteCategory: async (id:string): Promise<ApiResponse<deleteCategoryResponse>> =>{
+    const response = await ClientApi.delete<ApiResponse<deleteCategoryResponse>>(`/admin/category/${id}`)
     return response.data
   },
 }

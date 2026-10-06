@@ -68,6 +68,24 @@ class CategoryController extends BaseController{
         )
         }
     )
+//delete category
+
+static deleteCategory = BaseController.asyncHandler(
+    async(req,res)=>{
+        const id = req.params.id
+        const validateData = BaseController.validateRequest(Idvalidation,id)
+
+        const result = await CategoryService.deleteCategory(validateData)
+
+          BaseController.sendSuccessResponse(
+            res,
+            ` successfully deleted category`  ,
+            null,
+            200
+        )
+
+    }
+)
         
     
 }

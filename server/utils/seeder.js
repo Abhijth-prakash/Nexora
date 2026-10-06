@@ -1,7 +1,8 @@
 const User = require("../models/User");
 const logger = require("./logger");
 const Admin = require('../models/Admin')
-const config = require('../config/config')
+const config = require('../config/config');
+const {Category} = require('../models/Category')
 
 
 const seedAdmin = async () => {
@@ -67,10 +68,35 @@ const seedSampleUsers = async () => {
   }
 };
 
+const seedUncategorised = async () => {
+  try {
+    const existingCategory = await Category.findOne({
+      name: "Uncategorised"
+    });
+
+    if (!existingCategory) {
+      const uncategorised = new Category({
+        name: "Uncategorised",
+        description: "This is for uncategorised products and subcategories",
+        isVisible: false
+      });
+
+      await uncategorised.save();
+
+      logger.info("Created category: Uncategorised");
+    } else {
+      logger.info("Uncategorised category already exists");
+    }
+  } catch (error) {
+    logger.error("Error seeding Uncategorised category:", error);
+  }
+};
+
 const runSeeders = async () => {
   try {
     await seedAdmin();
     await seedSampleUsers();
+    await seedUncategorised()
     logger.info("Database seeding completed");
   } catch (error) {
     logger.error("Database seeding failed:", error);

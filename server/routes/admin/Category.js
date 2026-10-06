@@ -8,5 +8,6 @@ router.use(authenticateAdmin)
 router.post('/category',CategoryController.addCategory)
 router.get('/category',CategoryController.getCategories)
 router.get('/category/:id',CategoryController.getCategory)
+router.delete('/category/:id',CategoryController.deleteCategory)
 
 module.exports = router

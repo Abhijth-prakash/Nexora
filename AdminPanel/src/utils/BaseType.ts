@@ -29,4 +29,6 @@ export type BaseSubcategory={
     _id: string
     name:string
     isVisible:boolean
+    slug:string
+    productCount:number
 }

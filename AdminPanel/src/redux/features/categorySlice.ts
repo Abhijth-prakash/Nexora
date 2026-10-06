@@ -5,170 +5,193 @@ import axios from "axios";
 import type { categoryData } from "../../utils/validation";
 
 export type CategoryState = {
-    categories: Basecategory[];
-    category:Basecategory |null
-    loading: boolean;
-    error: string | null;
-    subCategories:BaseSubcategory[]
-    fetched:boolean 
-    fetchByid:boolean
-    Catid:string|null
+  categories: Basecategory[];
+  category: Basecategory | null;
+  loading: boolean;
+  error: string | null;
+  subCategories: BaseSubcategory[];
+  fetched: boolean;
+  fetchByid: boolean;
+  Catid: string | null;
 };
 
 const initialState: CategoryState = {
-    categories: [],
-    loading: false,
-    error: null,
-    subCategories:[],
-    category:null,
-    fetched:false,
-    fetchByid:false,
-    Catid:null
+  categories: [],
+  loading: false,
+  error: null,
+  subCategories: [],
+  category: null,
+  fetched: false,
+  fetchByid: false,
+  Catid: null,
 };
-
 
 //getallcatergories
 export const getAllCategories = createAsyncThunk(
-    "admin/categories/getall",
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await Categroy_APi.getCategories();
+  "admin/categories/getall",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await Categroy_APi.getCategories();
 
-            return response.data;
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to get categories. Please try again.",
+        );
+      }
 
-        } catch (error) {
-
-            if (axios.isAxiosError(error)) {
-                return rejectWithValue(
-                    error.response?.data?.error?.message ||
-                    "Failed to get categories. Please try again."
-                );
-            }
-
-            return rejectWithValue(
-                "Failed to get categories. Please try again."
-            );
-        }
+      return rejectWithValue("Failed to get categories. Please try again.");
     }
+  },
 );
 
 //addCategory
 
 export const addCategory = createAsyncThunk(
-    'admin/addCategory',
-    async (data:categoryData,{rejectWithValue})=>{
-        try{
-            const response = await Categroy_APi.addCategory(data)
-            return response.data
+  "admin/addCategory",
+  async (data: categoryData, { rejectWithValue }) => {
+    try {
+      const response = await Categroy_APi.addCategory(data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to add categories. Please try again.",
+        );
+      }
 
-        }catch(error){
-             if (axios.isAxiosError(error)) {
-                return rejectWithValue(
-                    error.response?.data?.error?.message ||
-                    "Failed to add categories. Please try again."
-                );
-            }
-
-            return rejectWithValue(
-                "Failed to add categories. Please try again."
-            );
-        }
+      return rejectWithValue("Failed to add categories. Please try again.");
     }
-)
+  },
+);
 
-//get categroy by id 
+//get categroy by id
 
 export const getCategory = createAsyncThunk(
-    'admin/getCategory',
-    async (id:string,{rejectWithValue})=>{
-        try{
+  "admin/getCategory",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await Categroy_APi.getCategory(id);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to get category. Please try again.",
+        );
+      }
 
-            const response = await Categroy_APi.getCategory(id)
+      return rejectWithValue("Failed to get category. Please try again.");
+    }
+  },
+);
+
+
+//delete category
+
+export const deleteCategory = createAsyncThunk(
+    'admin/deleteCategory',
+    async(id:string,{rejectWithValue})=>{
+        try{
+            const response = await Categroy_APi.deleteCategory(id)
             return response.data
 
         }catch(error){
 
-             if (axios.isAxiosError(error)) {
-                return rejectWithValue(
-                    error.response?.data?.error?.message ||
-                    "Failed to get category. Please try again."
-                );
-            }
+                  if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to get category. Please try again.",
+        );
+      }
 
-            return rejectWithValue(
-                "Failed to get category. Please try again."
-            );
+      return rejectWithValue("Failed to get category. Please try again.");
 
         }
     }
 )
 
 const categorySlice = createSlice({
-    name: "categorySlice",
+  name: "categorySlice",
 
-    initialState,
+  initialState,
 
-    reducers: {},
+  reducers: {},
 
-    extraReducers: (builder) => {
+  extraReducers: (builder) => {
+    builder
 
-        builder
+      //getting categories
+      .addCase(getAllCategories.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
 
-            //getting categories
-            .addCase(getAllCategories.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
+      .addCase(getAllCategories.fulfilled, (state, action) => {
+        state.loading = false;
+        state.fetched = true;
+        state.categories = action.payload;
+      })
 
-            .addCase(getAllCategories.fulfilled, (state, action) => {
-                state.loading = false;
-                state.fetched = true
-                state.categories = action.payload
-            })
+      .addCase(getAllCategories.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
 
-            .addCase(getAllCategories.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            })
+      //adding categories
+      .addCase(addCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
 
-            //adding categories
-            .addCase(addCategory.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
+      .addCase(addCategory.fulfilled, (state) => {
+        state.loading = false;
+      })
 
-            .addCase(addCategory.fulfilled, (state) => {
-                state.loading = false;
-            })
+      .addCase(addCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
 
-            .addCase(addCategory.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            })
+      //get category by id
+      .addCase(getCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.category = null;
+        state.subCategories = [];
+      })
+      .addCase(getCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.category = action.payload.category;
+        state.subCategories = action.payload.subCategories;
+        state.fetchByid = true;
+        state.Catid = action.payload.category._id;
+      })
 
+      .addCase(getCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
 
-             //get category by id
-         .addCase(getCategory.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-    state.category = null;
-    state.subCategories = [];
-})
-         .addCase(getCategory.fulfilled, (state, action) => {
-    state.loading = false;
-    state.category = action.payload.category;
-    state.subCategories = action.payload.subCategories;
-    state.fetchByid = true;
-    state.Catid = action.payload.category._id;
-})
+      //delete category
 
-            .addCase(getCategory.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            })
+      .addCase(deleteCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+    
+      })
+      .addCase(deleteCategory.fulfilled, (state, action) => {
+        state.loading = false;
+      })
 
-           
-    }
+      .addCase(deleteCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+  },
 });
 
 export default categorySlice.reducer;

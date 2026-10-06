@@ -9,7 +9,7 @@ const {
   ValidationError,
   OTPError,
 } = require("../utils/errors");
-
+const config = require('../config/config')
 
 class CategoryService {
 
@@ -126,6 +126,37 @@ static async getCategory(id) {
         logger.error("failed to get category", error);
         throw error;
     }
+}
+
+
+// delete category
+static async deleteCategory(id) {
+  try {
+    const uncategorisedId = config.UncategorisedId;
+
+    await Subcategory.updateMany(
+      { category: id },
+      {
+        $set: {
+          category: uncategorisedId
+        }
+      }
+    );
+
+    const deleted = await Category.findByIdAndDelete(id);
+
+    if (!deleted) {
+      throw new NotFoundError("category not found");
+    }
+
+    logger.info("successfully deleted category");
+
+    return true;
+
+  } catch (error) {
+    logger.error("failed to delete category", error);
+    throw error;
+  }
 }
 
 }

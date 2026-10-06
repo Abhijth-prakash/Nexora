@@ -70,6 +70,10 @@ const subcategorySchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+     productCount: {
+  type: Number,
+  default: 0,
+},
   },
   {
     timestamps: true,
