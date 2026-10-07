@@ -174,50 +174,42 @@ static async deleteCategory(id) {
 }
 
 //update category
-
 static async UpdateCategory(data, id) {
-    try {
-        const category = await Category.findById(id)
+  try {
+    const category = await Category.findById(id);
 
-        if (!category) {
-            throw new NotFoundError("category not found")
-        }
-
-        await Category.updateOne(
-            { _id: id },
-            {
-                $set: {
-                    name: data.name,
-                    description: data.description
-                }
-            }
-        )
-
-        if (data.subCategory) {
-
-            const subcategory = await Subcategory.findOne({
-                name: data.subCategory,
-                category: id
-            })
-
-            if (!subcategory) {
-                const newSub = new Subcategory({
-                    name: data.subCategory,
-                    category: id
-                })
-
-                await newSub.save()
-            }
-        }
-
-        logger.info(`${data.name} updated successfully`)
-
-        return true
-
-    } catch (error) {
-        logger.error("failed to update category", error)
-        throw error
+    if (!category) {
+      throw new NotFoundError("category not found");
     }
+
+    if (data.name !== undefined) category.name = data.name;
+    if (data.description !== undefined) category.description = data.description;
+
+    await category.save(); 
+
+    if (data.subCategory) {
+      const exists = await Subcategory.exists({
+        name: data.subCategory,
+        category: id,
+      });
+
+      if (!exists) {
+        await Subcategory.create({
+          name: data.subCategory,
+          category: id,
+        });
+      }
+    }
+
+    logger.info(`${category.name} updated successfully`);
+    return true;
+  } catch (error) {
+    if (error.code === 11000) {
+      throw new ConflictError("a category with this name already exists");
+    }
+    logger.error("failed to update category", error);
+    throw error;
+  }
 }
 
 
@@ -265,6 +257,30 @@ static async unHidecategory(id){
     }catch(error){
         logger.error('failed to unhide category',error)
         throw error
+    }
+}
+
+//delete subcategory
+
+static async deleteSubcategory(id, subId) {
+    try {
+
+        const deleteSUb = await Subcategory.deleteOne({
+            _id: subId,
+            category: id
+        });
+
+        if (deleteSUb.deletedCount === 0) {
+            throw new NotFoundError("subcategory not found");
+        }
+
+        logger.info("subcategory deleted successfully");
+
+        return true;
+
+    } catch (error) {
+        logger.error("failed to delete subcategory", error);
+        throw error;
     }
 }
 

@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import {
     addCategory,
     getAllCategories,
+    getCategory,
     updateCategory
 } from "../../redux/features/categorySlice"
 import { toast } from "react-toastify"
@@ -78,7 +79,7 @@ const CategoryForm = ({ onClose, editid }: props) => {
 
                 toast.success("Category added successfully")
             }
-
+            await dispatch(getCategory(editid)).unwrap()
             dispatch(getAllCategories())
             onClose()
 

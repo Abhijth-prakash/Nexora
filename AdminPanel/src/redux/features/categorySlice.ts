@@ -200,6 +200,40 @@ export const unhideCategory = createAsyncThunk(
 )
 
 
+//delete subCategory
+
+
+
+export const deleteSubCategory = createAsyncThunk(
+    "admin/deleteSubCategory",
+    async (
+       {  id,subId }: { id: string; subId: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await Categroy_APi.deleteSubCategory(id,subId)
+
+            return response.data
+
+        } catch (error) {
+
+            if (axios.isAxiosError(error)) {
+                return rejectWithValue(
+                    error.response?.data?.error?.message ||
+                    "Failed to delete  subcategory. Please try again."
+                )
+            }
+
+            return rejectWithValue(
+                  "Failed to delete  subcategory. Please try again."
+            )
+        }
+    }
+)
+
+
+
+
 
 const categorySlice = createSlice({
   name: "categorySlice",
@@ -307,6 +341,22 @@ const categorySlice = createSlice({
       })
 
       .addCase(unhideCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+
+      //deleteSubcategory
+      .addCase(deleteSubCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+    
+      })
+      .addCase(deleteSubCategory.fulfilled, (state) => {
+        state.loading = false;
+      })
+
+      .addCase(deleteSubCategory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

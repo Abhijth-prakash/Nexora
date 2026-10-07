@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getCategory } from "../../redux/features/categorySlice";
 import Subcategory from "./Subcategory";
 import CategoryForm from "./CategoryForm";
+import SubcategoryDelete from "./SubcategoryDelete";
 
 const CategoryDetails = () => {
   const { id } = useParams();
@@ -19,6 +20,8 @@ const CategoryDetails = () => {
   const [sub, setSub] = useState(false);
   const [editid, setEditid] = useState('')
   const [form, setForm] = useState(false)
+  const [remove,setRemove] =useState(false)
+  const [subId,setSubId] = useState("")
 
 
       const editHandle = () => {
@@ -35,6 +38,8 @@ const CategoryDetails = () => {
         setEditid('')
     }
 
+
+    //adding subcategory
   const subHandle = () => {
     setSub(true);
   };
@@ -44,6 +49,19 @@ const CategoryDetails = () => {
   const onClose = () => {
     setSub(false);
   };
+
+  //deleteing subcategory
+  const deleteHandle = (id:string)=>{
+    setSubId(id)
+    setRemove(true)
+  }
+
+  const close = ()=>{
+    setSubId("")
+    setRemove(false)
+  }
+
+
 
   const listItems = subCategories.map((item) => (
     <div
@@ -101,7 +119,9 @@ const CategoryDetails = () => {
 
       {/* Action */}
       <div>
-        <button className="text-xs font-semibold text-red-500 transition hover:text-red-700">
+        <button
+        onClick={()=> deleteHandle(item._id)} 
+        className="text-xs font-semibold text-red-500 transition hover:text-red-700">
           Delete
         </button>
       </div>
@@ -120,6 +140,8 @@ const CategoryDetails = () => {
     <div className="min-h-screen w-full bg-[#faf7f5] px-4 py-6 sm:px-6 lg:px-8">
 
         {form && <CategoryForm onClose={onCLose}  editid={editid} ></CategoryForm>}
+
+        {remove && category&& <SubcategoryDelete close={close} id={category?._id} subId={subId} ></SubcategoryDelete>}
 
       {sub && category && (
         <Subcategory

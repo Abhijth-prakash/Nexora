@@ -135,6 +135,28 @@ static unHidecategory = BaseController.asyncHandler(
         
     }
 )
+
+
+//delete subCategory
+
+
+static deleteSubcategory = BaseController.asyncHandler(
+    async(req,res)=>{
+        const id = req.params.id
+        const subId = req.params.subId
+
+        await CategoryService.deleteSubcategory(id,subId)
+
+        BaseController.sendSuccessResponse(
+            res,
+           "Successfully deleted Subcategory"  ,
+            null,
+            200
+        )
+    }
+)
+
+
         
     
 }

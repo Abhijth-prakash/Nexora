@@ -45,3 +45,5 @@ export type updateCategoryResponse = null
 export type hideCategoryResponse = null
 export type unHideCategoryResponse = null
 
+export type deleteSubCategoryResponse = null
+

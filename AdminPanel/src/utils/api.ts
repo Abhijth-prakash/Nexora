@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse } from "./apiTypes";
+import type { AddCategoryResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse } from "./apiTypes";
 
 
 const ClientApi = axios.create({
@@ -77,6 +77,10 @@ hideCategory: async (id: string): Promise<ApiResponse<hideCategoryResponse>> => 
 },
 unhideCategory: async (id: string): Promise<ApiResponse<unHideCategoryResponse>> => {
     const response = await ClientApi.post<ApiResponse<unHideCategoryResponse>>(`/admin/category/unhide/${id}`)
+    return response.data
+},
+deleteSubCategory: async (id: string,subId:string): Promise<ApiResponse<deleteSubCategoryResponse>> => {
+    const response = await ClientApi.delete<ApiResponse<deleteSubCategoryResponse>>(`/admin/category/subCategory/${id}/${subId}`)
     return response.data
 },
 }
