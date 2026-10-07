@@ -34,7 +34,13 @@ export type UnBlockUserresponse = null
 
 
 
-export type GetCategoryResponse = Basecategory[]
+export type GetCategoryResponse = {
+  categories:Basecategory[]
+  totalCategries:number
+  totalPages:number
+}
+
+
 export type AddCategoryResponse = null
 export type GetCategoryByidResponse = {
   category: Basecategory;

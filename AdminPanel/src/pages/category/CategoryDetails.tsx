@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { useEffect, useState } from "react";
 import { getCategory } from "../../redux/features/categorySlice";
 import Subcategory from "./Subcategory";
-import CategoryForm from "./CategoryForm";
+
 import SubcategoryDelete from "./SubcategoryDelete";
 
 const CategoryDetails = () => {
@@ -139,11 +139,11 @@ const CategoryDetails = () => {
   return (
     <div className="min-h-screen w-full bg-[#faf7f5] px-4 py-6 sm:px-6 lg:px-8">
 
-        {form && <CategoryForm onClose={onCLose}  editid={editid} ></CategoryForm>}
+        {/* {form && <CategoryForm onClose={onCLose}  editid={editid} ></CategoryForm>} */}
 
         {remove && category&& <SubcategoryDelete close={close} id={category?._id} subId={subId} ></SubcategoryDelete>}
 
-      {sub && category && (
+      {sub && category && (                                                                                                                
         <Subcategory
           onClose={onClose}
           category={category}

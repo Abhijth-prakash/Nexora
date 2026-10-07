@@ -6,9 +6,12 @@ export type props = {
     onClose: () => void
     visible: boolean
     id: string
+    page:number
+    search:string
+    filter:string
 }
 
-const CategoryVisiblity = ({ onClose, visible, id }: props) => {
+const CategoryVisiblity = ({ onClose, visible, id,page,search,filter }: props) => {
     const dispatch = useAppDispatch()
 
 const handleVisible = async () => {
@@ -18,14 +21,14 @@ const handleVisible = async () => {
 
             toast.success("Category hidden successfully")
 
-            dispatch(getAllCategories())
+            dispatch(getAllCategories({page,search,filter}))
             onClose()
         } else {
             await dispatch(unhideCategory(id)).unwrap()
 
             toast.success("Category made visible successfully")
 
-            dispatch(getAllCategories())
+            dispatch(getAllCategories({page,search,filter}))
             onClose()
         }
 

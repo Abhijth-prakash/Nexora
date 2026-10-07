@@ -86,19 +86,69 @@ static async addCategory(data) {
 
 //getting all categories
 
-static async getcategories(){
-    try{
-    const categories = await Category.find()
-    if(!categories){
-        throw new NotFoundError('failed to get categories')
-    }
-    logger.info('succefully fetched all categories')
-    return categories
-    }catch(error){
-        logger.error('failed to get categories',error);
+static async getcategories(page, search, filter) {
+    try {
+        const currentPage = page || 1
+        const limit = 8
+        const skip = (currentPage - 1) * limit
+
+        const query = {}
+
+        
+        if (search) {
+            query.$or = [
+                {
+                    name: {
+                        $regex: search,
+                        $options: "i"
+                    }
+                }
+            ]
+        }
+
+        // Filter
+        if (filter) {
+
+            if (filter === "visible") {
+                query.isVisible = true
+            }
+
+            if (filter === "notvisible") {
+                query.isVisible = false
+            }
+        }
+
+       
+        const totalCategries = await Category.countDocuments(query)
+
+        // Total pages
+        const totalPages = Math.ceil(
+            totalCategries / limit
+        )
+
+        
+        const categories = await Category
+            .find(query)
+            .skip(skip)
+            .limit(limit)
+
+        logger.info("Successfully fetched all categories")
+
+        return {
+            categories,
+            totalCategries,
+            totalPages
+        }
+
+    } catch (error) {
+
+        logger.error(
+            "Failed to get categories",
+            error
+        )
+
         throw error
     }
-    
 }
 
 

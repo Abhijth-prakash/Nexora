@@ -4,6 +4,7 @@ import { Categroy_APi } from "../../utils/api";
 import axios from "axios";
 import type { categoryData } from "../../utils/validation";
 
+
 export type CategoryState = {
   categories: Basecategory[];
   category: Basecategory | null;
@@ -13,6 +14,14 @@ export type CategoryState = {
   fetched: boolean;
   fetchByid: boolean;
   Catid: string | null;
+  page:number
+  totalPages :number
+  totalCategries:number|null
+  lastQuery: {
+  page: number
+  search: string
+  filter: string
+} | null
 };
 
 const initialState: CategoryState = {
@@ -24,14 +33,18 @@ const initialState: CategoryState = {
   fetched: false,
   fetchByid: false,
   Catid: null,
+  page:1,
+  totalPages:1,
+  totalCategries:null,
+  lastQuery:null
 };
 
 //getallcatergories
 export const getAllCategories = createAsyncThunk(
   "admin/categories/getall",
-  async (_, { rejectWithValue }) => {
+  async ({page,search,filter}:{page:number,search:string,filter:string}, { rejectWithValue }) => {
     try {
-      const response = await Categroy_APi.getCategories();
+      const response = await Categroy_APi.getCategories(page,search,filter);
 
       return response.data;
     } catch (error) {
@@ -240,7 +253,16 @@ const categorySlice = createSlice({
 
   initialState,
 
-  reducers: {},
+  reducers: {
+    addpage: (state)=>{
+        state.page +=1
+    },
+    minuspage:(state)=>{
+        if(state.page>1){
+            state.page -=1
+        }
+    }
+  },
 
   extraReducers: (builder) => {
     builder
@@ -254,7 +276,10 @@ const categorySlice = createSlice({
       .addCase(getAllCategories.fulfilled, (state, action) => {
         state.loading = false;
         state.fetched = true;
-        state.categories = action.payload;
+        state.categories = action.payload.categories
+        state.totalCategries = action.payload.totalCategries
+       state.totalPages = action.payload.totalPages
+       state.lastQuery= action.meta.arg
       })
 
       .addCase(getAllCategories.rejected, (state, action) => {
@@ -367,3 +392,4 @@ const categorySlice = createSlice({
 });
 
 export default categorySlice.reducer;
+export const{addpage,minuspage} = categorySlice.actions

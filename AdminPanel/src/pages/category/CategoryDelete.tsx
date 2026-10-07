@@ -4,15 +4,18 @@ import { useAppDispatch } from "../../redux/hooks";
 export type props = {
     id: string;
     Close: () => void;
+    page:number
+    search:string
+    filter:string
 };
 
-const CategoryDelete = ({ id, Close }: props) => {
+const CategoryDelete = ({ id, Close,page,search,filter }: props) => {
     const dispatch = useAppDispatch();
 
     const handleDelete = async () => {
         try {
             await dispatch(deleteCategory(id)).unwrap();
-            await dispatch(getAllCategories());
+            await dispatch(getAllCategories({page,search,filter}));
             Close();
         } catch (error) {
 

@@ -51,8 +51,8 @@ export const user_APi = {
 
 //category
 export const Categroy_APi = {
-  getCategories: async (): Promise<ApiResponse<GetCategoryResponse>> =>{
-    const response = await ClientApi.get<ApiResponse<GetCategoryResponse>>("/admin/category")
+  getCategories: async (page:number,search:string,filter:string): Promise<ApiResponse<GetCategoryResponse>> =>{
+    const response = await ClientApi.get<ApiResponse<GetCategoryResponse>>("/admin/category",{params:{page,search,filter}})
     return response.data
   },
   getCategory: async (id:string): Promise<ApiResponse<GetCategoryByidResponse>> =>{

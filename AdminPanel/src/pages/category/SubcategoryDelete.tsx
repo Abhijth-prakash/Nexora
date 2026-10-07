@@ -1,5 +1,4 @@
 import {
-    getAllCategories,
     getCategory,
     deleteSubCategory
 } from "../../redux/features/categorySlice"
@@ -27,8 +26,6 @@ const SubcategoryDelete = ({ close, id, subId }: props) => {
             ).unwrap()
 
             await dispatch(getCategory(id)).unwrap()
-
-            await dispatch(getAllCategories())
 
             toast.success("Subcategory deleted successfully")
 

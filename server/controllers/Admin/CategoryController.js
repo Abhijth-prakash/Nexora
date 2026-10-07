@@ -38,7 +38,11 @@ class CategoryController extends BaseController{
 
     static getCategories = BaseController.asyncHandler(
         async(req,res)=>{
-            const result =await CategoryService.getcategories()
+
+        const page = req.query.page
+        const search = req.query.search
+        const filter = req.query.filter
+            const result =await CategoryService.getcategories(page,search,filter)
 
                BaseController.sendSuccessResponse(
             res,

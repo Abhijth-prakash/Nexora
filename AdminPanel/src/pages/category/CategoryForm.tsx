@@ -14,9 +14,12 @@ import { useEffect } from "react"
 export type props = {
     onClose: () => void
     editid: string
+    page:number
+    search:string
+    filter:string
 }
 
-const CategoryForm = ({ onClose, editid }: props) => {
+const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
     const dispatch = useAppDispatch()
 
     const { categories } = useAppSelector(
@@ -28,7 +31,7 @@ const CategoryForm = ({ onClose, editid }: props) => {
         categories.find(item => item._id === editid)
 
     useEffect(() => {
-        dispatch(getAllCategories())
+        dispatch(getAllCategories({page,search,filter}))
     }, [])
 
     const {
@@ -80,7 +83,7 @@ const CategoryForm = ({ onClose, editid }: props) => {
                 toast.success("Category added successfully")
             }
             await dispatch(getCategory(editid)).unwrap()
-            dispatch(getAllCategories())
+            dispatch(getAllCategories({page,search,filter}))
             onClose()
 
         } catch (error) {
