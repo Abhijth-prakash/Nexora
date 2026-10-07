@@ -1,5 +1,5 @@
 import { getAllCategories, hideCategory, unhideCategory } from "../../redux/features/categorySlice"
-import { useAppDispatch, useAppSelector } from "../../redux/hooks"
+import { useAppDispatch } from "../../redux/hooks"
 import { toast } from "react-toastify"
 
 export type props = {

@@ -64,3 +64,9 @@ export const CategorySchema = z.object({
 })
 
 export type categoryData = z.infer<typeof CategorySchema>
+
+export const subCategorySchema = z.object({
+  subCategory: z.string().min(1, "subCategory is required")
+})
+
+export type subCategoryData = z.infer<typeof subCategorySchema>
