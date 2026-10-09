@@ -38,6 +38,26 @@ static visibleToggle = BaseController.asyncHandler(
         BaseController.sendSuccessResponse(
             res,
             'Product visibility toggled successfully',
+            null,
+            200
+        );
+    }
+);
+
+
+//delete product
+static DeleteProduct = BaseController.asyncHandler(
+    async (req, res) => {
+        const id = BaseController.validateRequest(
+            Idvalidation,
+            req.params.id
+        );
+
+        const result = await ProductService.Delete(id);
+
+        BaseController.sendSuccessResponse(
+            res,
+            'Product deleted successfully',
             result,
             200
         );

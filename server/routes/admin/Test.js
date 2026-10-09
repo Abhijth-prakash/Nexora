@@ -5,6 +5,7 @@ const upload = require('../../config/multer')
 
 router.post('/products', upload.array('images', 5), ProductController.addProduct)
 router.patch('/products/visible', ProductController.visibleToggle);
+router.delete('/products/:id', ProductController.DeleteProduct);
 
 
 module.exports = router

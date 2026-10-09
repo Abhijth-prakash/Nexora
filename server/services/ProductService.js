@@ -93,6 +93,29 @@ static async visibleToggle(id) {
         throw error;
     }
 }
+
+
+//delete product
+
+static async Delete(id){
+    try{
+
+         const product = await Product.findById(id);
+
+        if (!product) {
+            throw new NotFoundError('product not found');
+        }
+
+        const deleteProduct = await Product.findByIdAndDelete(id)
+
+        logger.info(`product deleted succesfully ${product.name}`)
+        return true
+
+    }catch(error){
+        logger.error('failed to delete product')
+        throw error
+    }
+}
 }
 
 module.exports = ProductService;
