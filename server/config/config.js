@@ -42,7 +42,13 @@ module.exports = {
     PASSWORD:process.env.ADMIN_PASSWORD
   },
 
-  UncategorisedId: process.env.UncategorisedId
+  UncategorisedId: process.env.UncategorisedId,
+
+  cloudinary:{
+      cloud_name:process.env.Cloudinary_cloud_name,
+      api_key:process.env.Cloudinary_api_key,
+      api_secret:process.env.Cloudinary_api_secret
+  }
   
 
 

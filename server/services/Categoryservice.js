@@ -10,7 +10,7 @@ const {
   OTPError,
 } = require("../utils/errors");
 const config = require('../config/config');
-const { notFound } = require("../middilewares/errorHandler");
+
 
 class CategoryService {
 

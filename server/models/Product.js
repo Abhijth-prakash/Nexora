@@ -63,7 +63,7 @@ const ProductSchema = new mongoose.Schema(
 
     subCategory: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "SubCategory",
+      ref: "Subcategory",
       required: true,
     },
 
@@ -77,7 +77,10 @@ const ProductSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-
+    size:{
+      type:[String],
+      default: [],
+    },
     rating: {
       type: Number,
       default: 0,

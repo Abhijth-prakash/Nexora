@@ -210,6 +210,63 @@ const CategoryValidation = Joi.object({
 
 const Idvalidation = Joi.string().required();
 
+
+
+
+
+
+const ProductValidation = Joi.object({
+  name: Joi.string().trim().required().messages({
+    "string.empty": "Product name is required",
+    "any.required": "Product name is required",
+  }),
+
+  description: Joi.string().required().messages({
+    "string.empty": "Product description is required",
+    "any.required": "Product description is required",
+  }),
+
+  category: Joi.string()
+    .hex()
+    .length(24)
+    .required()
+    .messages({
+      "string.hex": "Invalid category ID",
+      "string.length": "Category ID must be a valid MongoDB ObjectId",
+      "any.required": "Category is required",
+    }),
+
+  subCategory: Joi.string()
+    .hex()
+    .length(24)
+    .required()
+    .messages({
+      "string.hex": "Invalid subcategory ID",
+      "string.length": "Subcategory ID must be a valid MongoDB ObjectId",
+      "any.required": "Subcategory is required",
+    }),
+
+  visible: Joi.boolean().default(true),
+
+  price: Joi.number().min(0).required().messages({
+    "number.base": "Price must be a number",
+    "number.min": "Price cannot be negative",
+    "any.required": "Price is required",
+  }),
+
+  size: Joi.array()
+    .items(Joi.string().trim())
+    .default([]),
+
+  rating: Joi.number().min(0).max(5).default(0),
+
+  numReviews: Joi.number().integer().min(0).default(0),
+
+
+});
+
+module.exports = ProductValidation;
+
 module.exports = {
   registerValidate,
   OTPValidation,
@@ -220,5 +277,6 @@ module.exports = {
   changepasswordValidation,
   ProfileValidation,
   CategoryValidation,
-  Idvalidation
+  Idvalidation,
+  ProductValidation
 };

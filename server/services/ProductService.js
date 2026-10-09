@@ -1,16 +1,74 @@
 const logger = require("../utils/logger")
+const Product = require('../models/Product')
+const {
+  ConflictError,
+  AuthenticationError,
+  NotFoundError,
+  AuthorizationError,
+  ValidationError,
+  OTPError,
+} = require("../utils/errors");
+const config = require('../config/config');
+const uploadFile = require('../config/cloudinary');
+const {Category,Subcategory} = require("../models/Category");
 
-class ProductService{
+class ProductService {
+    static async addProduct(data, files) {
+        try {
+            const existingProduct = await Product.findOne({
+                name: data.name
+            });
 
-    static async addProduct(){
-        try{
+            if (existingProduct) {
+                throw new ConflictError('product already exists');
+            }
 
-        }catch(error){
-            logger.error('failed to add product',error)
-            throw error
+            const imageUrls = await Promise.all(
+                files.map(async file => {
+                    const result = await uploadFile(file.path);
+                    return result.secure_url;
+                })
+            );
+
+            const category = await Category.findOne({
+                name: data.Category
+            });
+
+            if (!category) {
+                throw new NotFoundError('category not found');
+            }
+
+            const subcategory = await Subcategory.findOne({
+                name: data.Subcategory
+            });
+
+            if (!subcategory) {
+                throw new NotFoundError('subcategory not found');
+            }
+
+            const newProduct = new Product({
+                name: data.name,
+                description: data.description,
+                visible: data.visible,
+                price: data.price,
+                size: data.size,
+                images: imageUrls,
+                category: category._id,
+                subCategory: subcategory._id
+            });
+
+            await newProduct.save();
+
+            logger.info('new product added successfully');
+
+            return newProduct;
+
+        } catch (error) {
+            logger.error('failed to add product', error);
+            throw error;
         }
     }
-
 }
 
-module.exports = ProductService
+module.exports = ProductService;
+
