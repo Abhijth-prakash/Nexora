@@ -1,4 +1,4 @@
-const ProductValidation = require("../../utils/validation");
+const {ProductValidation,Idvalidation} = require("../../utils/validation");
 const BaseController = require("../baseController");
 const ProductService = require('../../services/ProductService')
 
@@ -21,9 +21,31 @@ class ProductController extends BaseController{
                     )
         }
     )
+
+
+    //visible toggling
+
+static visibleToggle = BaseController.asyncHandler(
+    async (req, res) => {
+
+        const id  = BaseController.validateRequest(
+            Idvalidation,
+            req.query.id
+        );
+
+        const result = await ProductService.visibleToggle(id);
+
+        BaseController.sendSuccessResponse(
+            res,
+            'Product visibility toggled successfully',
+            result,
+            200
+        );
+    }
+);
 }
 
-//visible toggling
+
 
 
 

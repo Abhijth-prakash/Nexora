@@ -13,6 +13,8 @@ const uploadFile = require('../config/cloudinary');
 const {Category,Subcategory} = require("../models/Category");
 
 class ProductService {
+
+    //ading product
     static async addProduct(data, files) {
         try {
             const existingProduct = await Product.findOne({
@@ -68,6 +70,29 @@ class ProductService {
             throw error;
         }
     }
+
+static async visibleToggle(id) {
+    try {
+        const product = await Product.findById(id);
+
+        if (!product) {
+            throw new NotFoundError('product not found');
+        }
+
+       const updatedProduct = await Product.findByIdAndUpdate(
+    id,
+    { $set: { visible: !product.visible } },
+    { returnDocument: 'after' }
+);
+
+        logger.info('product visibility toggled successfully');
+
+        return updatedProduct;
+    } catch (error) {
+        logger.error('failed to toggle visibility', error);
+        throw error;
+    }
+}
 }
 
 module.exports = ProductService;
