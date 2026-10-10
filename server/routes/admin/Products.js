@@ -10,6 +10,7 @@ router.use(authenticateAdmin)
 router.post('/products', upload.array('images', 5), ProductController.addProduct)
 router.patch('/products/visible', ProductController.visibleToggle);
 router.delete('/products/:id', ProductController.DeleteProduct);
+router.patch('/products/:id',upload.array('images', 5),ProductController.UpdateProduct);
 
 
 module.exports = router

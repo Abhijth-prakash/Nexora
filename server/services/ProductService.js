@@ -17,6 +17,7 @@ class ProductService {
     //ading product
     static async addProduct(data, files) {
         try {
+            console.log(data)
             const existingProduct = await Product.findOne({
                 name: data.name
             });
@@ -33,7 +34,7 @@ class ProductService {
             );
 
             const category = await Category.findOne({
-                name: data.Category
+                name: data.category
             });
 
             if (!category) {
@@ -41,7 +42,7 @@ class ProductService {
             }
 
             const subcategory = await Subcategory.findOne({
-                name: data.Subcategory
+                name: data.subCategory
             });
 
             if (!subcategory) {
@@ -71,6 +72,8 @@ class ProductService {
         }
     }
 
+
+    //visiblity toggle
 static async visibleToggle(id) {
     try {
         const product = await Product.findById(id);
@@ -95,6 +98,8 @@ static async visibleToggle(id) {
 }
 
 
+
+
 //delete product
 
 static async Delete(id){
@@ -116,6 +121,49 @@ static async Delete(id){
         throw error
     }
 }
+
+//update product
+static async updateProduct(id, data, files) {
+    try {
+        const product = await Product.findById(id);
+
+        if (!product) {
+            throw new NotFoundError('product not found');
+        }
+
+        let imageUrls = [];
+
+        if (files && files.length > 0) {
+            imageUrls = await Promise.all(
+                files.map(async file => {
+                    const result = await uploadFile(file.path);
+                    return result.secure_url;
+                })
+            );
+        }
+
+        const updateData = {
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            size: data.size,
+        };
+
+        if (imageUrls.length > 0) {
+            updateData.images = imageUrls;
+        }
+
+        await Product.findByIdAndUpdate(id, { $set: updateData });
+
+        logger.info(`succesfully updated product ${product.name}`);
+        return true;
+
+    } catch (error) {
+        logger.error('failed to update product', error);
+        throw error;
+    }
+}
+
 }
 
 module.exports = ProductService;

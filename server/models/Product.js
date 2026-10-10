@@ -28,12 +28,6 @@ const VariantSchema = new mongoose.Schema(
       default: 0,
     },
 
-    sku: {
-      type: String,
-      unique: true,
-      trim: true,
-    },
-
     images: {
       type: [String],
       default: [],
