@@ -70,3 +70,25 @@ export const subCategorySchema = z.object({
 })
 
 export type subCategoryData = z.infer<typeof subCategorySchema>
+
+
+export const productSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+
+  description: z.string().trim().min(1, "Description is required"),
+
+  color: z.string().optional(),
+
+  brand: z.string().trim().min(1, "Brand is required"),
+
+  stock: z.coerce.number().min(0, "Stock cannot be negative"),
+
+  price: z.coerce.number().min(0, "Price cannot be negative"),
+
+  size: z.array(z.string()).default([]),
+
+  rating: z.coerce.number().min(0).max(5).default(0),
+
+});
+
+export type ProductFormData = z.infer<typeof productSchema>;

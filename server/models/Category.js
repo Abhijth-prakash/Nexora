@@ -45,6 +45,16 @@ categorySchema.pre("save", function () {
 });
 
 
+categorySchema.post("save", async function (doc) {
+  const exists = await mongoose.model("Subcategory").exists({ category: doc._id });
+  if (!exists) {
+    await mongoose.model("Subcategory").create({ name: "General", category: doc._id });
+  }
+});
+
+
+
+
 
 
 const subcategorySchema = new mongoose.Schema(

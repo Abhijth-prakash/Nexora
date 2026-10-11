@@ -32,3 +32,4 @@ export type BaseSubcategory={
     slug:string
     productCount:number
 }
+

@@ -1,7 +1,8 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse } from "./apiTypes";
+import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse } from "./apiTypes";
+
 
 
 const ClientApi = axios.create({
@@ -84,6 +85,19 @@ deleteSubCategory: async (id: string,subId:string): Promise<ApiResponse<deleteSu
     return response.data
 },
 }
+
+
+//product
+export const Product_Api = {
+  addProduct: async (data: FormData): Promise<ApiResponse<AddProductResponse>> => {
+    const response = await ClientApi.post<ApiResponse<AddProductResponse>>(
+      "/admin/products",
+      data,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return response.data;
+  },
+};
 
 
 

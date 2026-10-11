@@ -8,6 +8,8 @@ export type ApiResponse<T> = {
 }
 
 
+
+//auth
 export type LoginResponse = {
     admin:BaseAdmin
 }
@@ -18,6 +20,8 @@ export type Forgetpass = null
 export type Resetpass = null
 
 
+
+//users
 export type GetUsersResponse = {
   data:{
   users:[]
@@ -33,6 +37,8 @@ export type BlockUserresponse = null
 export type UnBlockUserresponse = null
 
 
+
+//category
 
 export type GetCategoryResponse = {
   categories:Basecategory[]
@@ -53,3 +59,8 @@ export type unHideCategoryResponse = null
 
 export type deleteSubCategoryResponse = null
 
+
+
+//products
+
+export type AddProductResponse = null

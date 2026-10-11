@@ -53,6 +53,11 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
         }
     }, [category, reset])
 
+
+
+
+    
+
     const handleData = async (data: categoryData) => {
         try {
             if (editid) {
@@ -70,6 +75,8 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                 ).unwrap()
 
                 toast.success("Category updated successfully")
+                dispatch(getCategory(editid))
+                onClose()
 
             } else {
                 const modData = {
@@ -82,7 +89,6 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
 
                 toast.success("Category added successfully")
             }
-            await dispatch(getCategory(editid)).unwrap()
             dispatch(getAllCategories({page,search,filter}))
             onClose()
 
@@ -90,7 +96,7 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
             toast.error(
                 editid
                     ? "Failed to update category"
-                    : "Failed to add category"
+                    : "Failed to add new  category"
             )
         }
     }

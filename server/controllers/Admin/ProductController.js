@@ -9,11 +9,12 @@ class ProductController extends BaseController{
 
     //adding product
 static addProduct = BaseController.asyncHandler(
-    async (req, res) => {
-        if (req.body.size) {
-            req.body.size = JSON.parse(req.body.size);
-        }
+    async (req, res) => { 
+       
 
+        if(req.body.size){
+          req.body.size = JSON.parse(req.body.size);
+        }
         const validatedData = BaseController.validateRequest(
             ProductValidation,
             req.body

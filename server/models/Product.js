@@ -48,6 +48,21 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    color: {
+      type: String,
+      trim: true,
+    },
+     brand: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
 
     category: {
       type: mongoose.Schema.Types.ObjectId,
@@ -101,5 +116,8 @@ const ProductSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+ProductSchema.index({ category: 1, visible: 1, createdAt: -1 });
+ProductSchema.index({ subCategory: 1, visible: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Product", ProductSchema);

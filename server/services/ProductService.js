@@ -33,17 +33,13 @@ class ProductService {
                 })
             );
 
-            const category = await Category.findOne({
-                name: data.category
-            });
+            const category = await Category.findById(data.category)
 
             if (!category) {
                 throw new NotFoundError('category not found');
             }
 
-            const subcategory = await Subcategory.findOne({
-                name: data.subCategory
-            });
+            const subcategory = await Subcategory.findById(data.subCategory);
 
             if (!subcategory) {
                 throw new NotFoundError('subcategory not found');
@@ -52,6 +48,9 @@ class ProductService {
             const newProduct = new Product({
                 name: data.name,
                 description: data.description,
+                brand:data.brand,
+                color:data.color,
+                stock:data.stock,
                 visible: data.visible,
                 price: data.price,
                 size: data.size,
@@ -147,6 +146,8 @@ static async updateProduct(id, data, files) {
             description: data.description,
             price: data.price,
             size: data.size,
+            stock:data.stock,
+            color:data.color
         };
 
         if (imageUrls.length > 0) {

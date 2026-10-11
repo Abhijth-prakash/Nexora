@@ -5,6 +5,7 @@ import { getCategory } from "../../redux/features/categorySlice";
 import Subcategory from "./Subcategory";
 
 import SubcategoryDelete from "./SubcategoryDelete";
+import CategoryForm from "./CategoryForm";
 
 const CategoryDetails = () => {
   const { id } = useParams();
@@ -139,7 +140,7 @@ const CategoryDetails = () => {
   return (
     <div className="min-h-screen w-full bg-[#faf7f5] px-4 py-6 sm:px-6 lg:px-8">
 
-        {/* {form && <CategoryForm onClose={onCLose}  editid={editid} ></CategoryForm>} */}
+        {form && <CategoryForm onClose={onCLose} page={1} filter={""} search=""  editid={editid} ></CategoryForm>}
 
         {remove && category&& <SubcategoryDelete close={close} id={category?._id} subId={subId} ></SubcategoryDelete>}
 

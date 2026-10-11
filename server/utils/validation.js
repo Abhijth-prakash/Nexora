@@ -224,16 +224,25 @@ const ProductValidation = Joi.object({
         "string.empty": "Product description is required",
         "any.required": "Product description is required",
     }),
+   brand: Joi.string().trim().required().messages({
+    "string.empty": "Brand name is required",
+    "any.required": "Brand name is required",
+}),
+    color: Joi.string().trim().allow(""),
 
-    category: Joi.string().trim().required().messages({
-        "string.empty": "Category name is required",
-        "any.required": "Category name is required",
-    }),
+   category: Joi.string().hex().length(24).required().messages({
+    "string.empty": "Category ID is required",
+    "string.hex": "Invalid category ID",
+    "string.length": "Category ID must be a valid MongoDB ObjectId",
+    "any.required": "Category ID is required",
+}),
 
-    subCategory: Joi.string().trim().required().messages({
-        "string.empty": "Subcategory name is required",
-        "any.required": "Subcategory name is required",
-    }),
+subCategory: Joi.string().hex().length(24).required().messages({
+    "string.empty": "Subcategory ID is required",
+    "string.hex": "Invalid subcategory ID",
+    "string.length": "Subcategory ID must be a valid MongoDB ObjectId",
+    "any.required": "Subcategory ID is required",
+}),
 
     visible: Joi.boolean().default(true),
 
@@ -247,9 +256,9 @@ const ProductValidation = Joi.object({
         .items(Joi.string().trim())
         .default([]),
 
+    stock: Joi.number().min(0).default(0),
     rating: Joi.number().min(0).max(5).default(0),
 
-    numReviews: Joi.number().integer().min(0).default(0),
 });
 
 
@@ -275,6 +284,8 @@ const UpdateProductValidation = Joi.object({
   size: Joi.array()
     .items(Joi.string().trim())
     .default([]),
+  stock: Joi.number().min(0).default(0),
+  color: Joi.string().trim().allow(""),
 })
 
 module.exports = ProductValidation;
