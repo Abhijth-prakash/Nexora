@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css"
 import CategoryDetails from "./pages/category/CategoryDetails"
 import Product from "./pages/products/Product"
 import PublicRoute from "./components/PublicRoute"
+import ProductDetails from "./pages/products/ProductDetails"
 
 
 
@@ -31,9 +32,12 @@ function App() {
      
       <Route path="/dashboard" element={<Dashboard></Dashboard>}></Route>
       <Route path="/admin/users/view" element={<ViewUsers></ViewUsers>}></Route>
+
       <Route path="/admin/category" element={<Category></Category>}></Route>
       <Route path="/admin/category/:id" element={<CategoryDetails></CategoryDetails>}></Route>
+
       <Route path="/admin/products" element={<Product></Product>}></Route>
+      <Route path="/admin/products/:id" element={<ProductDetails></ProductDetails>}></Route>
 
 
     </Routes>

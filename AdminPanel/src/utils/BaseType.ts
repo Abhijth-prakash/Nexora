@@ -32,7 +32,6 @@ export type BaseSubcategory={
     slug:string
     productCount:number
 }
-
 export type BaseProduct = {
   _id: string;
   name: string;
@@ -54,8 +53,17 @@ export type BaseProduct = {
   rating: number;
   numReviews: number;
   images: string[];
-  variants: [];
+  variants: BaseVarient[];
   createdAt: string;
   updatedAt: string;
   __v: number;
+};
+
+export type BaseVarient = {
+  _id?: string;
+  color?: string;
+  size?: string;
+  price: number;
+  stock: number;
+  images: string[];
 };

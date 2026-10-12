@@ -5,10 +5,13 @@ const upload = require('../../config/multer')
 const CategoryController = require('../../controllers/Admin/CategoryController')
 
 router.post('/products', upload.array('images', 5), ProductController.addProduct)
+router.get('/products/:id',ProductController.GetProductbyid)
 router.patch('/products/visible', ProductController.visibleToggle);
 router.delete('/products/:id', ProductController.DeleteProduct);
 router.patch('/products/:id',upload.array('images', 5),ProductController.UpdateProduct);
 router.get('/products',ProductController.GetProducts)
 
 router.get('/category/all',CategoryController.getallCategories)
+
+
 module.exports = router

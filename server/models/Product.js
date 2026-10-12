@@ -120,4 +120,13 @@ const ProductSchema = new mongoose.Schema(
 ProductSchema.index({ category: 1, visible: 1, createdAt: -1 });
 ProductSchema.index({ subCategory: 1, visible: 1, createdAt: -1 });
 
+ProductSchema.methods.populateDetails = async function () {
+  await this.populate([
+    { path: "category", select: "name" },
+    { path: "subCategory", select: "name" },
+  ]);
+
+  return this;
+};
+
 module.exports = mongoose.model("Product", ProductSchema);

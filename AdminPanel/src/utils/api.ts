@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, visibleResponse } from "./apiTypes";
+import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, visibleResponse } from "./apiTypes";
 
 
 
@@ -104,6 +104,11 @@ export const Product_Api = {
   getProducts: async (page:number,search:string,sort:string,filter:string): Promise<ApiResponse<getProductsResponse>> => {
     const response = await ClientApi.get<ApiResponse<getProductsResponse>>(
       "/admin/products",{params:{page,search,sort,filter}} );
+    return response.data;
+  },
+  getProductbyid: async (id:string): Promise<ApiResponse<getProductbyidResponse>> => {
+    const response = await ClientApi.get<ApiResponse<getProductbyidResponse>>(
+      `admin/products/${id}` );
     return response.data;
   },
   visiblityToggle: async (id:string): Promise<ApiResponse<visibleResponse>> => {

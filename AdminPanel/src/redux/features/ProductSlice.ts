@@ -6,6 +6,7 @@ import type { BaseProduct } from "../../utils/BaseType";
 
 export type ProductState = {
     products:BaseProduct[]
+    product:BaseProduct | null
     loading:boolean,
      error: string | null
      page:number,
@@ -18,6 +19,7 @@ const initialState:ProductState = {
     products:[],
     page:1,
     totalPages:1,
+    product:null
 }
 
 export const addProduct = createAsyncThunk(
@@ -107,12 +109,36 @@ export const deleteProduct = createAsyncThunk(
               if (axios.isAxiosError(error)) {
         return rejectWithValue(
           error.response?.data?.error?.message ||
-          "Failed to toggle  product visiblity. Please try again."
+          "Failed to delete  product visiblity. Please try again."
         )
       }
 
       return rejectWithValue(
-        "Failed to toggle  product visiblity. Please try again."
+        "Failed to delete  product visiblity. Please try again."
+      )
+
+        }
+    }
+)
+
+export const getProductbyid = createAsyncThunk(
+    'admin/productsbyid',
+    async (id:string,{rejectWithValue})=>{
+        try{
+            const response = await Product_Api.getProductbyid(id)
+            return response.data
+
+        }catch(error){
+
+              if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to get  product . Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to get  product . Please try again."
       )
 
         }
@@ -169,7 +195,7 @@ const productSlice = createSlice({
             .addCase(visiblityToggle.pending,(state,)=>{
                 state.loading = true
             })
-            .addCase(visiblityToggle.fulfilled,(state,action)=>{
+            .addCase(visiblityToggle.fulfilled,(state)=>{
                 state.loading = false
             })
             .addCase(visiblityToggle.rejected,(state,action)=>{
@@ -182,10 +208,25 @@ const productSlice = createSlice({
             .addCase(deleteProduct.pending,(state,)=>{
                 state.loading = true
             })
-            .addCase(deleteProduct.fulfilled,(state,action)=>{
+            .addCase(deleteProduct.fulfilled,(state,)=>{
                 state.loading = false
             })
             .addCase(deleteProduct.rejected,(state,action)=>{
+                state.loading = false
+                state.error = action.payload as string
+            })
+
+
+            //get product by id
+            .addCase(getProductbyid.pending,(state,)=>{
+                state.loading = true
+            })
+            .addCase(getProductbyid.fulfilled,(state,action)=>{
+                state.loading = false
+                state.product = action.payload
+                console.log(action.payload)
+            })
+            .addCase(getProductbyid.rejected,(state,action)=>{
                 state.loading = false
                 state.error = action.payload as string
             })

@@ -8,6 +8,7 @@ const upload = require('../../config/multer')
 router.use(authenticateAdmin)
 
 router.get('/products',ProductController.GetProducts)
+router.get('/products/:id',ProductController.GetProductbyid)
 router.post('/products', upload.array('images', 5), ProductController.addProduct)
 router.patch('/products/visible', ProductController.visibleToggle);
 router.delete('/products/:id', ProductController.DeleteProduct);

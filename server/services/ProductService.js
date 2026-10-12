@@ -155,7 +155,9 @@ static async updateProduct(id, data, files) {
             price: data.price,
             size: data.size,
             stock:data.stock,
-            color:data.color
+            color:data.color,
+            brand:data.brand,
+            rating:data.rating
         };
 
         if (imageUrls.length > 0) {
@@ -225,6 +227,23 @@ static async getProducts(page, search, sort, filter) {
     };
   } catch (error) {
     logger.error("Failed to get products", error);
+    throw error;
+  }
+}
+
+
+//get product by id
+
+static async getProductByid(id) {
+  try {
+    const product = await Product.findById(id);
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    return await product.populateDetails();
+  } catch (error) {
     throw error;
   }
 }

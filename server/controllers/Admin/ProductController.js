@@ -122,6 +122,24 @@ static GetProducts = BaseController.asyncHandler(
     );
   }
 );
+
+
+static GetProductbyid = BaseController.asyncHandler(
+  async (req, res) => {
+    const id = req.params.id;
+
+    const result = await ProductService.getProductByid(id);
+
+    BaseController.sendSuccessResponse(
+      res,
+      "Product fetched successfully",
+      result,
+      200
+    );
+  }
+);
+
+
 }
 
 

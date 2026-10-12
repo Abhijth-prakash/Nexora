@@ -9,6 +9,7 @@ import {
 import { getallCategories } from "../../redux/features/categorySlice";
 import ProductVisibility from "./ProductVisibility";
 import ProductDelete from "./ProductDelete";
+import { Link } from "react-router-dom";
 
 const Product = () => {
 
@@ -139,12 +140,13 @@ const Product = () => {
       {/* Actions */}
       <td className="px-5 py-4">
         <div className="flex items-center gap-2">
-          <button
+          <Link to={`/admin/products/${item._id}`}
+
             type="button"
             className="rounded-lg border border-[#e9e4e1] px-3 py-2 text-xs font-semibold text-[#625b57] transition hover:border-[#ff624d] hover:text-[#ff624d]"
           >
             View
-          </button>
+          </Link>
 
           <button
             type="button"

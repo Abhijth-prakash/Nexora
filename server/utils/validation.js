@@ -265,18 +265,17 @@ subCategory: Joi.string().hex().length(24).required().messages({
 
 
 const UpdateProductValidation = Joi.object({
-
-   name: Joi.string().trim().required().messages({
+  name: Joi.string().trim().required().messages({
     "string.empty": "Product name is required",
     "any.required": "Product name is required",
   }),
 
-  description: Joi.string().required().messages({
+  description: Joi.string().trim().required().messages({
     "string.empty": "Product description is required",
     "any.required": "Product description is required",
   }),
 
-   price: Joi.number().min(0).required().messages({
+  price: Joi.number().min(0).required().messages({
     "number.base": "Price must be a number",
     "number.min": "Price cannot be negative",
     "any.required": "Price is required",
@@ -285,9 +284,15 @@ const UpdateProductValidation = Joi.object({
   size: Joi.array()
     .items(Joi.string().trim())
     .default([]),
+
   stock: Joi.number().min(0).default(0),
-  color: Joi.string().trim().allow(""),
-})
+
+  color: Joi.string().trim().allow("").default(""),
+
+  brand: Joi.string().trim().allow("").default(""),
+
+  rating: Joi.number().min(0).max(5).default(0),
+});
 
 module.exports = ProductValidation;
 
