@@ -111,6 +111,11 @@ export const Product_Api = {
       "/admin/products/visible",{},{params:{id}} );
     return response.data;
   },
+  deleteProduct: async (id:string): Promise<ApiResponse<visibleResponse>> => {
+    const response = await ClientApi.delete<ApiResponse<visibleResponse>>(
+      `/admin/products/${id}` );
+    return response.data;
+  },
   
 };
 

@@ -8,6 +8,7 @@ import {
 } from "../../redux/features/ProductSlice";
 import { getallCategories } from "../../redux/features/categorySlice";
 import ProductVisibility from "./ProductVisibility";
+import ProductDelete from "./ProductDelete";
 
 const Product = () => {
 
@@ -22,6 +23,7 @@ const Product = () => {
   const [visibleForm,setVisibleForm] = useState(false)
   const [visible,setVisible] = useState(false)
   const [id,setId] = useState("")
+  const [remove,setRemove] = useState(false)
 
 
 
@@ -48,6 +50,18 @@ const Product = () => {
 
   const CloseVisble = ()=>{
     setVisibleForm(false)
+    setId("")
+  }
+
+
+  //deleteHandle
+  const deletehanlde = (id:string)=>{
+    setId(id)
+    setRemove(true)
+  }
+
+  const removeClose = ()=>{
+    setRemove(false)
     setId("")
   }
 
@@ -140,6 +154,8 @@ const Product = () => {
           </button>
 
           <button
+
+            onClick={()=> deletehanlde(item._id)}
             type="button"
             className="rounded-lg border border-red-100 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
           >
@@ -155,6 +171,8 @@ const Product = () => {
       {form && <ProductForm onClose={onClose} />}
 
       {visibleForm&& <ProductVisibility CloseVisble={CloseVisble} visible={visible} id={id}></ProductVisibility>}
+
+      {remove && <ProductDelete id={id} removeClose={removeClose} ></ProductDelete>}
 
       {/* Full-width page content */}
       <div className="w-full space-y-7">
