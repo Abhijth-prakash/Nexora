@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, visibleResponse } from "./apiTypes";
+import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
 
 
 
@@ -121,6 +121,14 @@ export const Product_Api = {
       `/admin/products/${id}` );
     return response.data;
   },
+updateProduct: async (  id: string, data: FormData): Promise<ApiResponse<updateProductResponse>> => {
+  const response = await ClientApi.patch<ApiResponse<updateProductResponse>>(
+    `/admin/products/${id}`,
+    data
+  );
+
+  return response.data;
+},
   
 };
 

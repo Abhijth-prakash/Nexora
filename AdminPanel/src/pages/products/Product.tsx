@@ -25,6 +25,7 @@ const Product = () => {
   const [visible,setVisible] = useState(false)
   const [id,setId] = useState("")
   const [remove,setRemove] = useState(false)
+  const [editId,setEditid] =useState("")
 
 
 
@@ -40,6 +41,7 @@ const Product = () => {
 
   const onClose = () => {
     setForm(false);
+    setEditid("")
   };
 
   //visible handle
@@ -65,6 +67,14 @@ const Product = () => {
     setRemove(false)
     setId("")
   }
+
+  //edithandle
+  const editHandle = (id:string)=>{
+    setForm(true)
+    setEditid(id)
+  }
+
+
 
   useEffect(() => {
     dispatch(getProducts({ page, search, sort, filter }));
@@ -148,7 +158,8 @@ const Product = () => {
             View
           </Link>
 
-          <button
+          <button 
+            onClick={()=>editHandle(item._id)}
             type="button"
             className="rounded-lg bg-[#fff1ed] px-3 py-2 text-xs font-semibold text-[#e95f49] transition hover:bg-[#ffe3dc]"
           >
@@ -170,7 +181,7 @@ const Product = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#faf8f7] p-4 sm:p-6 lg:p-8">
-      {form && <ProductForm onClose={onClose} />}
+      {form && <ProductForm onClose={onClose} editId={editId}/>}
 
       {visibleForm&& <ProductVisibility CloseVisble={CloseVisble} visible={visible} id={id}></ProductVisibility>}
 

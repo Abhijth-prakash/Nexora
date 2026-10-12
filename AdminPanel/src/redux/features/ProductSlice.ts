@@ -46,6 +46,30 @@ export const addProduct = createAsyncThunk(
     }
 )
 
+export const updateProduct = createAsyncThunk(
+    'admin/updateproduct',
+    async ({id,data}:{id:string,data:FormData},{rejectWithValue})=>{
+        try{
+            const response = await Product_Api.updateProduct(id,data)
+            return response.data
+
+        }catch(error){
+
+              if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to update product. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to update product. Please try again."
+      )
+
+        }
+    }
+)
+
 
 export const getProducts = createAsyncThunk(
     'admin/getproducts',
@@ -227,6 +251,19 @@ const productSlice = createSlice({
                 console.log(action.payload)
             })
             .addCase(getProductbyid.rejected,(state,action)=>{
+                state.loading = false
+                state.error = action.payload as string
+            })
+
+
+            //update product 
+            .addCase(updateProduct.pending,(state,)=>{
+                state.loading = true
+            })
+            .addCase(updateProduct.fulfilled,(state,)=>{
+                state.loading = false
+            })
+            .addCase(updateProduct.rejected,(state,action)=>{
                 state.loading = false
                 state.error = action.payload as string
             })

@@ -92,3 +92,15 @@ export const productSchema = z.object({
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
+
+export const updateproductSchema = z.object({
+  name: z.string().trim().min(1, "Product name is required"),
+  description: z.string().trim().min(1, "Product description is required"),
+  price: z.coerce.number().min(0, "Price cannot be negative"),
+  size: z.array(z.string().trim()).default([]).optional(),
+  stock: z.coerce.number().min(0, "Stock cannot be negative"),
+  color: z.string().trim().optional(),
+  brand: z.string().trim().min(1, "Brand is required"),
+  rating: z.coerce.number().min(0).max(5).default(0),
+});
+

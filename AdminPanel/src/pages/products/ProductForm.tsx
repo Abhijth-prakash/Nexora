@@ -1,34 +1,44 @@
-
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
   getallCategories,
   getCategory,
 } from "../../redux/features/categorySlice";
-import { useForm } from "react-hook-form";
-import { productSchema, type ProductFormData } from "../../utils/validation";
+import { useForm, type Resolver } from "react-hook-form";
+import {
+  productSchema,
+  updateproductSchema,
+  type ProductFormData,
+} from "../../utils/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addProduct } from "../../redux/features/ProductSlice";
+import {
+  addProduct,
+  getProductbyid,
+  getProducts,
+  updateProduct,
+} from "../../redux/features/ProductSlice";
 import { toast } from "react-toastify";
 
 export type props = {
   onClose: () => void;
+  editId: string;
 };
 
-const ProductForm = ({ onClose }: props) => {
+const ProductForm = ({ onClose, editId }: props) => {
   const dispatch = useAppDispatch();
 
-
-  const { fetched, categories, subCategories,error } = useAppSelector(
+  const { fetched, categories, subCategories, error } = useAppSelector(
     (state) => state.categoryData
   );
+
+  const { product } = useAppSelector((state) => state.productData);
 
   const [category, setCategory] = useState("");
   const [subcategory, setSubCategory] = useState("");
   const [previmage, setPrevimage] = useState<string[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [formError, setFormError] = useState("");
-  const [clothing,setClothing] = useState(false)
+  const [clothing, setClothing] = useState(false);
 
   // Image preview logic
   const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,8 +64,13 @@ const ProductForm = ({ onClose }: props) => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
-  } = useForm({ resolver: zodResolver(productSchema) });
+  } = useForm<ProductFormData>({
+    resolver: zodResolver(
+      editId ? updateproductSchema : productSchema
+    ) as Resolver<ProductFormData>,
+  });
 
   // Fetch categories
   useEffect(() => {
@@ -73,9 +88,88 @@ const ProductForm = ({ onClose }: props) => {
     }
   }, [category, dispatch]);
 
-  // Submit product
+  // Fetch product when editing
+  useEffect(() => {
+    if (editId) {
+      dispatch(getProductbyid(editId));
+    }
+  }, [editId, dispatch]);
+
+  // Fill the form values and image previews when the product arrives
+  useEffect(() => {
+    if (editId && product && product._id === editId) {
+   
+      const productCategoryId =
+        typeof product.category === "string"
+          ? product.category
+          : product.category?._id;
+
+      const productCategory = categories.find(
+        (item) => item._id === productCategoryId
+      );
+
+      const isClothing =
+        productCategory?.name.toLowerCase() === "clothing" ||
+        (product.size?.length ?? 0) > 0;
+
+      setClothing(isClothing);
+
+      reset({
+        name: product.name,
+        description: product.description,
+        brand: product.brand,
+        color: product.color ?? "",
+        price: product.price,
+        stock: product.stock,
+        rating: product.rating,
+        ...(isClothing
+          ? { size: (product.size ?? []).join(", ") as unknown as string[] }
+          : {}),
+      });
+
+      setPrevimage(
+        (product.images ?? []).map((img: string | { url: string }) =>
+          typeof img === "string" ? img : img.url
+        )
+      );
+    }
+  }, [editId, product, categories, reset]);
+
+  
   const dataHandle = async (data: ProductFormData) => {
     try {
+
+       const page=1
+        const search = ""
+        const filter = ""
+        const sort = ""
+     
+      if (editId) {
+        const formData = new FormData();
+
+        formData.append("name", data.name);
+        formData.append("description", data.description);
+        formData.append("brand", data.brand);
+        formData.append("color", data.color ?? "");
+        formData.append("stock", String(data.stock));
+        formData.append("price", String(data.price));
+        formData.append("rating", String(data.rating));
+
+        if (clothing) {
+          formData.append("size", JSON.stringify(data.size ?? []));
+        }
+
+        await dispatch(updateProduct({ id: editId, data: formData })).unwrap();
+
+        toast.success("Product updated successfully!");
+    
+        dispatch(getProducts({page,search,filter,sort}))
+        dispatch(getallCategories());
+        onClose();
+        return;
+      }
+
+      // ---------- ADD MODE ----------
       if (!category) {
         setFormError("Please select a category");
         toast.error("Please select a category");
@@ -121,18 +215,20 @@ const ProductForm = ({ onClose }: props) => {
         formData.append("images", img);
       });
 
-      await dispatch(addProduct(formData)).unwrap()
+      await dispatch(addProduct(formData)).unwrap();
 
       toast.success("Product added successfully!");
-      dispatch(getallCategories())
+      dispatch(getProducts({page,search,filter,sort}))
+      dispatch(getallCategories());
       onClose();
     } catch (error: unknown) {
-  toast.error(
-    typeof error === "string"
-      ? error
-      : "Failed to add product. Please try again."
-  );
-}
+      toast.error(
+        typeof error === "string"
+          ? error
+          : "Failed to save product. Please try again."
+      );
+      onClose();
+    }
   };
 
   const inputClass =
@@ -141,14 +237,8 @@ const ProductForm = ({ onClose }: props) => {
   const labelClass = "mb-1.5 block text-xs font-semibold text-[#111111]";
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/50 p-3 backdrop-blur-[2px] sm:p-5"
-      onClick={onClose}
-    >
-      <div
-        className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[#E4E0DD] bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/50 p-3 backdrop-blur-[2px] sm:p-5">
+      <div className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[#E4E0DD] bg-white shadow-2xl">
         {/* Security banner */}
         <div className="shrink-0 bg-[#101010] px-3 py-2 text-center text-[9px] font-medium uppercase tracking-[0.12em] text-white/80 sm:tracking-[0.16em]">
           Nexora Admin Portal | Secure Store Management
@@ -166,7 +256,7 @@ const ProductForm = ({ onClose }: props) => {
               </span>
             </div>
             <p className="mt-1 text-sm text-[#8A756B]">
-              Add a new product to your store
+              {editId ? "Update product details" : "Add a new product to your store"}
             </p>
           </div>
 
@@ -186,70 +276,72 @@ const ProductForm = ({ onClose }: props) => {
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 sm:px-8"
         >
           <div className="space-y-6">
-            {/* Category and subcategory */}
-            <section>
-              <div className="mb-3">
-                <h3 className="text-sm font-semibold text-[#111111]">
-                  Product classification
-                </h3>
-                <p className="mt-1 text-xs text-[#8A756B]">
-                  Choose where this product belongs.
-                </p>
-              </div>
+            {/* Category and subcategory (add mode only) */}
+            {!editId && (
+              <>
+                <section>
+                  <div className="mb-3">
+                    <h3 className="text-sm font-semibold text-[#111111]">
+                      Product classification
+                    </h3>
+                    <p className="mt-1 text-xs text-[#8A756B]">
+                      Choose where this product belongs.
+                    </p>
+                  </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className={labelClass}>Category</label>
-              <select
-  name="category"
-  value={category}
-  onChange={(e) => {
-    const selectedCategoryId = e.target.value;
-    setCategory(selectedCategoryId);
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className={labelClass}>Category</label>
+                      <select
+                        name="category"
+                        value={category}
+                        onChange={(e) => {
+                          const selectedCategoryId = e.target.value;
+                          setCategory(selectedCategoryId);
 
-    const selectedCategory = categories.find(
-      (item) => item._id === selectedCategoryId
-    );
+                          const selectedCategory = categories.find(
+                            (item) => item._id === selectedCategoryId
+                          );
 
-    setClothing(
-      selectedCategory?.name.toLowerCase() === "clothing"
-    );
-  }}
-  className={inputClass}
->
-  <option value="">Select category</option>
+                          setClothing(
+                            selectedCategory?.name.toLowerCase() === "clothing"
+                          );
+                        }}
+                        className={inputClass}
+                      >
+                        <option value="">Select category</option>
 
-  {categories.map((item) => (
-    <option key={item._id} value={item._id}>
-      {item.name}
-    </option>
-  ))}
-</select>
-                </div>
+                        {categories.map((item) => (
+                          <option key={item._id} value={item._id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
+                    <div>
+                      <label className={labelClass}>Subcategory</label>
+                      <select
+                        name="subcategory"
+                        value={subcategory}
+                        onChange={(e) => setSubCategory(e.target.value)}
+                        disabled={!category}
+                        className={`${inputClass} disabled:cursor-not-allowed disabled:bg-[#F7F6F4] disabled:text-[#B5AAA4]`}
+                      >
+                        <option value="">Select subcategory</option>
+                        {subCategories.map((item) => (
+                          <option key={item._id} value={item._id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </section>
 
-
-                <div>
-                  <label className={labelClass}>Subcategory</label>
-                  <select
-                    name="subcategory"
-                    value={subcategory}
-                    onChange={(e) => setSubCategory(e.target.value)}
-                    disabled={!category}
-                    className={`${inputClass} disabled:cursor-not-allowed disabled:bg-[#F7F6F4] disabled:text-[#B5AAA4]`}
-                  >
-                    <option value="">Select subcategory</option>
-                    {subCategories.map((item) => (
-                      <option key={item._id} value={item._id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <div className="h-px bg-[#E4E0DD]" />
+                <div className="h-px bg-[#E4E0DD]" />
+              </>
+            )}
 
             {/* Basic information */}
             <section>
@@ -404,24 +496,26 @@ const ProductForm = ({ onClose }: props) => {
                 </div>
               </div>
 
-              {clothing && <div className="mt-4">
-                <label className={labelClass}>Available sizes</label>
-                <input
-                  type="text"
-                  {...register("size", {
-                    setValueAs: (value: string) =>
-                      value
-                        .split(",")
-                        .map((size: string) => size.trim())
-                        .filter(Boolean),
-                  })}
-                  placeholder="S, M, L, XL"
-                  className={inputClass}
-                />
-                <p className="mt-1.5 text-xs text-[#8A756B]">
-                  Separate each size with a comma.
-                </p>
-              </div>}
+              {clothing && (
+                <div className="mt-4">
+                  <label className={labelClass}>Available sizes</label>
+                  <input
+                    type="text"
+                    {...register("size", {
+                      setValueAs: (value: string) =>
+                        value
+                          .split(",")
+                          .map((size: string) => size.trim())
+                          .filter(Boolean),
+                    })}
+                    placeholder="S, M, L, XL"
+                    className={inputClass}
+                  />
+                  <p className="mt-1.5 text-xs text-[#8A756B]">
+                    Separate each size with a comma.
+                  </p>
+                </div>
+              )}
             </section>
 
             <div className="h-px bg-[#E4E0DD]" />
@@ -433,45 +527,50 @@ const ProductForm = ({ onClose }: props) => {
                   Product images
                 </h3>
                 <p className="mt-1 text-xs text-[#8A756B]">
-                  Upload up to 5 images to showcase your product.
+                  {editId
+                    ? "Current product images."
+                    : "Upload up to 5 images to showcase your product."}
                 </p>
               </div>
 
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#D8CEC8] bg-[#F7F6F4] px-4 py-6 text-center transition hover:border-[#F87552] hover:bg-[#FFF7F4]">
-                <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#FCE5DF] text-[#F87552]">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.7}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 16V4m0 0L8 8m4-4 4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"
-                    />
-                  </svg>
-                </span>
+              {/* Upload box (add mode only) */}
+              {!editId && (
+                <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#D8CEC8] bg-[#F7F6F4] px-4 py-6 text-center transition hover:border-[#F87552] hover:bg-[#FFF7F4]">
+                  <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#FCE5DF] text-[#F87552]">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.7}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 16V4m0 0L8 8m4-4 4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"
+                      />
+                    </svg>
+                  </span>
 
-                <span className="text-sm font-semibold text-[#111111]">
-                  Click to upload images
-                </span>
-                <span className="mt-1 text-xs text-[#8A756B]">
-                  Image files only · Maximum 5 images
-                </span>
+                  <span className="text-sm font-semibold text-[#111111]">
+                    Click to upload images
+                  </span>
+                  <span className="mt-1 text-xs text-[#8A756B]">
+                    Image files only · Maximum 5 images
+                  </span>
 
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={fileHandle}
-                  className="sr-only"
-                />
-              </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={fileHandle}
+                    className="sr-only"
+                  />
+                </label>
+              )}
 
-              {/* Existing image preview logic preserved */}
+              {/* Image previews (new uploads in add mode, saved images in edit mode) */}
               {previmage.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-3">
                   {previmage.map((image, index) => (
@@ -511,7 +610,7 @@ const ProductForm = ({ onClose }: props) => {
 
               <input
                 type="submit"
-                value="Create Product"
+                value={editId ? "Update Product" : "Create Product"}
                 className="cursor-pointer rounded-md bg-[#F87552] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E96543] focus:outline-none focus:ring-2 focus:ring-[#F87552]/30 focus:ring-offset-2"
               />
             </div>

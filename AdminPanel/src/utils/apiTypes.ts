@@ -74,4 +74,6 @@ export type getProductsResponse = {
 
 export type visibleResponse = null
 
+export type updateProductResponse = null
+
 export type getProductbyidResponse = BaseProduct
