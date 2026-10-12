@@ -161,6 +161,22 @@ static deleteSubcategory = BaseController.asyncHandler(
 )
 
 
+static getallCategories = BaseController.asyncHandler(
+    async(req,res)=>{
+
+         const result =await CategoryService.getallcategories()
+
+               BaseController.sendSuccessResponse(
+            res,
+            ` successfully get all categories`  ,
+            result,
+            200
+        )
+        
+    }
+)
+
+
         
     
 }

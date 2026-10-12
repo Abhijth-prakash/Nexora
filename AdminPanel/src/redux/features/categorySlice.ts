@@ -39,12 +39,34 @@ const initialState: CategoryState = {
   lastQuery:null
 };
 
-//getallcatergories
-export const getAllCategories = createAsyncThunk(
-  "admin/categories/getall",
+//getcatergories
+export const getCategories = createAsyncThunk(
+  "admin/categories/",
   async ({page,search,filter}:{page:number,search:string,filter:string}, { rejectWithValue }) => {
     try {
       const response = await Categroy_APi.getCategories(page,search,filter);
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to get categories. Please try again.",
+        );
+      }
+
+      return rejectWithValue("Failed to get categories. Please try again.");
+    }
+  },
+);
+
+
+//getallcatergories
+export const getallCategories = createAsyncThunk(
+  "admin/categories/all",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await Categroy_APi.getallCategories();
 
       return response.data;
     } catch (error) {
@@ -268,12 +290,12 @@ const categorySlice = createSlice({
     builder
 
       //getting categories
-      .addCase(getAllCategories.pending, (state) => {
+      .addCase(getCategories.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
 
-      .addCase(getAllCategories.fulfilled, (state, action) => {
+      .addCase(getCategories.fulfilled, (state, action) => {
         state.loading = false;
         state.fetched = true;
         state.categories = action.payload.categories
@@ -282,7 +304,25 @@ const categorySlice = createSlice({
        state.lastQuery= action.meta.arg
       })
 
-      .addCase(getAllCategories.rejected, (state, action) => {
+      .addCase(getCategories.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+
+      //getting aallcategories
+      .addCase(getallCategories.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+
+      .addCase(getallCategories.fulfilled, (state, action) => {
+        state.loading = false;
+        state.fetched = true;
+        state.categories = action.payload
+      })
+
+      .addCase(getallCategories.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

@@ -4,7 +4,7 @@ import { CategorySchema, type categoryData } from "../../utils/validation"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import {
     addCategory,
-    getAllCategories,
+    getCategories,
     getCategory,
     updateCategory
 } from "../../redux/features/categorySlice"
@@ -31,7 +31,7 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
         categories.find(item => item._id === editid)
 
     useEffect(() => {
-        dispatch(getAllCategories({page,search,filter}))
+        dispatch(getCategories({page,search,filter}))
     }, [])
 
     const {
@@ -89,7 +89,7 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
 
                 toast.success("Category added successfully")
             }
-            dispatch(getAllCategories({page,search,filter}))
+            dispatch(getCategories({page,search,filter}))
             onClose()
 
         } catch (error) {

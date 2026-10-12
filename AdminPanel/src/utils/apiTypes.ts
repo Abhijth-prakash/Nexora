@@ -1,4 +1,4 @@
-import type { BaseAdmin, Basecategory, BaseUser,BaseSubcategory } from "./BaseType"
+import type { BaseAdmin, Basecategory, BaseUser,BaseSubcategory, BaseProduct } from "./BaseType"
 
 
 export type ApiResponse<T> = {
@@ -46,6 +46,8 @@ export type GetCategoryResponse = {
   totalPages:number
 }
 
+export type getallCategoryRespose = Basecategory[]
+
 
 export type AddCategoryResponse = null
 export type GetCategoryByidResponse = {
@@ -64,3 +66,8 @@ export type deleteSubCategoryResponse = null
 //products
 
 export type AddProductResponse = null
+
+export type getProductsResponse = {
+ products: BaseProduct[]
+ totalPages: string
+}

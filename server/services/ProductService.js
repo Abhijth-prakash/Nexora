@@ -173,6 +173,59 @@ static async updateProduct(id, data, files) {
     }
 }
 
+
+//get all products
+
+static async getProducts(page, search, sort) {
+  try {
+    const currentPage = page || 1;
+    const limit = 8;
+    const skip = (currentPage - 1) * limit;
+
+    if (sort) {
+      if (sort === "low") {
+        sort = 1;
+      } else {
+        sort = -1;
+      }
+    }
+
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        {
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    const totalProducts = await Product.countDocuments(query);
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    const products = await Product.find(query)
+  .populate("category", "name")
+  .populate("subCategory", "name")
+  .skip(skip)
+  .sort(sort ? { price: sort } : {})
+  .limit(limit);
+
+    logger.info("Fetched products successfully");
+
+    return {
+      totalPages,
+      products,
+    };
+  } catch (error) {
+    logger.error("Failed to get products", error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = ProductService;

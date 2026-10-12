@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import {
-    getAllCategories,
+    getCategories,
     addpage,
     minuspage
 } from "../../redux/features/categorySlice"
@@ -42,7 +42,7 @@ const Category = () => {
 
         if (!sameQuery) {
             dispatch(
-                getAllCategories({
+                getCategories({
                     page,
                     search,
                     filter

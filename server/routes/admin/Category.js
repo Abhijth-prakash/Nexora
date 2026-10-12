@@ -12,7 +12,9 @@ router.delete('/category/:id',CategoryController.deleteCategory)
 router.patch('/category/:id',CategoryController.editCategory)
 router.post('/category/hide/:id',CategoryController.Hidecategory)
 router.post('/category/unhide/:id',CategoryController.unHidecategory)
+router.get('/category/all',CategoryController.getallCategories)
 
 router.delete('/category/subCategory/:id/:subId',CategoryController.deleteSubcategory)
+
 
 module.exports = router

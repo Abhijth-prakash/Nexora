@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,GetCategoryByidResponse,GetCategoryResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse } from "./apiTypes";
+import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse } from "./apiTypes";
 
 
 
@@ -84,6 +84,10 @@ deleteSubCategory: async (id: string,subId:string): Promise<ApiResponse<deleteSu
     const response = await ClientApi.delete<ApiResponse<deleteSubCategoryResponse>>(`/admin/category/subCategory/${id}/${subId}`)
     return response.data
 },
+ getallCategories: async (): Promise<ApiResponse<getallCategoryRespose>> =>{
+    const response = await ClientApi.get<ApiResponse<getallCategoryRespose>>("/admin/category/all")
+    return response.data
+  },
 }
 
 
@@ -97,6 +101,12 @@ export const Product_Api = {
     );
     return response.data;
   },
+  getProducts: async (page:number,search:string,sort:string): Promise<ApiResponse<getProductsResponse>> => {
+    const response = await ClientApi.get<ApiResponse<getProductsResponse>>(
+      "/admin/products",{params:{page,search,sort}} );
+    return response.data;
+  },
+  
 };
 
 

@@ -33,3 +33,29 @@ export type BaseSubcategory={
     productCount:number
 }
 
+export type BaseProduct = {
+  _id: string;
+  name: string;
+  description: string;
+  color?: string;
+  brand: string;
+  stock: number;
+  category: {
+    _id: string;
+    name: string;
+  };
+  subCategory: {
+    _id: string;
+    name: string;
+  };
+  visible: boolean;
+  price: number;
+  size: string[];
+  rating: number;
+  numReviews: number;
+  images: string[];
+  variants: [];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+};

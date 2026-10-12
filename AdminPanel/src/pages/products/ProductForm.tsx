@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
-  getAllCategories,
+  getallCategories,
   getCategory,
 } from "../../redux/features/categorySlice";
 import { useForm } from "react-hook-form";
@@ -18,9 +18,6 @@ export type props = {
 const ProductForm = ({ onClose }: props) => {
   const dispatch = useAppDispatch();
 
-  const page = 1;
-  const search = "";
-  const filter = "";
 
   const { fetched, categories, subCategories,error } = useAppSelector(
     (state) => state.categoryData
@@ -63,7 +60,7 @@ const ProductForm = ({ onClose }: props) => {
   // Fetch categories
   useEffect(() => {
     if (!fetched) {
-      dispatch(getAllCategories({ page, search, filter }));
+      dispatch(getallCategories());
     }
   }, [fetched, dispatch]);
 
@@ -127,10 +124,7 @@ const ProductForm = ({ onClose }: props) => {
       await dispatch(addProduct(formData)).unwrap()
 
       toast.success("Product added successfully!");
-      const page = 1
-      const search = ""
-      const filter = ""
-      dispatch(getAllCategories({page,search,filter}))
+      dispatch(getallCategories())
       onClose();
     } catch (error: unknown) {
   toast.error(

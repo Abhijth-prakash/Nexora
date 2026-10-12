@@ -334,6 +334,21 @@ static async deleteSubcategory(id, subId) {
     }
 }
 
+static async getallcategories(){
+    try{
+        const categories = await Category.find()
+        if(categories.length === 0){
+            throw new NotFoundError('failed to get categories')
+        }
+
+        logger.info('succefullu fetched all categories')
+        return categories
+    }catch(error){
+        logger.error('failed to get all categories')
+        throw error
+    }
+}
+
 }
 
 

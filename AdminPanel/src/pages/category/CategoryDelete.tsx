@@ -1,4 +1,4 @@
-import { deleteCategory, getAllCategories } from "../../redux/features/categorySlice";
+import { deleteCategory, getCategories } from "../../redux/features/categorySlice";
 import { useAppDispatch } from "../../redux/hooks";
 
 export type props = {
@@ -15,7 +15,7 @@ const CategoryDelete = ({ id, Close,page,search,filter }: props) => {
     const handleDelete = async () => {
         try {
             await dispatch(deleteCategory(id)).unwrap();
-            await dispatch(getAllCategories({page,search,filter}));
+            await dispatch(getCategories({page,search,filter}));
             Close();
         } catch (error) {
 

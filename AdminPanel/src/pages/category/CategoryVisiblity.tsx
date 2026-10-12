@@ -1,4 +1,4 @@
-import { getAllCategories, hideCategory, unhideCategory } from "../../redux/features/categorySlice"
+import { getCategories, hideCategory, unhideCategory } from "../../redux/features/categorySlice"
 import { useAppDispatch } from "../../redux/hooks"
 import { toast } from "react-toastify"
 
@@ -21,14 +21,14 @@ const handleVisible = async () => {
 
             toast.success("Category hidden successfully")
 
-            dispatch(getAllCategories({page,search,filter}))
+            dispatch(getCategories({page,search,filter}))
             onClose()
         } else {
             await dispatch(unhideCategory(id)).unwrap()
 
             toast.success("Category made visible successfully")
 
-            dispatch(getAllCategories({page,search,filter}))
+            dispatch(getCategories({page,search,filter}))
             onClose()
         }
 

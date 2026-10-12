@@ -82,7 +82,6 @@ static DeleteProduct = BaseController.asyncHandler(
 
 static UpdateProduct = BaseController.asyncHandler(
     async (req,res)=>{
-        console.log(req.body)
          if (req.body.size) {
             req.body.size = JSON.parse(req.body.size);
         }
@@ -102,6 +101,26 @@ static UpdateProduct = BaseController.asyncHandler(
 
     }
 )
+
+
+//get all products
+
+static GetProducts = BaseController.asyncHandler(
+  async (req, res) => {
+
+      const page = req.query.page
+        const search = req.query.search
+        const sort = req.query.sort
+    const result = await ProductService.getProducts(page,search,sort);
+
+    BaseController.sendSuccessResponse(
+      res,
+      "Products fetched successfully",
+      result,
+      200
+    );
+  }
+);
 }
 
 
