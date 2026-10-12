@@ -70,6 +70,31 @@ export const getProducts = createAsyncThunk(
 )
 
 
+export const visiblityToggle = createAsyncThunk(
+    'admin/products/visible',
+    async (id:string,{rejectWithValue})=>{
+        try{
+            const response = await Product_Api.visiblityToggle(id)
+            return response.data
+
+        }catch(error){
+
+              if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to toggle  product visiblity. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to toggle  product visiblity. Please try again."
+      )
+
+        }
+    }
+)
+
+
 
 const productSlice = createSlice({
     name:"productslice",
@@ -111,6 +136,18 @@ const productSlice = createSlice({
 
             })
             .addCase(getProducts.rejected,(state,action)=>{
+                state.loading = false
+                state.error = action.payload as string
+            })
+
+            //visible product
+            .addCase(visiblityToggle.pending,(state,)=>{
+                state.loading = true
+            })
+            .addCase(visiblityToggle.fulfilled,(state,action)=>{
+                state.loading = false
+            })
+            .addCase(visiblityToggle.rejected,(state,action)=>{
                 state.loading = false
                 state.error = action.payload as string
             })

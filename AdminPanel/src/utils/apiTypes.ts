@@ -71,3 +71,5 @@ export type getProductsResponse = {
  products: BaseProduct[]
  totalPages: string
 }
+
+export type visibleResponse = null

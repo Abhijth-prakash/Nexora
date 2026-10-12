@@ -7,20 +7,30 @@ import {
   minupage,
 } from "../../redux/features/ProductSlice";
 import { getallCategories } from "../../redux/features/categorySlice";
+import ProductVisibility from "./ProductVisibility";
 
 const Product = () => {
-  const [form, setForm] = useState(false);
+
+    //hooks
   const dispatch = useAppDispatch();
 
-  const { products, page, totalPages } = useAppSelector(
-    (state) => state.productData
-  );
+  const { products, page, totalPages } = useAppSelector((state) => state.productData);
   const { categories } = useAppSelector((state) => state.categoryData);
+
+
+  const [form, setForm] = useState(false);
+  const [visibleForm,setVisibleForm] = useState(false)
+  const [visible,setVisible] = useState(false)
+  const [id,setId] = useState("")
+
+
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState("");
 
+
+  //edit or add product
   const formHandle = () => {
     setForm(true);
   };
@@ -28,6 +38,18 @@ const Product = () => {
   const onClose = () => {
     setForm(false);
   };
+
+  //visible handle
+  const visibleHandle = (id:string,value:boolean)=>{
+      setVisibleForm(true)
+      setVisible(value)
+      setId(id)
+  }
+
+  const CloseVisble = ()=>{
+    setVisibleForm(false)
+    setId("")
+  }
 
   useEffect(() => {
     dispatch(getProducts({ page, search, sort, filter }));
@@ -74,6 +96,7 @@ const Product = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={()=>visibleHandle(item._id,item.visible)}
             aria-label={
               item.visible ? "Turn visibility off" : "Turn visibility on"
             }
@@ -130,6 +153,8 @@ const Product = () => {
   return (
     <div className="min-h-screen w-full bg-[#faf8f7] p-4 sm:p-6 lg:p-8">
       {form && <ProductForm onClose={onClose} />}
+
+      {visibleForm&& <ProductVisibility CloseVisble={CloseVisble} visible={visible} id={id}></ProductVisibility>}
 
       {/* Full-width page content */}
       <div className="w-full space-y-7">
