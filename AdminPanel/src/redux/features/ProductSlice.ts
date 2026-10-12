@@ -47,9 +47,9 @@ export const addProduct = createAsyncThunk(
 
 export const getProducts = createAsyncThunk(
     'admin/getproducts',
-    async ({page,search,sort}:{page:number,search:string,sort:string},{rejectWithValue})=>{
+    async ({page,search,sort,filter}:{page:number,search:string,sort:string,filter:string},{rejectWithValue})=>{
         try{
-            const response = await Product_Api.getProducts(page,search,sort)
+            const response = await Product_Api.getProducts(page,search,sort,filter)
             return response.data
 
         }catch(error){

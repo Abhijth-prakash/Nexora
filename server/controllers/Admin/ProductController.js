@@ -111,7 +111,8 @@ static GetProducts = BaseController.asyncHandler(
       const page = req.query.page
         const search = req.query.search
         const sort = req.query.sort
-    const result = await ProductService.getProducts(page,search,sort);
+        const filter = req.query.filter
+    const result = await ProductService.getProducts(page,search,sort,filter);
 
     BaseController.sendSuccessResponse(
       res,

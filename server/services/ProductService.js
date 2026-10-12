@@ -175,8 +175,7 @@ static async updateProduct(id, data, files) {
 
 
 //get all products
-
-static async getProducts(page, search, sort) {
+static async getProducts(page, search, sort, filter) {
   try {
     const currentPage = page || 1;
     const limit = 8;
@@ -203,16 +202,20 @@ static async getProducts(page, search, sort) {
       ];
     }
 
-    const totalProducts = await Product.countDocuments(query);
+    // Category filter
+    if (filter) {
+      query.category = filter;
+    }
 
+    const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
     const products = await Product.find(query)
-  .populate("category", "name")
-  .populate("subCategory", "name")
-  .skip(skip)
-  .sort(sort ? { price: sort } : {})
-  .limit(limit);
+      .populate("category", "name")
+      .populate("subCategory", "name")
+      .skip(skip)
+      .sort(sort ? { price: sort } : {})
+      .limit(limit);
 
     logger.info("Fetched products successfully");
 

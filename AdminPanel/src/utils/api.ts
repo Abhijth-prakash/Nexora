@@ -101,9 +101,9 @@ export const Product_Api = {
     );
     return response.data;
   },
-  getProducts: async (page:number,search:string,sort:string): Promise<ApiResponse<getProductsResponse>> => {
+  getProducts: async (page:number,search:string,sort:string,filter:string): Promise<ApiResponse<getProductsResponse>> => {
     const response = await ClientApi.get<ApiResponse<getProductsResponse>>(
-      "/admin/products",{params:{page,search,sort}} );
+      "/admin/products",{params:{page,search,sort,filter}} );
     return response.data;
   },
   
