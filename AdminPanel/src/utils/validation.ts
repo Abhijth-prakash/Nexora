@@ -85,7 +85,7 @@ export const productSchema = z.object({
 
   price: z.coerce.number().min(0, "Price cannot be negative"),
 
-  size: z.array(z.string()).default([]),
+  size: z.array(z.string()).optional(),
 
   rating: z.coerce.number().min(0).max(5).default(0),
 

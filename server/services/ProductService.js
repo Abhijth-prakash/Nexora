@@ -17,7 +17,6 @@ class ProductService {
     //ading product
     static async addProduct(data, files) {
         try {
-            console.log(data)
             const existingProduct = await Product.findOne({
                 name: data.name
             });
@@ -60,10 +59,19 @@ class ProductService {
             });
 
             await newProduct.save();
+await Category.findByIdAndUpdate(category._id, {
+  $inc: { productCount: 1 },
+});
 
+await Subcategory.updateOne(
+  { _id: subcategory._id, category: category._id },
+  {
+    $inc: { productCount: 1 },
+  }
+);
             logger.info('new product added successfully');
 
-            return newProduct;
+            return null;
 
         } catch (error) {
             logger.error('failed to add product', error);

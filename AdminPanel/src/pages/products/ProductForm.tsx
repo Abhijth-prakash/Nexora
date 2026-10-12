@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { productSchema, type ProductFormData } from "../../utils/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addProduct } from "../../redux/features/ProductSlice";
+import { toast } from "react-toastify";
 
 export type props = {
   onClose: () => void;
@@ -21,38 +22,37 @@ const ProductForm = ({ onClose }: props) => {
   const search = "";
   const filter = "";
 
-  const { fetched, categories, subCategories } = useAppSelector(
+  const { fetched, categories, subCategories,error } = useAppSelector(
     (state) => state.categoryData
   );
 
   const [category, setCategory] = useState("");
   const [subcategory, setSubCategory] = useState("");
-
   const [previmage, setPrevimage] = useState<string[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [formError, setFormError] = useState("");
+  const [clothing,setClothing] = useState(false)
 
-  // Image preview logic 
-const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = Array.from(e.target.files ?? []);
+  // Image preview logic
+  const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
 
-  setImages((prev) => [...prev, ...files]);
+    setImages((prev) => [...prev, ...files]);
 
-  files.forEach((file) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
 
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result === "string") {
-        setPrevimage((prev) => [...prev, result]);
-      }
-    };
-  });
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (typeof result === "string") {
+          setPrevimage((prev) => [...prev, result]);
+        }
+      };
+    });
 
-  e.target.value = "";
-};
-
+    e.target.value = "";
+  };
 
   const {
     register,
@@ -76,64 +76,75 @@ const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   }, [category, dispatch]);
 
-
-
-
-
   // Submit product
-  const dataHandle = (data: ProductFormData) => {
-    if (!category) {
-      setFormError("Please select a category");
-      return;
-    }
+  const dataHandle = async (data: ProductFormData) => {
+    try {
+      if (!category) {
+        setFormError("Please select a category");
+        toast.error("Please select a category");
+        return;
+      }
 
-    if (!subcategory) {
-      setFormError("Please select a subcategory");
-      return;
-    }
+      if (!subcategory) {
+        setFormError("Please select a subcategory");
+        toast.error("Please select a subcategory");
+        return;
+      }
 
-    if (images.length === 0) {
-      setFormError("Please upload at least one image");
-      return;
-    }
+      if (images.length === 0) {
+        setFormError("Please upload at least one image");
+        toast.error("Please upload at least one image");
+        return;
+      }
 
-    if (images.length > 5) {
-      setFormError("You can upload a maximum of 5 images");
-      return;
-    }
-    console.log(images.length)
+      if (images.length > 5) {
+        setFormError("You can upload a maximum of 5 images");
+        toast.error("You can upload a maximum of 5 images");
+        return;
+      }
 
-    setFormError("");
+      console.log(images.length);
 
-    const formData = new FormData();
+      setFormError("");
 
-    formData.append("name", data.name);
-    formData.append("description", data.description);
-    formData.append("brand", data.brand);
-    formData.append("color", data.color ?? "");
-    formData.append("stock", String(data.stock));
-    formData.append("price", String(data.price));
-    formData.append("rating", String(data.rating));
-    formData.append("category", category);
-    formData.append("subCategory", subcategory);
-    formData.append("size", JSON.stringify(data.size));
+      const formData = new FormData();
 
-    images.forEach((img) => {
-      formData.append("images", img);
-    });
+      formData.append("name", data.name);
+      formData.append("description", data.description);
+      formData.append("brand", data.brand);
+      formData.append("color", data.color ?? "");
+      formData.append("stock", String(data.stock));
+      formData.append("price", String(data.price));
+      formData.append("rating", String(data.rating));
+      formData.append("category", category);
+      formData.append("subCategory", subcategory);
+      formData.append("size", JSON.stringify(data.size));
 
-    dispatch(addProduct(formData))
+      images.forEach((img) => {
+        formData.append("images", img);
+      });
+
+      await dispatch(addProduct(formData)).unwrap()
+
+      toast.success("Product added successfully!");
+      const page = 1
+      const search = ""
+      const filter = ""
+      dispatch(getAllCategories({page,search,filter}))
+      onClose();
+    } catch (error: unknown) {
+  toast.error(
+    typeof error === "string"
+      ? error
+      : "Failed to add product. Please try again."
+  );
+}
   };
-
-
-
-
 
   const inputClass =
     "w-full rounded-md border border-[#E4E0DD] bg-white px-3 py-2.5 text-sm text-[#111111] outline-none transition placeholder:text-[#B5AAA4] focus:border-[#F87552] focus:ring-2 focus:ring-[#F87552]/15";
 
-  const labelClass =
-    "mb-1.5 block text-xs font-semibold text-[#111111]";
+  const labelClass = "mb-1.5 block text-xs font-semibold text-[#111111]";
 
   return (
     <div
@@ -195,20 +206,34 @@ const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className={labelClass}>Category</label>
-                  <select
-                    name="category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className={inputClass}
-                  >
-                    <option value="">Select category</option>
-                    {categories.map((item) => (
-                      <option key={item._id} value={item._id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
+              <select
+  name="category"
+  value={category}
+  onChange={(e) => {
+    const selectedCategoryId = e.target.value;
+    setCategory(selectedCategoryId);
+
+    const selectedCategory = categories.find(
+      (item) => item._id === selectedCategoryId
+    );
+
+    setClothing(
+      selectedCategory?.name.toLowerCase() === "clothing"
+    );
+  }}
+  className={inputClass}
+>
+  <option value="">Select category</option>
+
+  {categories.map((item) => (
+    <option key={item._id} value={item._id}>
+      {item.name}
+    </option>
+  ))}
+</select>
                 </div>
+
+
 
                 <div>
                   <label className={labelClass}>Subcategory</label>
@@ -385,7 +410,7 @@ const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
               </div>
 
-              <div className="mt-4">
+              {clothing && <div className="mt-4">
                 <label className={labelClass}>Available sizes</label>
                 <input
                   type="text"
@@ -402,7 +427,7 @@ const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
                 <p className="mt-1.5 text-xs text-[#8A756B]">
                   Separate each size with a comma.
                 </p>
-              </div>
+              </div>}
             </section>
 
             <div className="h-px bg-[#E4E0DD]" />
@@ -475,7 +500,7 @@ const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
             )}
           </div>
 
-          {/* Footer — remains below the scrolling content */}
+          {/* Footer */}
           <footer className="mt-7 flex shrink-0 flex-col-reverse gap-3 border-t border-[#E4E0DD] bg-white pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[10px] text-[#8A756B]">
               Nexora Admin · Secure product management

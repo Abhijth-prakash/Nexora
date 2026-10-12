@@ -252,9 +252,10 @@ subCategory: Joi.string().hex().length(24).required().messages({
         "any.required": "Price is required",
     }),
 
-    size: Joi.array()
-        .items(Joi.string().trim())
-        .default([]),
+   size: Joi.array()
+  .items(Joi.string().trim())
+  .optional()
+  .default([]),
 
     stock: Joi.number().min(0).default(0),
     rating: Joi.number().min(0).max(5).default(0),
