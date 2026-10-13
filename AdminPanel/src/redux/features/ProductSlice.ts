@@ -146,6 +146,8 @@ export const visiblityToggle = createAsyncThunk(
 )
 
 
+
+//delete product
 export const deleteProduct = createAsyncThunk(
     'admin/products/delete',
     async (id:string,{rejectWithValue})=>{
@@ -170,6 +172,34 @@ export const deleteProduct = createAsyncThunk(
     }
 )
 
+
+//delete varient
+export const deleteVarient = createAsyncThunk(
+    'admin/products/varient',
+    async ({id,variantId}:{id:string,variantId:string},{rejectWithValue})=>{
+        try{
+            const response = await Product_Api.deleteVarient(id,variantId)
+            return response.data
+
+        }catch(error){
+
+              if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to delete  product varient. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+ "Failed to delete  product varient. Please try again."
+      )
+
+        }
+    }
+)
+
+
+//get product by id
 export const getProductbyid = createAsyncThunk(
     'admin/productsbyid',
     async (id:string,{rejectWithValue})=>{
@@ -301,6 +331,19 @@ const productSlice = createSlice({
                 state.loading = false
             })
             .addCase(addVarient.rejected,(state,action)=>{
+                state.loading = false
+                state.error = action.payload as string
+            })
+
+
+            //delete vairent 
+            .addCase(deleteVarient.pending,(state,)=>{
+                state.loading = true
+            })
+            .addCase(deleteVarient.fulfilled,(state,)=>{
+                state.loading = false
+            })
+            .addCase(deleteVarient.rejected,(state,action)=>{
                 state.loading = false
                 state.error = action.payload as string
             })

@@ -77,5 +77,5 @@ export type visibleResponse = null
 export type updateProductResponse = null
 
 export type addVarientResponse = null
-
+export type deleteVarientResponse = null
 export type getProductbyidResponse = BaseProduct

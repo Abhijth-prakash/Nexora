@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { getProductbyid } from "../../redux/features/ProductSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import VariantForm from "./VariantForm";
+import VarientDelete from "./VarientDelete";
 
 const STAR_PATH =
   "M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.191l4.07 2.485c.715.436 1.6-.207 1.405-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.651l-4.752-.382-1.831-4.4Z";
@@ -56,6 +57,10 @@ const ProductDetails = () => {
   const { product } = useAppSelector((state) => state.productData);
   const [form,setForm] = useState(false)
   const [category,setCategory] = useState("")
+  const [remove,setRemove] = useState(false)
+  const [variantId,setVariantId] = useState('')
+
+
   useEffect(() => {
     if (id) {
       dispatch(getProductbyid(id));
@@ -76,6 +81,17 @@ const ProductDetails = () => {
     setCategory("")
   }
 
+  //deletehandle
+  const deleteHandle = (id:string)=>{
+      setRemove(true)
+      setVariantId(id)
+  }
+
+  const Close = ()=>{
+    setRemove(false)
+    setVariantId("")
+  }
+
   if (!product) {
     return (
       <div className="flex min-h-[60vh] w-full items-center justify-center bg-gray-50">
@@ -87,7 +103,9 @@ const ProductDetails = () => {
   }
 
   return (
+    
     <div className="min-h-screen w-full bg-[#f8f9fb] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
+      {remove && product._id && <VarientDelete variantId={variantId} Close={Close} id={product._id}></VarientDelete>}
       {form && product._id&& <VariantForm onClose={onClose} id={product._id} category={category} ></VariantForm>}
       <div className="w-full space-y-7">
         {/* Header */}
@@ -425,15 +443,17 @@ const ProductDetails = () => {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        console.log("Delete variant:", variant._id)
-                      }
-                      className="w-full rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                    >
-                      Delete Variant
-                    </button>
+                   <button
+  type="button"
+  onClick={() => {
+    if (variant._id) {
+      deleteHandle(variant._id)
+    }
+  }}
+  className="w-full rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+>
+  Delete Variant
+</button>
                   </div>
                 </article>
               ))}
