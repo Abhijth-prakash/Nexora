@@ -54,7 +54,7 @@ const ProductDetails = () => {
   const dispatch = useAppDispatch();
   const { id } = useParams();
 
-  const { product } = useAppSelector((state) => state.productData);
+  const { product,productId } = useAppSelector((state) => state.productData);
   const [form,setForm] = useState(false)
   const [category,setCategory] = useState("")
   const [remove,setRemove] = useState(false)
@@ -63,7 +63,10 @@ const ProductDetails = () => {
 
   useEffect(() => {
     if (id) {
-      dispatch(getProductbyid(id));
+      if(productId!==id){
+        dispatch(getProductbyid(id));
+      }
+      
     }
   }, [dispatch, id]);
 

@@ -16,7 +16,7 @@ const Product = () => {
     //hooks
   const dispatch = useAppDispatch();
 
-  const { products, page, totalPages } = useAppSelector((state) => state.productData);
+  const { products, page, totalPages,lastQuery } = useAppSelector((state) => state.productData);
   const { categories } = useAppSelector((state) => state.categoryData);
 
 
@@ -77,8 +77,21 @@ const Product = () => {
 
 
   useEffect(() => {
-    dispatch(getProducts({ page, search, sort, filter }));
-    dispatch(getallCategories());
+      const sameQuery =   
+            lastQuery?.page === page &&
+            lastQuery?.search === search &&
+            lastQuery?.filter === filter &&
+            lastQuery?.sort === sort
+
+
+    if(!sameQuery){
+       dispatch(getProducts({ page, search, sort, filter }));
+    }
+
+    if(!categories){
+          dispatch(getallCategories());
+    }
+    
   }, [page, search, sort, filter]);
 
   const listItems = products?.map((item) => (

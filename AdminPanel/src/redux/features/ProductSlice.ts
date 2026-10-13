@@ -11,6 +11,13 @@ export type ProductState = {
      error: string | null
      page:number,
      totalPages:number,
+     lastQuery:{
+        page:number,
+        search:string,
+        sort:string,
+        filter:string
+     }|null,
+     productId:string
 }
 
 const initialState:ProductState = {
@@ -19,7 +26,9 @@ const initialState:ProductState = {
     products:[],
     page:1,
     totalPages:1,
-    product:null
+    product:null,
+    lastQuery:null,
+    productId:""
 }
 
 export const addProduct = createAsyncThunk(
@@ -263,6 +272,7 @@ const productSlice = createSlice({
                 state.loading = false
                 state.totalPages = Number(action.payload.totalPages)
                 state.products = action.payload.products
+                state.lastQuery= action.meta.arg
 
             })
             .addCase(getProducts.rejected,(state,action)=>{
@@ -297,12 +307,15 @@ const productSlice = createSlice({
 
 
             //get product by id
-            .addCase(getProductbyid.pending,(state,)=>{
-                state.loading = true
+            .addCase(getProductbyid.pending, (state, action) => {
+                state.loading = true;
+                 if (state.productId !== action.meta.arg) {
+                 state.product = null;  }
             })
             .addCase(getProductbyid.fulfilled,(state,action)=>{
                 state.loading = false
                 state.product = action.payload
+                state.productId = action.meta.arg
             })
             .addCase(getProductbyid.rejected,(state,action)=>{
                 state.loading = false
