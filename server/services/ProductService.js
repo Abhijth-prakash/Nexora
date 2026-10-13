@@ -9,7 +9,7 @@ const {
   OTPError,
 } = require("../utils/errors");
 const config = require('../config/config');
-const uploadFile = require('../config/cloudinary');
+const {uploadFile,destroyFile} = require('../config/cloudinary');
 const {Category,Subcategory} = require("../models/Category");
 
 class ProductService {
@@ -244,9 +244,105 @@ static async getProductByid(id) {
 
     return await product.populateDetails();
   } catch (error) {
+    logger.error('failed to get product',error)
     throw error;
   }
 }
+
+//add Vairant
+
+static async addVariant(id, data, files = []) {
+  try {
+    const { color, size = [], price, stock, rating } = data;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      throw new NotFoundError("Product not found");
+    }
+
+    const normalizedColor = color?.toLowerCase().trim();
+
+    if (normalizedColor && product.variants.some(v => v.color === normalizedColor)) {
+      throw new ConflictError("Color already exists");
+    }
+
+    const uploadedImages = await Promise.all(
+      files.map(async (file) => {
+        const result = await uploadFile(file.path);
+
+        return {
+          url: result.secure_url,
+          public_id: result.public_id,
+        };
+      })
+    );
+
+    const images = uploadedImages.map((image) => image.url);
+    const public_ids = uploadedImages.map((image) => image.public_id);
+
+    product.variants.push({
+      color: normalizedColor,
+      size,
+      price,
+      stock,
+      images,
+      public_ids,
+      rating,
+    });
+
+    product.stock = product.variants.reduce(
+      (sum, v) => sum + (v.stock || 0),
+      0
+    );
+
+    await product.save();
+
+    logger.info(`New variant for ${product.name} added successfully`);
+
+    return null;
+  } catch (error) {
+    logger.error('failed to add variant', error);
+    throw error;
+  }
+}
+
+//delete variant 
+
+static async deleteVariant(id, variantId) {
+  try {
+    const product = await Product.findById(id);
+    if (!product) {
+      throw new NotFoundError("Product not found");
+    }
+
+    const variant = product.variants.id(variantId);
+    if (!variant) {
+      throw new NotFoundError("Variant not found");
+    }
+
+    const publicIdsToDelete = [...(variant.public_ids || [])];
+
+    variant.deleteOne();
+
+    if (product.variants.length) {
+      product.stock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    }
+
+    await product.save();
+
+    await Promise.all(
+      publicIdsToDelete.map((publicId) => destroyFile(publicId))
+    );
+
+    logger.info(`Variant ${variantId} deleted from ${product.name}`);
+
+    return null;
+  } catch (error) {
+    logger.error("failed to delete variant", error);
+    throw error;
+  }
+}
+
 
 }
 

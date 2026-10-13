@@ -1,4 +1,4 @@
-const {ProductValidation,Idvalidation, UpdateProductValidation} = require("../../utils/validation");
+const {ProductValidation,Idvalidation, UpdateProductValidation, VariantValidation} = require("../../utils/validation");
 const BaseController = require("../baseController");
 const ProductService = require('../../services/ProductService')
 
@@ -123,7 +123,7 @@ static GetProducts = BaseController.asyncHandler(
   }
 );
 
-
+//get productby id
 static GetProductbyid = BaseController.asyncHandler(
   async (req, res) => {
     const id = req.params.id;
@@ -138,6 +138,49 @@ static GetProductbyid = BaseController.asyncHandler(
     );
   }
 );
+
+//add variants
+
+static addVariant = BaseController.asyncHandler(
+    async (req,res)=>{
+        const id  = req.params.id;
+
+       if (typeof req.body.size === "string") {
+  req.body.size = JSON.parse(req.body.size);
+}
+
+        const validatedData = BaseController.validateRequest(VariantValidation,req.body,req.files)
+
+        const result = await ProductService.addVariant(id,validatedData,req.files)
+
+         BaseController.sendSuccessResponse(
+      res,
+      "add variant successfully",
+      null,
+      200
+    );
+
+    }
+)
+
+//delete variant
+
+static deleteVariant = BaseController.asyncHandler(
+    async (req,res)=>{
+        const id = req.params.id
+        const variantId = req.params.variantId
+
+
+        await ProductService.deleteVariant(id,variantId)
+
+          BaseController.sendSuccessResponse(
+      res,
+      "delete variant successfully",
+      null,
+      200
+    );
+    }
+)
 
 
 }

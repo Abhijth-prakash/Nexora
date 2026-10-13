@@ -5,14 +5,11 @@ const mongoose = require("mongoose");
 
 const VariantSchema = new mongoose.Schema(
   {
-    color: {
-      type: String,
-      trim: true,
-    },
+     color: { type: String, trim: true, lowercase: true },
 
-    size: {
-      type: String,
-      trim: true,
+    size:{
+      type:[String],
+      default: [],
     },
 
     price: {
@@ -32,9 +29,22 @@ const VariantSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+     rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    public_ids: {
+  type: [String],
+  default: [],
+},
+    
   },
   { _id: true }
 );
+
+
 
 const ProductSchema = new mongoose.Schema(
   {
@@ -48,10 +58,7 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    color: {
-      type: String,
-      trim: true,
-    },
+   color: { type: String, trim: true, lowercase: true },
      brand: {
       type: String,
       required: true,
@@ -105,8 +112,7 @@ const ProductSchema = new mongoose.Schema(
     images: {
       type: [String],
       default: [],
-    },
-
+    }, 
     variants: {
       type: [VariantSchema],
       default: [],
@@ -128,5 +134,6 @@ ProductSchema.methods.populateDetails = async function () {
 
   return this;
 };
+
 
 module.exports = mongoose.model("Product", ProductSchema);

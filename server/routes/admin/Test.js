@@ -14,4 +14,6 @@ router.get('/products',ProductController.GetProducts)
 router.get('/category/all',CategoryController.getallCategories)
 
 
+router.post('/products/:id/variant',upload.array('images',5),ProductController.addVariant)
+router.delete('/products/:id/:variantId',ProductController.deleteVariant)
 module.exports = router

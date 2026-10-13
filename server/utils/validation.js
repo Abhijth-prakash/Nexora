@@ -294,7 +294,19 @@ const UpdateProductValidation = Joi.object({
   rating: Joi.number().min(0).max(5).default(0),
 });
 
-module.exports = ProductValidation;
+
+
+const VariantValidation = Joi.object({
+  color: Joi.string().trim().optional(),
+
+  size: Joi.array().items(Joi.string()).optional().default([]),
+
+  price: Joi.number().min(0).required(),
+
+  stock: Joi.number().min(0).optional().default(0),
+
+  rating: Joi.number().min(0).max(5).optional().default(0),
+});
 
 module.exports = {
   registerValidate,
@@ -308,5 +320,6 @@ module.exports = {
   CategoryValidation,
   Idvalidation,
   ProductValidation,
-  UpdateProductValidation
+  UpdateProductValidation,
+  VariantValidation
 };

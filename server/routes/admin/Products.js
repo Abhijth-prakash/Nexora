@@ -15,4 +15,7 @@ router.delete('/products/:id', ProductController.DeleteProduct);
 router.patch('/products/:id',upload.array('images', 5),ProductController.UpdateProduct);
 
 
+router.post('/products/:id/variant',upload.array('images',5),ProductController.addVariant)
+router.delete('/products/:id/:variantId',ProductController.addVariant)
+
 module.exports = router

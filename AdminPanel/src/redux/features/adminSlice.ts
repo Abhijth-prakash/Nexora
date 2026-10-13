@@ -33,12 +33,12 @@ export const login = createAsyncThunk(
             if (axios.isAxiosError(error)) {
         return rejectWithValue(
           error.response?.data?.error?.message ||
-          "Registration failed. Please try again."
+          "login failed. Please try again."
         );
       }
 
       return rejectWithValue(
-        "Registration failed. Please try again."
+        "login failed. Please try again."
       );
 
         }
