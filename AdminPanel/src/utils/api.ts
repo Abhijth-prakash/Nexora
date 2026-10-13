@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, AddProductResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
+import type { AddCategoryResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
 
 
 
@@ -127,6 +127,12 @@ updateProduct: async (  id: string, data: FormData): Promise<ApiResponse<updateP
     data
   );
 
+  return response.data;
+},
+
+addVarient: async (id: string, data: FormData): Promise<ApiResponse<addVarientResponse>> => {
+  const response = await ClientApi.post<ApiResponse<addVarientResponse>>(`/admin/products/${id}/variant`, 
+    data, { headers: { "Content-Type": "multipart/form-data" } });
   return response.data;
 },
   

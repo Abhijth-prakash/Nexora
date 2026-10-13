@@ -104,3 +104,39 @@ export const updateproductSchema = z.object({
   rating: z.coerce.number().min(0).max(5).default(0),
 });
 
+
+
+
+export const variantValidation = z.object({
+  color: z.string().trim().min(1, "Color is required"),
+
+  size: z.array(z.string()).optional().default([]),
+
+  price: z
+    .string()
+    .trim()
+    .min(1, "Price is required")
+    .transform(Number)
+    .pipe(z.number("Price must be a number").min(0, "Price must be at least 0")),
+
+  stock: z
+    .string()
+    .trim()
+    .min(1, "Stock is required")
+    .transform(Number)
+    .pipe(z.number("Stock must be a number").min(0, "Stock must be at least 0")),
+
+  rating: z
+    .string()
+    .trim()
+    .min(1, "Rating is required")
+    .transform(Number)
+    .pipe(
+      z
+        .number("Rating must be a number")
+        .min(0, "Rating must be at least 0")
+        .max(5, "Rating cannot exceed 5")
+    ),
+});
+
+export type VariantFormData = z.output<typeof variantValidation>;

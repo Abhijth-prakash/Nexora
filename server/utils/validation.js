@@ -297,7 +297,7 @@ const UpdateProductValidation = Joi.object({
 
 
 const VariantValidation = Joi.object({
-  color: Joi.string().trim().optional(),
+  color: Joi.string().trim().required(),
 
   size: Joi.array().items(Joi.string()).optional().default([]),
 
@@ -305,7 +305,7 @@ const VariantValidation = Joi.object({
 
   stock: Joi.number().min(0).optional().default(0),
 
-  rating: Joi.number().min(0).max(5).optional().default(0),
+  rating: Joi.number().min(0).max(5).required().default(0),
 });
 
 module.exports = {

@@ -62,8 +62,9 @@ export type BaseProduct = {
 export type BaseVarient = {
   _id?: string;
   color?: string;
-  size?: string;
+  size?: string[];
   price: number;
   stock: number;
   images: string[];
+  rating: number;
 };

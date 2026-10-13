@@ -24,6 +24,8 @@ export type props = {
   editId: string;
 };
 
+const SIZES = ["S", "M", "L", "XL", "XXL"];
+
 const ProductForm = ({ onClose, editId }: props) => {
   const dispatch = useAppDispatch();
 
@@ -122,9 +124,7 @@ const ProductForm = ({ onClose, editId }: props) => {
         price: product.price,
         stock: product.stock,
         rating: product.rating,
-        ...(isClothing
-          ? { size: (product.size ?? []).join(", ") as unknown as string[] }
-          : {}),
+        ...(isClothing ? { size: product.size ?? [] } : {}),
       });
 
       setPrevimage(
@@ -499,21 +499,27 @@ const ProductForm = ({ onClose, editId }: props) => {
               {clothing && (
                 <div className="mt-4">
                   <label className={labelClass}>Available sizes</label>
-                  <input
-                    type="text"
-                    {...register("size", {
-                      setValueAs: (value: string) =>
-                        value
-                          .split(",")
-                          .map((size: string) => size.trim())
-                          .filter(Boolean),
-                    })}
-                    placeholder="S, M, L, XL"
-                    className={inputClass}
-                  />
-                  <p className="mt-1.5 text-xs text-[#8A756B]">
-                    Separate each size with a comma.
-                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {SIZES.map((s) => (
+                      <label
+                        key={s}
+                        className="flex cursor-pointer items-center gap-2 text-sm text-[#111111]"
+                      >
+                        <input
+                          type="checkbox"
+                          value={s}
+                          {...register("size")}
+                          className="h-4 w-4 accent-[#F87552]"
+                        />
+                        {s}
+                      </label>
+                    ))}
+                  </div>
+                  {errors.size && (
+                    <p className="mt-1.5 text-xs text-red-600">
+                      {errors.size.message}
+                    </p>
+                  )}
                 </div>
               )}
             </section>

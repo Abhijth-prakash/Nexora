@@ -46,6 +46,31 @@ export const addProduct = createAsyncThunk(
     }
 )
 
+//add variant
+export const addVarient = createAsyncThunk(
+    'admin/addVarient',
+    async ({data,id}:{data:FormData,id:string},{rejectWithValue})=>{
+        try{
+            const response = await Product_Api.addVarient(id,data)
+            return response.data
+
+        }catch(error){
+
+              if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to add varient. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to add varient. Please try again."
+      )
+
+        }
+    }
+)
+
 export const updateProduct = createAsyncThunk(
     'admin/updateproduct',
     async ({id,data}:{id:string,data:FormData},{rejectWithValue})=>{
@@ -70,7 +95,7 @@ export const updateProduct = createAsyncThunk(
     }
 )
 
-
+//get products
 export const getProducts = createAsyncThunk(
     'admin/getproducts',
     async ({page,search,sort,filter}:{page:number,search:string,sort:string,filter:string},{rejectWithValue})=>{
@@ -248,7 +273,6 @@ const productSlice = createSlice({
             .addCase(getProductbyid.fulfilled,(state,action)=>{
                 state.loading = false
                 state.product = action.payload
-                console.log(action.payload)
             })
             .addCase(getProductbyid.rejected,(state,action)=>{
                 state.loading = false
@@ -264,6 +288,19 @@ const productSlice = createSlice({
                 state.loading = false
             })
             .addCase(updateProduct.rejected,(state,action)=>{
+                state.loading = false
+                state.error = action.payload as string
+            })
+
+
+            //add vairent 
+            .addCase(addVarient.pending,(state,)=>{
+                state.loading = true
+            })
+            .addCase(addVarient.fulfilled,(state,)=>{
+                state.loading = false
+            })
+            .addCase(addVarient.rejected,(state,action)=>{
                 state.loading = false
                 state.error = action.payload as string
             })

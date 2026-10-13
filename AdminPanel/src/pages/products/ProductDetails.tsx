@@ -1,19 +1,80 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProductbyid } from "../../redux/features/ProductSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import VariantForm from "./VariantForm";
+
+const STAR_PATH =
+  "M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.191l4.07 2.485c.715.436 1.6-.207 1.405-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.651l-4.752-.382-1.831-4.4Z";
+
+const StarRating = ({ rating }: { rating?: number }) => {
+  const value = Math.max(0, Math.min(5, rating ?? 0));
+
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${value} out of 5`}>
+      {[0, 1, 2, 3, 4].map((i) => {
+        const fill = Math.max(0, Math.min(1, value - i));
+
+        return (
+          <span key={i} className="relative inline-block h-4 w-4 shrink-0">
+            {/* empty star */}
+            <svg
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4 max-w-none text-gray-300"
+            >
+              <path d={STAR_PATH} />
+            </svg>
+
+            {/* filled star, clipped to the fraction */}
+            <span
+              className="absolute inset-0 overflow-hidden"
+              style={{ width: `${fill * 100}%` }}
+            >
+              <svg
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4 max-w-none text-amber-400"
+              >
+                <path d={STAR_PATH} />
+              </svg>
+            </span>
+          </span>
+        );
+      })}
+      <span className="ml-1.5 text-xs font-medium text-gray-500">
+        {value.toFixed(1)}
+      </span>
+    </div>
+  );
+};
 
 const ProductDetails = () => {
   const dispatch = useAppDispatch();
   const { id } = useParams();
 
   const { product } = useAppSelector((state) => state.productData);
-
+  const [form,setForm] = useState(false)
+  const [category,setCategory] = useState("")
   useEffect(() => {
     if (id) {
       dispatch(getProductbyid(id));
     }
   }, [dispatch, id]);
+
+  //formhandle
+  const formhandle = ()=>{
+    setForm(true)
+    if(product?.category){
+          setCategory(product?.category.name)
+    }
+
+  }
+
+  const onClose = ()=>{
+    setForm(false)
+    setCategory("")
+  }
 
   if (!product) {
     return (
@@ -27,6 +88,7 @@ const ProductDetails = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#f8f9fb] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
+      {form && product._id&& <VariantForm onClose={onClose} id={product._id} category={category} ></VariantForm>}
       <div className="w-full space-y-7">
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -129,6 +191,15 @@ const ProductDetails = () => {
 
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                  Color
+                </p>
+                <p className="mt-2 break-words text-sm font-semibold capitalize text-gray-900">
+                  {product.color || "—"}
+                </p>
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
                   Base Price
                 </p>
                 <p className="mt-2 text-xl font-bold text-[#ff624d]">
@@ -211,6 +282,7 @@ const ProductDetails = () => {
             </div>
 
             <button
+            onClick={()=> formhandle()}
               type="button"
               className="inline-flex w-fit items-center justify-center gap-2 rounded-xl bg-[#ff624d] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ed503c]"
             >
@@ -324,17 +396,26 @@ const ProductDetails = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="min-w-0 rounded-lg bg-gray-50 p-3">
                         <p className="text-xs text-gray-400">Color</p>
-                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
+                        <p className="mt-1 break-words text-sm font-medium capitalize text-gray-800">
                           {variant.color || "—"}
                         </p>
                       </div>
 
-                      <div className="min-w-0 rounded-lg bg-gray-50 p-3">
-                        <p className="text-xs text-gray-400">Size</p>
-                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
-                          {variant.size || "—"}
-                        </p>
-                      </div>
+                      {(variant.size?.length ?? 0) > 0 ? (
+                        <div className="min-w-0 rounded-lg bg-gray-50 p-3">
+                          <p className="text-xs text-gray-400">Size</p>
+                          <p className="mt-1 break-words text-sm font-medium text-gray-800">
+                            {variant.size?.join(", ")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="min-w-0 rounded-lg bg-gray-50 p-3">
+                          <p className="text-xs text-gray-400">Rating</p>
+                          <div className="mt-1">
+                            <StarRating rating={variant.rating} />
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-gray-500">
