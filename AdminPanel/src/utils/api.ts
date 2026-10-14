@@ -121,12 +121,8 @@ export const Product_Api = {
       `/admin/products/${id}` );
     return response.data;
   },
-updateProduct: async (  id: string, data: FormData): Promise<ApiResponse<updateProductResponse>> => {
-  const response = await ClientApi.patch<ApiResponse<updateProductResponse>>(
-    `/admin/products/${id}`,
-    data
-  );
-
+updateProduct: async (id: string, data: FormData): Promise<ApiResponse<updateProductResponse>> => {
+  const response = await ClientApi.patch<ApiResponse<updateProductResponse>>(`/admin/products/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } });
   return response.data;
 },
 

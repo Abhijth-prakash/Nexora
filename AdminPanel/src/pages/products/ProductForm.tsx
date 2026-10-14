@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
@@ -26,6 +27,25 @@ export type props = {
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 
+// Convert an existing image URL into a File object.
+const imageUrlToFile = async (
+  url: string,
+  index: number
+): Promise<File> => {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch existing image: ${url}`);
+  }
+
+  const blob = await response.blob();
+  const extension = blob.type.split("/")[1]?.split(";")[0] || "jpeg";
+
+  return new File([blob], `product-image-${index + 1}.${extension}`, {
+    type: blob.type || "image/jpeg",
+  });
+};
+
 const ProductForm = ({ onClose, editId }: props) => {
   const dispatch = useAppDispatch();
 
@@ -38,29 +58,47 @@ const ProductForm = ({ onClose, editId }: props) => {
   const [category, setCategory] = useState("");
   const [subcategory, setSubCategory] = useState("");
   const [previmage, setPrevimage] = useState<string[]>([]);
+
+  // All images are File objects, including images converted from Redux URLs.
   const [images, setImages] = useState<File[]>([]);
+
   const [formError, setFormError] = useState("");
   const [clothing, setClothing] = useState(false);
 
-  // Image preview logic
-  const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image preview logic. Append new files to existing files.
+  const fileHandle = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
 
+    e.target.value = "";
+
+    if (files.length === 0) return;
+
+    const previews = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+
+            reader.readAsDataURL(file);
+          })
+      )
+    );
+
+    // Append newly selected File objects.
     setImages((prev) => [...prev, ...files]);
 
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
+    // Append their previews.
+    setPrevimage((prev) => [...prev, ...previews]);
+  };
 
-      reader.onload = (e) => {
-        const result = e.target?.result;
-        if (typeof result === "string") {
-          setPrevimage((prev) => [...prev, result]);
-        }
-      };
-    });
-
-    e.target.value = "";
+  // Remove one image from both the file list and preview list.
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPrevimage((prev) => prev.filter((_, i) => i !== index));
+    setFormError("");
   };
 
   const {
@@ -74,14 +112,14 @@ const ProductForm = ({ onClose, editId }: props) => {
     ) as Resolver<ProductFormData>,
   });
 
-  // Fetch categories
+  // Fetch categories.
   useEffect(() => {
     if (!fetched) {
       dispatch(getallCategories());
     }
   }, [fetched, dispatch]);
 
-  // Fetch subcategories for selected category
+  // Fetch subcategories for the selected category.
   useEffect(() => {
     setSubCategory("");
 
@@ -90,17 +128,16 @@ const ProductForm = ({ onClose, editId }: props) => {
     }
   }, [category, dispatch]);
 
-  // Fetch product when editing
+  // Fetch product when editing.
   useEffect(() => {
     if (editId) {
       dispatch(getProductbyid(editId));
     }
   }, [editId, dispatch]);
 
-  // Fill the form values and image previews when the product arrives
+  // Fill the form values when the product arrives.
   useEffect(() => {
     if (editId && product && product._id === editId) {
-   
       const productCategoryId =
         typeof product.category === "string"
           ? product.category
@@ -126,24 +163,63 @@ const ProductForm = ({ onClose, editId }: props) => {
         rating: product.rating,
         ...(isClothing ? { size: product.size ?? [] } : {}),
       });
-
-      setPrevimage(
-        (product.images ?? []).map((img: string | { url: string }) =>
-          typeof img === "string" ? img : img.url
-        )
-      );
     }
   }, [editId, product, categories, reset]);
 
-  
+  // Convert Redux image URLs into File objects and store them in images.
+  useEffect(() => {
+    if (!(editId && product && product._id === editId)) return;
+
+    let cancelled = false;
+
+    const productImages = (product.images ?? []).map(
+      (img: string | { url: string }) =>
+        typeof img === "string" ? img : img.url
+    );
+
+    // Keep the original URLs for displaying the previews.
+    setPrevimage(productImages);
+
+    const convertExistingImages = async () => {
+      try {
+        const imageFiles = await Promise.all(
+          productImages.map((url, index) => imageUrlToFile(url, index))
+        );
+
+        if (!cancelled) {
+          // Store all converted existing images as File objects.
+          setImages(imageFiles);
+        }
+      } catch (conversionError) {
+        console.error(
+          "Failed to convert existing product images:",
+          conversionError
+        );
+
+        if (!cancelled) {
+          setImages([]);
+
+          toast.error(
+            "Could not load existing images as files. Check image URL CORS access and try again."
+          );
+        }
+      }
+    };
+
+    void convertExistingImages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editId, product]);
+
   const dataHandle = async (data: ProductFormData) => {
     try {
+      const page = 1;
+      const search = "";
+      const filter = "";
+      const sort = "";
 
-       const page=1
-        const search = ""
-        const filter = ""
-        const sort = ""
-     
       if (editId) {
         const formData = new FormData();
 
@@ -159,17 +235,33 @@ const ProductForm = ({ onClose, editId }: props) => {
           formData.append("size", JSON.stringify(data.size ?? []));
         }
 
-        await dispatch(updateProduct({ id: editId, data: formData })).unwrap();
+        // Append ALL images, including converted Redux images
+        // and newly selected images, exactly like add-product logic.
+        images.forEach((img) => {
+          formData.append("images", img);
+        });
+
+        console.log("Total images being submitted:", images.length);
+        console.log(
+          "FormData image entries:",
+          formData.getAll("images")
+        );
+
+        await dispatch(
+          updateProduct({ id: editId, data: formData })
+        ).unwrap();
 
         toast.success("Product updated successfully!");
-    
-        dispatch(getProducts({page,search,filter,sort}))
+
+        dispatch(getProducts({ page, search, filter, sort }));
         dispatch(getallCategories());
+
         onClose();
         return;
       }
 
       // ---------- ADD MODE ----------
+
       if (!category) {
         setFormError("Please select a category");
         toast.error("Please select a category");
@@ -211,6 +303,7 @@ const ProductForm = ({ onClose, editId }: props) => {
       formData.append("subCategory", subcategory);
       formData.append("size", JSON.stringify(data.size));
 
+      // Same image upload logic as before.
       images.forEach((img) => {
         formData.append("images", img);
       });
@@ -218,8 +311,10 @@ const ProductForm = ({ onClose, editId }: props) => {
       await dispatch(addProduct(formData)).unwrap();
 
       toast.success("Product added successfully!");
-      dispatch(getProducts({page,search,filter,sort}))
+
+      dispatch(getProducts({ page, search, filter, sort }));
       dispatch(getallCategories());
+
       onClose();
     } catch (error: unknown) {
       toast.error(
@@ -227,6 +322,7 @@ const ProductForm = ({ onClose, editId }: props) => {
           ? error
           : "Failed to save product. Please try again."
       );
+
       onClose();
     }
   };
@@ -251,12 +347,16 @@ const ProductForm = ({ onClose, editId }: props) => {
               <h2 className="text-xl font-bold tracking-tight text-[#111111]">
                 Nexora
               </h2>
+
               <span className="text-[10px] font-medium uppercase tracking-wider text-[#8A756B]">
                 Admin
               </span>
             </div>
+
             <p className="mt-1 text-sm text-[#8A756B]">
-              {editId ? "Update product details" : "Add a new product to your store"}
+              {editId
+                ? "Update product details"
+                : "Add a new product to your store"}
             </p>
           </div>
 
@@ -266,7 +366,7 @@ const ProductForm = ({ onClose, editId }: props) => {
             aria-label="Close"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E4E0DD] text-2xl leading-none text-[#8A756B] transition hover:border-[#F87552] hover:bg-[#FFF1ED] hover:text-[#F87552]"
           >
-            &times;
+            ×
           </button>
         </header>
 
@@ -284,6 +384,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                     <h3 className="text-sm font-semibold text-[#111111]">
                       Product classification
                     </h3>
+
                     <p className="mt-1 text-xs text-[#8A756B]">
                       Choose where this product belongs.
                     </p>
@@ -292,11 +393,13 @@ const ProductForm = ({ onClose, editId }: props) => {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className={labelClass}>Category</label>
+
                       <select
                         name="category"
                         value={category}
                         onChange={(e) => {
                           const selectedCategoryId = e.target.value;
+
                           setCategory(selectedCategoryId);
 
                           const selectedCategory = categories.find(
@@ -304,7 +407,8 @@ const ProductForm = ({ onClose, editId }: props) => {
                           );
 
                           setClothing(
-                            selectedCategory?.name.toLowerCase() === "clothing"
+                            selectedCategory?.name.toLowerCase() ===
+                              "clothing"
                           );
                         }}
                         className={inputClass}
@@ -321,6 +425,7 @@ const ProductForm = ({ onClose, editId }: props) => {
 
                     <div>
                       <label className={labelClass}>Subcategory</label>
+
                       <select
                         name="subcategory"
                         value={subcategory}
@@ -329,6 +434,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                         className={`${inputClass} disabled:cursor-not-allowed disabled:bg-[#F7F6F4] disabled:text-[#B5AAA4]`}
                       >
                         <option value="">Select subcategory</option>
+
                         {subCategories.map((item) => (
                           <option key={item._id} value={item._id}>
                             {item.name}
@@ -349,6 +455,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                 <h3 className="text-sm font-semibold text-[#111111]">
                   Basic information
                 </h3>
+
                 <p className="mt-1 text-xs text-[#8A756B]">
                   Add the product details displayed to customers.
                 </p>
@@ -357,6 +464,7 @@ const ProductForm = ({ onClose, editId }: props) => {
               <div className="space-y-4">
                 <div>
                   <label className={labelClass}>Product name</label>
+
                   <input
                     type="text"
                     {...register("name", {
@@ -365,6 +473,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                     placeholder="e.g. Classic Cotton T-Shirt"
                     className={inputClass}
                   />
+
                   {errors.name && (
                     <p className="mt-1.5 text-xs text-red-600">
                       {errors.name.message}
@@ -374,6 +483,7 @@ const ProductForm = ({ onClose, editId }: props) => {
 
                 <div>
                   <label className={labelClass}>Description</label>
+
                   <textarea
                     {...register("description", {
                       required: "Description is required",
@@ -382,6 +492,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                     rows={3}
                     className={`${inputClass} resize-y`}
                   />
+
                   {errors.description && (
                     <p className="mt-1.5 text-xs text-red-600">
                       {errors.description.message}
@@ -392,6 +503,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className={labelClass}>Color</label>
+
                     <input
                       type="text"
                       {...register("color")}
@@ -402,6 +514,7 @@ const ProductForm = ({ onClose, editId }: props) => {
 
                   <div>
                     <label className={labelClass}>Brand</label>
+
                     <input
                       type="text"
                       {...register("brand", {
@@ -410,6 +523,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                       placeholder="Enter brand name"
                       className={inputClass}
                     />
+
                     {errors.brand && (
                       <p className="mt-1.5 text-xs text-red-600">
                         {errors.brand.message}
@@ -428,6 +542,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                 <h3 className="text-sm font-semibold text-[#111111]">
                   Pricing & inventory
                 </h3>
+
                 <p className="mt-1 text-xs text-[#8A756B]">
                   Set the product price, stock, and rating.
                 </p>
@@ -436,6 +551,7 @@ const ProductForm = ({ onClose, editId }: props) => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                   <label className={labelClass}>Price (₹)</label>
+
                   <input
                     type="number"
                     {...register("price", {
@@ -449,6 +565,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                     placeholder="0.00"
                     className={inputClass}
                   />
+
                   {errors.price && (
                     <p className="mt-1.5 text-xs text-red-600">
                       {errors.price.message}
@@ -458,6 +575,7 @@ const ProductForm = ({ onClose, editId }: props) => {
 
                 <div>
                   <label className={labelClass}>Stock quantity</label>
+
                   <input
                     type="number"
                     {...register("stock", {
@@ -471,6 +589,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                     placeholder="0"
                     className={inputClass}
                   />
+
                   {errors.stock && (
                     <p className="mt-1.5 text-xs text-red-600">
                       {errors.stock.message}
@@ -480,6 +599,7 @@ const ProductForm = ({ onClose, editId }: props) => {
 
                 <div>
                   <label className={labelClass}>Rating (0–5)</label>
+
                   <input
                     type="number"
                     {...register("rating", {
@@ -499,6 +619,7 @@ const ProductForm = ({ onClose, editId }: props) => {
               {clothing && (
                 <div className="mt-4">
                   <label className={labelClass}>Available sizes</label>
+
                   <div className="flex flex-wrap gap-4">
                     {SIZES.map((s) => (
                       <label
@@ -511,10 +632,12 @@ const ProductForm = ({ onClose, editId }: props) => {
                           {...register("size")}
                           className="h-4 w-4 accent-[#F87552]"
                         />
+
                         {s}
                       </label>
                     ))}
                   </div>
+
                   {errors.size && (
                     <p className="mt-1.5 text-xs text-red-600">
                       {errors.size.message}
@@ -532,6 +655,7 @@ const ProductForm = ({ onClose, editId }: props) => {
                 <h3 className="text-sm font-semibold text-[#111111]">
                   Product images
                 </h3>
+
                 <p className="mt-1 text-xs text-[#8A756B]">
                   {editId
                     ? "Current product images."
@@ -539,53 +663,62 @@ const ProductForm = ({ onClose, editId }: props) => {
                 </p>
               </div>
 
-              {/* Upload box (add mode only) */}
-              {!editId && (
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#D8CEC8] bg-[#F7F6F4] px-4 py-6 text-center transition hover:border-[#F87552] hover:bg-[#FFF7F4]">
-                  <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#FCE5DF] text-[#F87552]">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.7}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 16V4m0 0L8 8m4-4 4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"
-                      />
-                    </svg>
-                  </span>
+              {/* Upload box */}
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#D8CEC8] bg-[#F7F6F4] px-4 py-6 text-center transition hover:border-[#F87552] hover:bg-[#FFF7F4]">
+                <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#FCE5DF] text-[#F87552]">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.7}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 16V4m0 0L8 8m4-4 4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"
+                    />
+                  </svg>
+                </span>
 
-                  <span className="text-sm font-semibold text-[#111111]">
-                    Click to upload images
-                  </span>
-                  <span className="mt-1 text-xs text-[#8A756B]">
-                    Image files only · Maximum 5 images
-                  </span>
+                <span className="text-sm font-semibold text-[#111111]">
+                  Click to upload images
+                </span>
 
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={fileHandle}
-                    className="sr-only"
-                  />
-                </label>
-              )}
+                <span className="mt-1 text-xs text-[#8A756B]">
+                  Image files only · Maximum 5 images
+                </span>
 
-              {/* Image previews (new uploads in add mode, saved images in edit mode) */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={fileHandle}
+                  className="sr-only"
+                />
+              </label>
+
+              {/* Image previews */}
               {previmage.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-3">
                   {previmage.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`Preview ${index + 1}`}
-                      className="h-20 w-20 rounded-md border border-[#E4E0DD] object-cover"
-                    />
+                    <div key={index} className="relative h-20 w-20">
+                      <img
+                        src={image}
+                        alt={`Preview ${index + 1}`}
+                        className="h-20 w-20 rounded-md border border-[#E4E0DD] object-cover"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        aria-label={`Remove image ${index + 1}`}
+                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#111111] text-xs leading-none text-white shadow transition hover:bg-[#F87552]"
+                      >
+                        &times;
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}

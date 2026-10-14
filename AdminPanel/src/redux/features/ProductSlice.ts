@@ -326,9 +326,11 @@ const productSlice = createSlice({
             //update product 
             .addCase(updateProduct.pending,(state,)=>{
                 state.loading = true
+                state.productId=""
             })
             .addCase(updateProduct.fulfilled,(state,)=>{
                 state.loading = false
+                
             })
             .addCase(updateProduct.rejected,(state,action)=>{
                 state.loading = false

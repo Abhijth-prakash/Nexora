@@ -86,6 +86,7 @@ static UpdateProduct = BaseController.asyncHandler(
             req.body.size = JSON.parse(req.body.size);
         }
 
+
         const id =  req.params.id
          const data = BaseController.validateRequest(
             UpdateProductValidation,req.body

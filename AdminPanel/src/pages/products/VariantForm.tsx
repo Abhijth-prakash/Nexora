@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -40,26 +39,36 @@ const VariantForm = ({ onClose, id, category }: props) => {
   const isClothing = category.toLowerCase() === "clothing"
 
   // Image preview logic
-  const fileHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Reads all selected files first, then adds files and previews together
+  // so `images` and `previmage` always have the same order.
+  const fileHandle = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
+    e.target.value = ""
+
+    if (files.length === 0) return
+
+    const previews = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.onerror = () => reject(reader.error)
+            reader.readAsDataURL(file)
+          })
+      )
+    )
 
     setImages((prev) => [...prev, ...files])
+    setPrevimage((prev) => [...prev, ...previews])
     setImageError("")
+  }
 
-    files.forEach((file) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-
-      reader.onload = (e) => {
-        const result = e.target?.result
-
-        if (typeof result === "string") {
-          setPrevimage((prev) => [...prev, result])
-        }
-      }
-    })
-
-    e.target.value = ""
+  // Remove (deselect) one image from both the file list and the preview list
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index))
+    setPrevimage((prev) => prev.filter((_, i) => i !== index))
+    setImageError("")
   }
 
   const dataHandle = async (values: VariantFormData) => {
@@ -382,13 +391,22 @@ const VariantForm = ({ onClose, id, category }: props) => {
                     {previmage.map((image, index) => (
                       <div
                         key={index}
-                        className="rounded-md border border-[#E4E0DD] bg-white p-1"
+                        className="relative rounded-md border border-[#E4E0DD] bg-white p-1"
                       >
                         <img
                           src={image}
                           alt={`Preview ${index + 1}`}
                           className="h-20 w-20 rounded-sm object-cover"
                         />
+
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          aria-label={`Remove image ${index + 1}`}
+                          className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#111111] text-xs leading-none text-white shadow transition hover:bg-[#F87552]"
+                        >
+                          &times;
+                        </button>
                       </div>
                     ))}
                   </div>
