@@ -241,11 +241,7 @@ const ProductForm = ({ onClose, editId }: props) => {
           formData.append("images", img);
         });
 
-        console.log("Total images being submitted:", images.length);
-        console.log(
-          "FormData image entries:",
-          formData.getAll("images")
-        );
+
 
         await dispatch(
           updateProduct({ id: editId, data: formData })
@@ -286,7 +282,7 @@ const ProductForm = ({ onClose, editId }: props) => {
         return;
       }
 
-      console.log(images.length);
+    
 
       setFormError("");
 

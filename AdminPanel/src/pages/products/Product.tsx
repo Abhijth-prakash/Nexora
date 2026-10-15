@@ -101,10 +101,26 @@ const Product = () => {
     >
       {/* Product */}
       <td className="px-5 py-4">
-        <p className="font-semibold text-[#262322]">{item.name}</p>
-        <p className="mt-1 max-w-[240px] truncate text-xs text-[#99918d]">
-          {item.description}
-        </p>
+        <div className="flex items-center gap-3">
+          {item.images?.[0] ? (
+            <img
+              src={item.images[0]}
+              alt={item.name}
+              className="h-12 w-12 shrink-0 rounded-lg border border-[#eee8e5] object-cover"
+            />
+          ) : (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#eee8e5] bg-[#fdfaf9] text-[10px] text-[#aaa19c]">
+              No image
+            </div>
+          )}
+
+          <div className="min-w-0">
+            <p className="font-semibold text-[#262322]">{item.name}</p>
+            <p className="mt-1 max-w-[240px] truncate text-xs text-[#99918d]">
+              {item.description}
+            </p>
+          </div>
+        </div>
       </td>
 
       {/* Brand */}

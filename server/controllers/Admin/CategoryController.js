@@ -29,7 +29,7 @@ class CategoryController extends BaseController{
             res,
             message,
             null,
-            200
+            201
         );
     }
 );

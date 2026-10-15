@@ -30,7 +30,7 @@ if (req.body.size && req.body.size !== "undefined") {
             res,
             'Successfully added product',
             null,
-            200
+            201
         );
     }
 );
@@ -158,7 +158,7 @@ static addVariant = BaseController.asyncHandler(
       res,
       "add variant successfully",
       null,
-      200
+      201
     );
 
     }

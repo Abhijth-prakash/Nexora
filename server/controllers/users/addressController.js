@@ -43,7 +43,7 @@ class AddressController extends BaseController{
       res,
       "address added  for user",
       null,
-      200
+      201
     )
 
         }
