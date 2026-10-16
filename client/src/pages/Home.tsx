@@ -4,6 +4,8 @@ import { useEffect } from "react"
 import { logout, UserProfile } from "../redux/features/userSlice"
 import Navbar from "../components/Navbar"
 
+const slug = "electronics"
+
 const Home = () => {
   const { logged,isStale } = useAppSelector(
     (state) => state.userData
@@ -28,6 +30,7 @@ const Home = () => {
       console.log("Logout failed:", error)
     }
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -115,6 +118,10 @@ const Home = () => {
               >
                 Logout
               </button>
+
+              <Link to={`/products/${slug}`}>
+              electronics
+              </Link>
 
             </div>
           )}

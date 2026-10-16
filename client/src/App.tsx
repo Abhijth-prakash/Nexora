@@ -12,6 +12,7 @@ import Profile from "./pages/Profile"
 import Address from "./pages/Address/Address"
 import ChangePass from "./pages/Profile/ChangePass"
 import EditProfile from "./pages/Profile/EditProfile"
+import Product from "./pages/Products/Product"
 
 function App() {
   return (
@@ -63,6 +64,13 @@ function App() {
           path="/profile/editProfile"
           element={<EditProfile />}
         />
+
+
+        <Route
+          path="/products/:slug"
+          element={<Product />}
+        />
+
 
 
       </Routes>
