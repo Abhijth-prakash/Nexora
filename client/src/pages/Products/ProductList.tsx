@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
 import { getProducts } from '../../redux/features/productSlice'
 
@@ -18,7 +18,9 @@ const ProductList = () => {
 
     const productList = products && products.map(item => <li key={item._id}>
       <span>{item.name}</span>
+      <Link to={`/product/${item._id}`}>
       <img src={item.images[0]} alt="" />
+      </Link>
     </li>)
 
   return (

@@ -8,13 +8,15 @@ type ProductState = {
   loading: boolean,
   error: string | null,
   products: BaseProduct[]
+  product:BaseProduct | null,
 }
 
 const initialState: ProductState = {
   categories: [],
   loading: false,
   error: null,
-  products:[]
+  products:[],
+  product:null
 }
 
 
@@ -65,6 +67,30 @@ export const getProducts = createAsyncThunk(
 )
 
 
+//get product by id
+export const getProductbyID = createAsyncThunk(
+    'users/product by id',
+    async(id:string,{rejectWithValue})=>{
+        try{
+
+            const response = await ProductApi.getProductbyID(id)
+            return response.data
+        }catch(error){
+              if (axios.isAxiosError(error)) {
+      return rejectWithValue(
+        error.response?.data?.error?.message ||
+        "Get product failed. Please try again."
+      );
+    }
+
+    return rejectWithValue(
+       "Get product failed. Please try again."
+    );
+        }
+    }
+)
+
+
 
 
 export const ProductSlice = createSlice({
@@ -95,6 +121,17 @@ export const ProductSlice = createSlice({
         state.products = action.payload
     })
     .addCase(getProducts.rejected,(state)=>{
+        state.loading = false
+    })
+    //get product by id
+    .addCase(getProductbyID.pending,(state)=>{
+        state.loading = true
+    })
+    .addCase(getProductbyID.fulfilled,(state,action)=>{
+        state.loading = false
+        state.product = action.payload
+    })
+    .addCase(getProductbyID.rejected,(state)=>{
         state.loading = false
     })
   }

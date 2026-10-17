@@ -25,7 +25,7 @@ const Home = () => {
   }, [dispatch])
 
 
-  
+
   useEffect(()=>{
     const limit = 6
     dispatch(getCategories(limit))
@@ -55,7 +55,7 @@ const Home = () => {
 
 const productList = products && products.map(item => <li key={item._id}>
   <span>{item.name}</span>
-  <Link to={`/product/${item.name}`}>
+  <Link to={`/product/${item._id}`}>
    <img src={item.images[0]} alt="" /></Link>
  
 </li>)

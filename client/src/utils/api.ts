@@ -2,6 +2,7 @@ import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
 import type { addAddressResponse, AddressResponse, ApiResponse, categoryresponse, changepasswordresponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { BaseProduct } from "./baseTypes";
 
 
 const ClientApi = axios.create({
@@ -98,6 +99,12 @@ export const ProductApi = {
   getProducts: async (limit: number,slug:string): Promise<ApiResponse<productResponse>> => {
     const response = await ClientApi.get<ApiResponse<productResponse>>('/users/products', {
       params: { limit,slug },
+    })
+    return response.data
+  },
+  getProductbyID: async (id:string): Promise<ApiResponse<BaseProduct>> => {
+    const response = await ClientApi.get<ApiResponse<BaseProduct>>('/users/product', {
+      params: { id },
     })
     return response.data
   },

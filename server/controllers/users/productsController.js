@@ -21,6 +21,24 @@ class ProductsController extends BaseController{
         }
     )
 
+    //getproductByid
+    static GetProductbyid = BaseController.asyncHandler(
+      async (req, res) => {
+        const id = req.query.id;
+    
+        const result = await UserproductService.getProductByid(id);
+    
+        BaseController.sendSuccessResponse(
+          res,
+          "Product fetched successfully by id for userside",
+          result,
+          200
+        );
+      }
+    );
+
+
+
     static getCategories = BaseController.asyncHandler(
         async(req,res)=>{
 

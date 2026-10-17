@@ -36,6 +36,26 @@ class UserproductService{
     }
 
 
+
+    //get product by id
+    static async getProductByid(id) {
+      try {
+        const product = await Product.findById(id);
+    
+        if (!product) {
+          throw new Error("Product not found");
+        }
+        logger.info(`fetched product ${product.name} for user`)
+        return await product.populateDetails();
+      } catch (error) {
+        logger.error('failed to get product',error)
+        throw error;
+      }
+    }
+
+
+
+    //get categories
     static async getCategories(limit){
         try{
             const currentlimit = Number(limit) || 6
