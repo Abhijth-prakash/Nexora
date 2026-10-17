@@ -9,7 +9,7 @@ export type ProductState = {
     product:BaseProduct | null
     loading:boolean,
      error: string | null
-     page:number,
+     page:,
      totalPages:number,
      lastQuery:{
         page:number,

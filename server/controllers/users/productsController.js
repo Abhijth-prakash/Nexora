@@ -7,6 +7,7 @@ class ProductsController extends BaseController{
     //get products
     static getProducts = BaseController.asyncHandler(
         async(req,res)=>{
+            
             const limit = req.query.limit
             const slug = req.query.slug
 

@@ -96,9 +96,9 @@ export const ProductApi = {
     })
     return response.data
   },
-  getProducts: async (limit: number,slug:string): Promise<ApiResponse<productResponse>> => {
+  getProducts: async (limit: number,slug:string,page:number): Promise<ApiResponse<productResponse>> => {
     const response = await ClientApi.get<ApiResponse<productResponse>>('/users/products', {
-      params: { limit,slug },
+      params: { limit,slug,page },
     })
     return response.data
   },

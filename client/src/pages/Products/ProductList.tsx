@@ -1,19 +1,20 @@
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
-import { getProducts } from '../../redux/features/productSlice'
+import { addpage, getProducts, minupage } from '../../redux/features/productSlice'
+import Navbar from '../../components/Navbar'
 
 const ProductList = () => {
     const {slug} = useParams()
     const dispatch = useAppDispatch()
-    const {products} = useAppSelector(state=> state.productData)
-
+    const {products,page,totalpages} = useAppSelector(state=> state.productData)
+  
     useEffect(()=>{
       const limit = 12
       if(slug){
-          dispatch(getProducts({limit,slug}))
+          dispatch(getProducts({limit,slug,page}))
       }
-    
+      
     },[])
 
     const productList = products && products.map(item => <li key={item._id}>
@@ -25,10 +26,15 @@ const ProductList = () => {
 
   return (
     <div>
+      <Navbar></Navbar>
       <h1>this is product listing page of {slug}</h1>
       <ul>
         {productList}
       </ul>
+      {page}
+      <button onClick={()=>dispatch(minupage())} disabled={page===1}>prev</button>
+      <button onClick={()=>dispatch(addpage())} disabled={page===totalpages}>next</button>
+      
     </div>
   )
 }

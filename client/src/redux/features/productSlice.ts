@@ -9,6 +9,8 @@ type ProductState = {
   error: string | null,
   products: BaseProduct[]
   product:BaseProduct | null,
+  page:number,
+  totalpages:number
 }
 
 const initialState: ProductState = {
@@ -16,7 +18,9 @@ const initialState: ProductState = {
   loading: false,
   error: null,
   products:[],
-  product:null
+  product:null,
+  page:1,
+  totalpages:3
 }
 
 
@@ -46,10 +50,10 @@ export const getCategories = createAsyncThunk(
 //get products
 export const getProducts = createAsyncThunk(
     'users/products',
-    async({limit,slug}:{limit:number,slug:string},{rejectWithValue})=>{
+    async({limit,slug,page}:{limit:number,slug:string,page:number},{rejectWithValue})=>{
         try{
 
-            const response = await ProductApi.getProducts(limit,slug)
+            const response = await ProductApi.getProducts(limit,slug,page)
             return response.data
         }catch(error){
               if (axios.isAxiosError(error)) {
@@ -96,7 +100,16 @@ export const getProductbyID = createAsyncThunk(
 export const ProductSlice = createSlice({
   name: "product",
   initialState,
-  reducers: {},
+  reducers: {
+      addpage:(state)=>{
+            state.page+=1
+        },
+        minupage:(state)=>{
+            if(state.page>1){
+                state.page-=1
+            }
+        }
+  },
   extraReducers:(build)=>{
     build
 
@@ -139,3 +152,5 @@ export const ProductSlice = createSlice({
 })
 
 export default ProductSlice.reducer
+
+export const {addpage,minupage} = ProductSlice.actions

@@ -7,17 +7,20 @@ const Product = require('../models/Product')
 class UserproductService{
 
     //getproducts
-    static async getProducts(limit,slug){
+    static async getProducts(limit,slug,page){
         try{
             
              const currentlimit = Number(limit) 
-            
+             const currentPage = Number(page)
+
+             
+             const skip = (currentPage-1) *limit
              const query= {}
              if(slug){
                 query.category = slug
              }
 
-            const category = await Product.find(query).limit(currentlimit)
+            const category = await Product.find(query).limit(currentlimit).skip(skip)
 
             if(category.length ===0){
                 throw new NotFoundError('products not found')
