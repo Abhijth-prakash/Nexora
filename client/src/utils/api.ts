@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, ApiResponse, changepasswordresponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, ApiResponse, categoryresponse, changepasswordresponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 
 
 const ClientApi = axios.create({
@@ -86,6 +86,21 @@ export const addressApi = {
   return response.data
 },
 
+}
+
+export const ProductApi = {
+  getCategories: async (limit: number): Promise<ApiResponse<categoryresponse>> => {
+    const response = await ClientApi.get<ApiResponse<categoryresponse>>('/users/category', {
+      params: { limit },
+    })
+    return response.data
+  },
+  getProducts: async (limit: number,slug:string): Promise<ApiResponse<productResponse>> => {
+    const response = await ClientApi.get<ApiResponse<productResponse>>('/users/products', {
+      params: { limit,slug },
+    })
+    return response.data
+  },
 }
 
 

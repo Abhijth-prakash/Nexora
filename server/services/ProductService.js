@@ -14,7 +14,7 @@ const {Category,Subcategory} = require("../models/Category");
 
 class ProductService {
 
-    //ading product
+    //adding product
     static async addProduct(data, files) {
         try {
             const existingProduct = await Product.findOne({

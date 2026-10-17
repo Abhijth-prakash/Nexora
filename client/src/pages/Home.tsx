@@ -3,13 +3,16 @@ import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { useEffect } from "react"
 import { logout, UserProfile } from "../redux/features/userSlice"
 import Navbar from "../components/Navbar"
+import { getCategories, getProducts } from "../redux/features/productSlice"
 
-const slug = "electronics"
+
 
 const Home = () => {
   const { logged,isStale } = useAppSelector(
     (state) => state.userData
   )
+
+  const {categories,products} = useAppSelector(state=> state.productData)
 
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -21,6 +24,17 @@ const Home = () => {
    
   }, [dispatch])
 
+
+  
+  useEffect(()=>{
+    const limit = 6
+    dispatch(getCategories(limit))
+    const slug = ""
+    dispatch(getProducts({limit,slug}))
+  },[])
+
+
+
   const handleLogout = async () => {
     try {
       await dispatch(logout()).unwrap()
@@ -31,6 +45,20 @@ const Home = () => {
     }
   }
 
+  //category listing
+  const categoryList = categories && categories.map(item=> <li key={item._id}> 
+  <span>{item.name}</span>
+  <Link to={`/products/${item._id}`}>click</Link>
+  </li>)
+
+  //product listing
+
+const productList = products && products.map(item => <li key={item._id}>
+  <span>{item.name}</span>
+  <Link to={`/product/${item.name}`}>
+   <img src={item.images[0]} alt="" /></Link>
+ 
+</li>)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,6 +72,7 @@ const Home = () => {
       <main className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4 py-10">
 
         <div className="w-full max-w-sm space-y-6 rounded-xl bg-white p-8 text-center shadow-md">
+          {categoryList}
 
           {/* ================= MESSAGE ================= */}
 
@@ -69,6 +98,7 @@ const Home = () => {
             </div>
           )}
 
+          {productList}
           {/* ================= LOGGED OUT ================= */}
 
           {!logged && (
@@ -119,9 +149,7 @@ const Home = () => {
                 Logout
               </button>
 
-              <Link to={`/products/${slug}`}>
-              electronics
-              </Link>
+            
 
             </div>
           )}

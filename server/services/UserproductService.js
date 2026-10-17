@@ -1,15 +1,59 @@
+const {Category} = require("../models/Category")
+const { NotFoundError } = require("../utils/errors")
 const logger = require("../utils/logger")
-
+const Product = require('../models/Product')
 
 
 class UserproductService{
-    static async getProducts(){
+
+    //getproducts
+    static async getProducts(limit,slug){
         try{
+            
+             const currentlimit = Number(limit) 
+            
+             const query= {}
+             if(slug){
+                query.category = slug
+             }
+
+            const category = await Product.find(query).limit(currentlimit)
+
+            if(category.length ===0){
+                throw new NotFoundError('products not found')
+            }
+
+            logger.info('products fetched for userside')
+            return category
+
             logger.info('succesfully fetched products')
             return true
 
         }catch(error){
             logger.error('failed to fetch products')
+            throw error
+        }
+    }
+
+
+    static async getCategories(limit){
+        try{
+            const currentlimit = Number(limit) || 6
+            const query ={}
+            query.isVisible = true
+
+
+            const category = await Category.find(query).limit(currentlimit)
+
+            if(category.length ===0){
+                throw new NotFoundError('category not found')
+            }
+
+            logger.info('categories fetched for userside')
+            return category
+
+        }catch(error){
+            logger.error('failed to fetch categories')
             throw error
         }
     }

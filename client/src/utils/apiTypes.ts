@@ -1,4 +1,4 @@
-import  type { BaseUser,BaseAddress } from "./baseTypes"
+import  type { BaseUser,BaseAddress, Basecategory, BaseProduct } from "./baseTypes"
 
 export type ApiResponse<T> = {
   success: boolean
@@ -59,3 +59,6 @@ export type resendOtpResponse = null
 export type changepasswordresponse = null
 
 export type editProfileResponse = null
+
+export type categoryresponse = Basecategory[]
+export type productResponse = BaseProduct[]

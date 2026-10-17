@@ -13,6 +13,7 @@ import Address from "./pages/Address/Address"
 import ChangePass from "./pages/Profile/ChangePass"
 import EditProfile from "./pages/Profile/EditProfile"
 import Product from "./pages/Products/Product"
+import ProductList from "./pages/Products/ProductList"
 
 function App() {
   return (
@@ -68,6 +69,11 @@ function App() {
 
         <Route
           path="/products/:slug"
+          element={<ProductList />}
+        />
+
+        <Route
+          path="/product/:id"
           element={<Product />}
         />
 
