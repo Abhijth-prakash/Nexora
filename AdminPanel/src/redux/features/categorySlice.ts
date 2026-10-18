@@ -86,7 +86,7 @@ export const getallCategories = createAsyncThunk(
 
 export const addCategory = createAsyncThunk(
   "admin/addCategory",
-  async (data: categoryData, { rejectWithValue }) => {
+  async (data: FormData, { rejectWithValue }) => {
     try {
       const response = await Categroy_APi.addCategory(data);
       return response.data;
@@ -154,7 +154,7 @@ export const deleteCategory = createAsyncThunk(
 export const updateCategory = createAsyncThunk(
     "admin/updateCategory",
     async (
-        { data, id }: { data: categoryData; id: string },
+        { data, id }: { data: FormData; id: string },
         { rejectWithValue }
     ) => {
         try {

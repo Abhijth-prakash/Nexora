@@ -198,9 +198,17 @@ const CategoryDetails = () => {
               </p>
             </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff0ed] text-sm font-bold text-[#ff624d]">
-              {category?.name?.charAt(0).toUpperCase()}
-            </div>
+            {category?.image?.url ? (
+              <img
+                src={category.image.url}
+                alt={category.name}
+                className="h-10 w-10 rounded-xl object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff0ed] text-sm font-bold text-[#ff624d]">
+                {category?.name?.charAt(0).toUpperCase()}
+              </div>
+            )}
 
           </div>
 
@@ -215,9 +223,17 @@ const CategoryDetails = () => {
 
               <div className="flex items-center gap-3">
 
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff0ed] text-base font-bold text-[#ff624d]">
-                  {category?.name?.charAt(0).toUpperCase()}
-                </div>
+                {category?.image?.url ? (
+                  <img
+                    src={category.image.url}
+                    alt={category.name}
+                    className="h-11 w-11 shrink-0 rounded-xl object-cover"
+                  />
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff0ed] text-base font-bold text-[#ff624d]">
+                    {category?.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
 
                 <p className="text-sm font-semibold text-[#171717]">
                   {category?.name}

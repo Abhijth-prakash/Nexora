@@ -7,9 +7,9 @@ import type { BaseProduct } from "../../utils/BaseType";
 export type ProductState = {
     products:BaseProduct[]
     product:BaseProduct | null
-    loading:boolean,
+    loading:boolean
      error: string | null
-     page:,
+     page:number
      totalPages:number,
      lastQuery:{
         page:number,

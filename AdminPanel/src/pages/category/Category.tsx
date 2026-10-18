@@ -103,9 +103,17 @@ const Category = () => {
             {/* Category */}
             <div className="col-span-3 flex min-w-0 items-center gap-4">
 
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff0ed] text-xs font-bold uppercase tracking-wide text-[#ff624d] ring-1 ring-[#ff624d]/10">
-                    {item.name.substring(0, 2)}
-                </div>
+                {item.image?.url ? (
+                    <img
+                        src={item.image.url}
+                        alt={item.name}
+                        className="h-11 w-11 shrink-0 rounded-xl object-cover ring-1 ring-[#ff624d]/10"
+                    />
+                ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff0ed] text-xs font-bold uppercase tracking-wide text-[#ff624d] ring-1 ring-[#ff624d]/10">
+                        {item.name.substring(0, 2)}
+                    </div>
+                )}
 
                 <div className="min-w-0">
 

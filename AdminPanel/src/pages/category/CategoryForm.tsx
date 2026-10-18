@@ -9,7 +9,7 @@ import {
     updateCategory
 } from "../../redux/features/categorySlice"
 import { toast } from "react-toastify"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export type props = {
     onClose: () => void
@@ -29,6 +29,9 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
     const category =
         editid &&
         categories.find(item => item._id === editid)
+
+    const [image, setImage] = useState<File | null>(null)
+    const [preview, setPreview] = useState<string>("")
 
     useEffect(() => {
         dispatch(getCategories({page,search,filter}))
@@ -50,26 +53,61 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                 description: category.description,
                 subCategory: ""
             })
+            setPreview(category.image?.url || "")
         }
     }, [category, reset])
 
+    // show a preview of the newly chosen file, and release it when it changes
+    useEffect(() => {
+        if (!image) return
 
+        const url = URL.createObjectURL(image)
+        setPreview(url)
 
+        return () => URL.revokeObjectURL(url)
+    }, [image])
 
-    
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+
+        if (!file) return
+
+        if (!file.type.startsWith("image/")) {
+            toast.error("Please select an image file")
+            return
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image must be smaller than 5 MB")
+            return
+        }
+
+        setImage(file)
+    }
+
+    const buildFormData = (data: categoryData) => {
+        const formData = new FormData()
+
+        formData.append("name", data.name.toLowerCase())
+        formData.append("description", data.description.toLowerCase())
+
+        if (data.subCategory) {
+            formData.append("subCategory", data.subCategory.toLowerCase())
+        }
+
+        if (image) {
+            formData.append("image", image)
+        }
+
+        return formData
+    }
 
     const handleData = async (data: categoryData) => {
         try {
             if (editid) {
-                const editData = {
-                    name: data.name.toLowerCase(),
-                    description: data.description.toLowerCase(),
-                    subCategory: data.subCategory?.toLowerCase()
-                }
-
                 await dispatch(
                     updateCategory({
-                        data: editData,
+                        data: buildFormData(data),
                         id: editid
                     })
                 ).unwrap()
@@ -79,13 +117,7 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                 onClose()
 
             } else {
-                const modData = {
-                    name: data.name.toLowerCase(),
-                    description: data.description.toLowerCase(),
-                    subCategory: data.subCategory?.toLowerCase()
-                }
-
-                await dispatch(addCategory(modData)).unwrap()
+                await dispatch(addCategory(buildFormData(data))).unwrap()
 
                 toast.success("Category added successfully")
             }
@@ -192,6 +224,45 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                                         {errors.description.message}
                                     </p>
                                 )}
+                            </div>
+
+                            {/* Image */}
+                            <div>
+                                <div className="mb-2 flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-[#292421]">
+                                        Category Image
+                                    </label>
+
+                                    <span className="text-xs text-[#a3938c]">
+                                        Optional
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#e2d9d5] bg-[#faf7f5]">
+                                        {preview ? (
+                                            <img
+                                                src={preview}
+                                                alt="Category preview"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-xs text-[#b3a49e]">
+                                                No image
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <label className="cursor-pointer rounded-xl border border-[#ddd3ce] px-4 py-2.5 text-sm font-semibold text-[#625650] transition hover:bg-[#faf7f5]">
+                                        {preview ? "Change image" : "Choose image"}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
                             </div>
 
                             {/* Subcategory */}

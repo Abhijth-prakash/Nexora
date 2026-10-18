@@ -60,16 +60,16 @@ export const Categroy_APi = {
     const response = await ClientApi.get<ApiResponse<GetCategoryByidResponse>>(`/admin/category/${id}`)
     return response.data
   },
-  addCategory: async (data:categoryData): Promise<ApiResponse<AddCategoryResponse>> =>{
-    const response = await ClientApi.post<ApiResponse<AddCategoryResponse>>("/admin/category",data)
+  addCategory: async (data:FormData): Promise<ApiResponse<AddCategoryResponse>> =>{
+    const response = await ClientApi.post<ApiResponse<AddCategoryResponse>>("/admin/category",data, { headers: { "Content-Type": "multipart/form-data" } })
     return response.data
   },
     deleteCategory: async (id:string): Promise<ApiResponse<deleteCategoryResponse>> =>{
     const response = await ClientApi.delete<ApiResponse<deleteCategoryResponse>>(`/admin/category/${id}`)
     return response.data
   },
-updateCategory: async (Data: categoryData,id: string): Promise<ApiResponse<updateCategoryResponse>> => {
-    const response = await ClientApi.patch<ApiResponse<updateCategoryResponse>>(`/admin/category/${id}`,Data)
+updateCategory: async (Data: FormData,id: string): Promise<ApiResponse<updateCategoryResponse>> => {
+    const response = await ClientApi.patch<ApiResponse<updateCategoryResponse>>(`/admin/category/${id}`,Data, { headers: { "Content-Type": "multipart/form-data" } })
     return response.data
 },
 hideCategory: async (id: string): Promise<ApiResponse<hideCategoryResponse>> => {
