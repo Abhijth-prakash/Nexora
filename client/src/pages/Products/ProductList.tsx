@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
 import { addpage, getProducts, minupage } from '../../redux/features/productSlice'
 import Navbar from '../../components/Navbar'
+import CategorySidebar from '../../components/CategorySidebar'
 
 const ProductList = () => {
     const {slug} = useParams()
@@ -28,6 +29,8 @@ const ProductList = () => {
     <div>
       <Navbar></Navbar>
       <h1>this is product listing page of {slug}</h1>
+
+       <CategorySidebar></CategorySidebar>
       <ul>
         {productList}
       </ul>

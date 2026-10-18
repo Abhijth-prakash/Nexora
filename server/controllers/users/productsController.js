@@ -7,7 +7,7 @@ class ProductsController extends BaseController{
     //get products
     static getProducts = BaseController.asyncHandler(
         async(req,res)=>{
-            
+
             const limit = req.query.limit
             const slug = req.query.slug
 
@@ -57,6 +57,16 @@ class ProductsController extends BaseController{
 
         }
     )
+
+
+
+    //getcategoryTree
+    static getCategoryTree = BaseController.asyncHandler(
+    async (req, res) => {
+        const result = await UserproductService.getCategoryTree()
+        return this.sendSuccessResponse(res, "category tree fetched successfully", result, 200)
+    }
+)
 
 }
 

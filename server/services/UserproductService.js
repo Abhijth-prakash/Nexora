@@ -1,4 +1,4 @@
-const {Category} = require("../models/Category")
+const {Category,Subcategory} = require("../models/Category")
 const { NotFoundError } = require("../utils/errors")
 const logger = require("../utils/logger")
 const Product = require('../models/Product')
@@ -80,6 +80,23 @@ class UserproductService{
             throw error
         }
     }
+
+
+    //get category tree
+
+    static async getCategoryTree() {
+    const [categories, subcategories] = await Promise.all([
+        Category.find({ isVisible: true }).sort({ name: 1 }).select('name slug').lean(),
+        Subcategory.find({ isVisible: true }).select('name slug category').lean(),
+    ])
+
+    const subMap = {}
+    subcategories.forEach(s => {
+        (subMap[s.category] ||= []).push(s)
+    })
+
+    return categories.map(c => ({ ...c, subCategories: subMap[c._id] || [] }))
+}
 }
 
 module.exports = UserproductService

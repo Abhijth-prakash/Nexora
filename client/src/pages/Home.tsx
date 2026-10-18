@@ -6,6 +6,7 @@ import { logout, UserProfile } from "../redux/features/userSlice";
 import Navbar from "../components/Navbar";
 import { getCategories, getProducts } from "../redux/features/productSlice";
 import PriceRangeFilter from "../components/PriceRangeFilter";
+import CategorySidebar from "../components/CategorySidebar";
 
 const Home = () => {
   const { logged, isStale } = useAppSelector(
@@ -123,6 +124,9 @@ const Home = () => {
           <p>Maximum price: ₹{priceRange.maxPrice}</p>
         </div>
       </div>
+
+
+     
 
       <main className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4 py-10">
         <div className="w-full max-w-sm space-y-6 rounded-xl bg-white p-8 text-center shadow-md">

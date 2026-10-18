@@ -68,3 +68,5 @@ export type BaseVarient = {
   images: string[];
   rating: number;
 };
+
+

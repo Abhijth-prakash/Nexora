@@ -63,3 +63,10 @@ export type editProfileResponse = null
 export type categoryresponse = Basecategory[]
 export type productResponse = BaseProduct[]
 export type getProductbyID = BaseProduct
+
+export type CategoryTreeItem = {
+  _id: string
+  name: string
+  slug: string
+  subCategories: { _id: string; name: string; slug: string }[]
+}

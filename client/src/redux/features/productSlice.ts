@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import type { Basecategory, BaseProduct } from "../../utils/baseTypes"
 import axios from "axios"
 import { ProductApi } from "../../utils/api"
+import type { CategoryTreeItem } from "../../utils/apiTypes"
 
 type ProductState = {
   categories: Basecategory[]
@@ -11,6 +12,7 @@ type ProductState = {
   product:BaseProduct | null,
   page:number,
   totalpages:number
+  categoryTree:CategoryTreeItem[]
 }
 
 const initialState: ProductState = {
@@ -20,7 +22,8 @@ const initialState: ProductState = {
   products:[],
   product:null,
   page:1,
-  totalpages:3
+  totalpages:3,
+  categoryTree:[]
 }
 
 
@@ -94,6 +97,19 @@ export const getProductbyID = createAsyncThunk(
     }
 )
 
+//get categorytree
+export const getCategoryTree = createAsyncThunk(
+  'users/categoryTree',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await ProductApi.getCategoryTree()
+      return response.data
+    } catch (error) {
+      return rejectWithValue("Failed to load categories")
+    }
+  }
+)
+
 
 
 
@@ -145,6 +161,18 @@ export const ProductSlice = createSlice({
         state.product = action.payload
     })
     .addCase(getProductbyID.rejected,(state)=>{
+        state.loading = false
+    })
+
+    //getcategoryTree
+    .addCase(getCategoryTree.pending,(state)=>{
+        state.loading = true
+    })
+    .addCase(getCategoryTree.fulfilled,(state,action)=>{
+        state.loading = false
+        state.categoryTree = action.payload
+    })
+    .addCase(getCategoryTree.rejected,(state)=>{
         state.loading = false
     })
   }
