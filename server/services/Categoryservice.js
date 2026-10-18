@@ -10,12 +10,13 @@ const {
   OTPError,
 } = require("../utils/errors");
 const config = require('../config/config');
+const { uploadFile, destroyFile } = require('../config/cloudinary') 
 
 
 class CategoryService {
 
     //addingcategory
-static async addCategory(data) {
+static async addCategory(data, file) {
     try {
         const existingCategory = await Category.findOne({
             name: data.name
@@ -52,9 +53,17 @@ static async addCategory(data) {
         }
 
         // Category doesn't exist
+        let image = { url: "", public_id: "" };
+
+        if (file) {
+            const uploaded = await uploadFile(file.path);
+            image = { url: uploaded.secure_url, public_id: uploaded.public_id };
+        }
+
         const newCat = new Category({
             name: data.name,
-            description: data.description
+            description: data.description,
+            image
         });
 
         await newCat.save();
@@ -213,7 +222,13 @@ static async deleteCategory(id) {
       await sub.save();
     }
 
+    const publicId = category.image?.public_id;
+
     await category.deleteOne();
+
+    if (publicId) {
+      await destroyFile(publicId);
+    }
 
     logger.info("successfully deleted category");
     return true;
@@ -224,7 +239,7 @@ static async deleteCategory(id) {
 }
 
 //update category
-static async UpdateCategory(data, id) {
+static async UpdateCategory(data, id, file) {
   try {
     const category = await Category.findById(id);
 
@@ -234,6 +249,17 @@ static async UpdateCategory(data, id) {
 
     if (data.name !== undefined) category.name = data.name;
     if (data.description !== undefined) category.description = data.description;
+
+    if (file) {
+      const oldPublicId = category.image?.public_id;
+
+      const uploaded = await uploadFile(file.path);
+      category.image = { url: uploaded.secure_url, public_id: uploaded.public_id };
+
+      if (oldPublicId) {
+        await destroyFile(oldPublicId);
+      }
+    }
 
     await category.save(); 
 

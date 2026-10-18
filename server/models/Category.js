@@ -20,6 +20,10 @@ const categorySchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    image: {
+      url: { type: String, default: "" },
+      public_id: { type: String, default: "" },
+    },
     isVisible: {
       type: Boolean,
       default: true,
@@ -109,4 +113,3 @@ module.exports = {
   Category: mongoose.model("Category", categorySchema),
   Subcategory: mongoose.model("Subcategory", subcategorySchema),
 };
-

@@ -15,7 +15,7 @@ class CategoryController extends BaseController{
             req.body
         );
 
-        const result = await CategoryService.addCategory(validatedData);
+        const result = await CategoryService.addCategory(validatedData, req.file);
 
         let message;
 
@@ -98,7 +98,7 @@ static editCategory = BaseController.asyncHandler(
         const id = req.params.id
         const validateData = BaseController.validateRequest(CategoryValidation,req.body)
 
-        const result = await CategoryService.UpdateCategory(validateData,id)
+        const result = await CategoryService.UpdateCategory(validateData,id,req.file)
 
           BaseController.sendSuccessResponse(
             res,
