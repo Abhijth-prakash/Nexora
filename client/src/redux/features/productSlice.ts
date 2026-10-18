@@ -3,6 +3,7 @@ import type { Basecategory, BaseProduct } from "../../utils/baseTypes"
 import axios from "axios"
 import { ProductApi } from "../../utils/api"
 import type { CategoryTreeItem } from "../../utils/apiTypes"
+import type { PayloadAction } from "@reduxjs/toolkit"
 
 type ProductState = {
   categories: Basecategory[]
@@ -13,6 +14,13 @@ type ProductState = {
   page:number,
   totalpages:number
   categoryTree:CategoryTreeItem[]
+  brand: string[]
+  brands: string[]
+  category: string
+  subCategory: string
+  sort: string
+  minPrice: number
+  maxPrice: number
 }
 
 const initialState: ProductState = {
@@ -23,7 +31,14 @@ const initialState: ProductState = {
   product:null,
   page:1,
   totalpages:3,
-  categoryTree:[]
+  categoryTree:[],
+  brand: [],
+  brands: [],
+  category: '',
+  subCategory: '',
+  sort: '',
+  minPrice: 0,
+  maxPrice: 10000
 }
 
 
@@ -53,10 +68,23 @@ export const getCategories = createAsyncThunk(
 //get products
 export const getProducts = createAsyncThunk(
     'users/products',
-    async({limit,slug,page}:{limit:number,slug:string,page:number},{rejectWithValue})=>{
+    async(
+      {limit,slug,page,subCategory,category,brand,minprice,maxprice,sort}:{
+        limit:number,
+        slug:string,
+        page:number,
+        subCategory:string,
+        category:string,
+        brand:string[],
+        minprice:number,
+        maxprice:number,
+        sort:string
+      },
+      {rejectWithValue}
+    )=>{
         try{
 
-            const response = await ProductApi.getProducts(limit,slug,page)
+           const response = await ProductApi.getProducts(limit,slug,page,subCategory,category,brand,minprice,maxprice,sort)
             return response.data
         }catch(error){
               if (axios.isAxiosError(error)) {
@@ -124,7 +152,20 @@ export const ProductSlice = createSlice({
             if(state.page>1){
                 state.page-=1
             }
-        }
+        },
+        setBrand: (state, action: PayloadAction<string[]>) => {
+            state.brand = action.payload
+            state.page = 1
+        },
+        setCategory: (state, action: PayloadAction<string>) => {
+         state.category = action.payload
+         state.subCategory = ''
+         state.page = 1
+        },
+        setSubCategory: (state, action: PayloadAction<string>) => {
+        state.subCategory = action.payload
+         state.page = 1
+        },
   },
   extraReducers:(build)=>{
     build
@@ -148,6 +189,13 @@ export const ProductSlice = createSlice({
     .addCase(getProducts.fulfilled,(state,action)=>{
         state.loading = false
         state.products = action.payload
+
+        // store brands only from the first fetch so the list stays stable
+        if(state.brands.length === 0){
+            state.brands = Array.from(
+                new Set(action.payload.map(p => p.brand).filter(Boolean))
+            ).sort()
+        }
     })
     .addCase(getProducts.rejected,(state)=>{
         state.loading = false
@@ -181,4 +229,4 @@ export const ProductSlice = createSlice({
 
 export default ProductSlice.reducer
 
-export const {addpage,minupage} = ProductSlice.actions
+export const { addpage, minupage, setBrand, setCategory, setSubCategory } = ProductSlice.actions

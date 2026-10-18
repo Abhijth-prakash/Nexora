@@ -10,10 +10,17 @@ class ProductsController extends BaseController{
 
             const limit = req.query.limit
             const slug = req.query.slug
+            const page = req.query.page
+            const subCategory = req.query.subCategory
+            const category = req.query.category
+            const brand = req.query.brand ? req.query.brand.split(',') : []
+            const minprice = req.query.minprice
+            const maxprice = req.query.maxprice
+            const sort = req.query.sort
 
-           const result =  await UserproductService.getProducts(limit,slug)
+            const result = await UserproductService.getProducts(limit,slug,page,subCategory,category,brand,minprice,maxprice,sort)
 
-          return this.sendSuccessResponse(
+            return this.sendSuccessResponse(
       res,
       "products  fetched successfully",
       result,

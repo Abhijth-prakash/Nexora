@@ -68,7 +68,7 @@ function App() {
 
 
         <Route
-          path="/products/:slug"
+          path="/category/products/:slug"
           element={<ProductList />}
         />
 

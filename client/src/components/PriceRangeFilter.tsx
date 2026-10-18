@@ -1,4 +1,3 @@
-
 interface PriceRange {
   minPrice: number;
   maxPrice: number;
@@ -42,8 +41,8 @@ export default function PriceRangeFilter({
 
   const reset = () => {
     onChange({
-      minPrice: 0,
-      maxPrice: 0,
+      minPrice: MIN_PRICE,
+      maxPrice: MAX_PRICE,
     });
   };
 
