@@ -1,4 +1,4 @@
-import  type { BaseUser,BaseAddress, Basecategory, BaseProduct } from "./baseTypes"
+import  type { BaseUser,BaseAddress, Basecategory, BaseProduct,BaseCartItem } from "./baseTypes"
 
 export type ApiResponse<T> = {
   success: boolean
@@ -80,3 +80,13 @@ export type AddToCartPayload ={
   size?: string | null;
   quantity?: number;
 }
+
+
+export type CartResponse = {
+  items: BaseCartItem[];
+  totalItems: number;
+  subtotal: number;
+};
+
+
+

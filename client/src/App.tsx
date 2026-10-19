@@ -14,6 +14,7 @@ import ChangePass from "./pages/Profile/ChangePass"
 import EditProfile from "./pages/Profile/EditProfile"
 import Product from "./pages/Products/Product"
 import ProductList from "./pages/Products/ProductList"
+import Cart from "./pages/cart/Cart"
 
 function App() {
   return (
@@ -75,6 +76,12 @@ function App() {
         <Route
           path="/product/:id"
           element={<Product />}
+        />
+
+
+        <Route
+          path="/users/cart"
+          element={<Cart />}
         />
 
 

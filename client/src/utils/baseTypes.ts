@@ -73,4 +73,21 @@ export type BaseVarient = {
   rating: number;
 };
 
+export type BaseCartItem = {
+  _id: string;
+  productId?: string;
+  variantId?: string | null;
+  name?: string;
+  brand?: string;
+  size?: string | null;
+  color?: string | null;
+  price?: number;
+  image?: string | null;
+  quantity: number;
+  stock?: number;
+  available: boolean;
+  reason?: string | null;
+  lineTotal?: number;
+};
+
 

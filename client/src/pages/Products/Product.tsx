@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from "react-toastify"
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
 import { getProductbyID } from '../../redux/features/productSlice'
+import { addToCart } from '../../redux/features/cartSlice'
+import type { BaseProduct } from '../../utils/baseTypes'
 import Navbar from '../../components/Navbar'
+
+type Variant = NonNullable<BaseProduct['variants']>[number]
 
 const Product = () => {
   const { id } = useParams()
   const dispatch = useAppDispatch()
   const { product } = useAppSelector(state => state.productData)
+  const navigate = useNavigate()
 
-  const [selected, setSelected] = useState(0) // 0 = normal product, 1+ = variants
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null) // null = original product
   const [size, setSize] = useState<string | null>(null)
   const [activeImage, setActiveImage] = useState(0)
   const [tab, setTab] = useState<'description' | 'specifications' | 'reviews'>('description')
+  const [quantity, setQuantiy] = useState(1)
 
   useEffect(() => {
     if (id) {
@@ -28,33 +35,46 @@ const Product = () => {
     )
   }
 
-  // option 0 is the normal product, the rest are its variants
-  const options = [
-    {
-      label: product.color || 'Default',
-      price: product.price,
-      stock: product.stock,
-      images: product.images ?? [],
-      sizes: product.size ?? [],
-    },
-    ...(product.variants ?? []).map((v, i) => ({
-      label: v.color || `Variant ${i + 1}`,
-      price: v.price,
-      stock: v.stock,
-      images: v.images?.length ? v.images : product.images ?? [],
-      sizes: v.size?.length ? v.size : product.size ?? [],
-    })),
-  ]
+  const variants = product.variants ?? []
 
-  const current = options[selected] ?? options[0]
-  const sizeOk = current.sizes.length === 0 || !!size
-  const outOfStock = current.stock <= 0
+  // values for whatever is selected (variant, or original product if null)
+  const price = selectedVariant ? selectedVariant.price : product.price
+  const stock = selectedVariant ? selectedVariant.stock : product.stock
+  const images = selectedVariant?.images?.length ? selectedVariant.images : product.images ?? []
+  const sizes = selectedVariant?.size?.length ? selectedVariant.size : product.size ?? []
+  const colorLabel = selectedVariant ? selectedVariant.color : product.color
+
+  const sizeOk = sizes.length === 0 || !!size
+  const outOfStock = stock <= 0
   const canBuy = sizeOk && !outOfStock
 
-  const selectOption = (index: number) => {
-    setSelected(index)
+  const selectVariant = (variant: Variant | null) => {
+    setSelectedVariant(variant)
     setSize(null)
     setActiveImage(0)
+    setQuantiy(1)
+  }
+
+  const cartHandle = async () => {
+    if (!canBuy) return
+
+    try {
+      await dispatch(
+        addToCart({
+          productId: product._id,
+          variantId: selectedVariant?._id ?? null,
+          size: sizes.length > 0 ? size : null,
+          quantity,
+        })
+      ).unwrap()
+
+      setQuantiy(1)
+      toast.success('Added to bag')
+      navigate('/users/cart')
+      
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not add to bag')
+    }
   }
 
   return (
@@ -62,20 +82,18 @@ const Product = () => {
       <Navbar />
 
       <main className="w-full px-6 py-6 lg:px-16">
-      
-
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* gallery */}
           <div className="flex gap-4 rounded-lg border border-gray-200 bg-white p-4">
             <div className="flex-1">
               <img
-                src={current.images[activeImage]}
+                src={images[activeImage]}
                 alt={product.name}
                 className="h-[420px] w-full object-contain"
               />
             </div>
             <div className="flex flex-col gap-3">
-              {current.images.map((img, index) => (
+              {images.map((img, index) => (
                 <button
                   key={index}
                   type="button"
@@ -101,34 +119,50 @@ const Product = () => {
             </div>
 
             <div className="border-t border-gray-200 pt-4">
-              <span className="text-2xl font-bold text-red-500">₹{current.price}</span>
+              <span className="text-2xl font-bold text-red-500">₹{price}</span>
               <p className="mt-1 text-xs text-gray-500">Inclusive of all taxes</p>
             </div>
 
-            {/* options: normal + variants */}
-            {options.length > 1 && (
+            {/* variants */}
+            {variants.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-800">
-                  Options <span className="font-normal text-gray-500">: {current.label}</span>
+                  Options <span className="font-normal text-gray-500">: {colorLabel || 'Default'}</span>
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  {options.map((opt, index) => (
+                  {/* original product */}
+                  <button
+                    type="button"
+                    onClick={() => selectVariant(null)}
+                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm ${
+                      selectedVariant === null ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
+                  >
+                    {product.images?.[0] && (
+                      <img src={product.images[0]} alt="" className="h-10 w-10 rounded object-cover" />
+                    )}
+                    <span>
+                      <span className="block text-gray-800">{product.color || 'Default'}</span>
+                      <span className="block text-xs text-gray-500">₹{product.price}</span>
+                    </span>
+                  </button>
+
+                  {/* each variant */}
+                  {variants.map((v, index) => (
                     <button
-                      key={index}
+                      key={v._id}
                       type="button"
-                      onClick={() => selectOption(index)}
+                      onClick={() => selectVariant(v)}
                       className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm ${
-                        selected === index
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-300'
+                        selectedVariant?._id === v._id ? 'border-red-500 bg-red-50' : 'border-gray-300'
                       }`}
                     >
-                      {opt.images[0] && (
-                        <img src={opt.images[0]} alt="" className="h-10 w-10 rounded object-cover" />
+                      {v.images?.[0] && (
+                        <img src={v.images[0]} alt="" className="h-10 w-10 rounded object-cover" />
                       )}
                       <span>
-                        <span className="block text-gray-800">{opt.label}</span>
-                        <span className="block text-xs text-gray-500">₹{opt.price}</span>
+                        <span className="block text-gray-800">{v.color || `Variant ${index + 1}`}</span>
+                        <span className="block text-xs text-gray-500">₹{v.price}</span>
                       </span>
                     </button>
                   ))}
@@ -137,11 +171,11 @@ const Product = () => {
             )}
 
             {/* sizes */}
-            {current.sizes.length > 0 && (
+            {sizes.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-800">Size</p>
                 <div className="flex flex-wrap gap-2">
-                  {current.sizes.map(s => (
+                  {sizes.map(s => (
                     <button
                       key={s}
                       type="button"
@@ -162,9 +196,36 @@ const Product = () => {
             {!sizeOk && <p className="text-xs text-gray-500">Select a size to continue</p>}
             {outOfStock && <p className="text-sm text-red-500">Out of stock</p>}
 
+            {/* quantity */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-800">Quantity</p>
+              <div className="inline-flex items-center rounded-lg border border-gray-300">
+                <button
+                  type="button"
+                  onClick={() => setQuantiy(prev => Math.max(1, prev - 1))}
+                  disabled={quantity <= 1}
+                  className="h-10 w-10 text-lg text-gray-700 hover:bg-gray-100 disabled:opacity-40"
+                >
+                  −
+                </button>
+                <span className="w-12 text-center text-sm font-medium text-gray-900">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantiy(prev => Math.min(stock, prev + 1))}
+                  disabled={quantity >= stock}
+                  className="h-10 w-10 text-lg text-gray-700 hover:bg-gray-100 disabled:opacity-40"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             {/* actions */}
             <div className="flex gap-3">
               <button
+                onClick={cartHandle}
                 type="button"
                 disabled={!canBuy}
                 className="flex-1 rounded-lg bg-red-500 px-4 py-3 text-sm font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"

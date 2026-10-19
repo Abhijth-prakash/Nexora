@@ -1,18 +1,25 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import axios from "axios"
 import { CartApi } from "../../utils/api"
-import type { AddToCartPayload, addtoCartResponse } from "../../utils/apiTypes"
+import type { AddToCartPayload } from "../../utils/apiTypes"
+import type { BaseCartItem } from "../../utils/baseTypes"
 
 export type Carttype = {
+  cartItems:BaseCartItem[]
   loading: boolean
   errors: null | string
-  cart: addtoCartResponse | null
+  totalItems:number
+  subtotal:number
+ 
 }
 
 const initialState: Carttype = {
+  cartItems:[],
   loading: false,
   errors: null,
-  cart: null,
+  totalItems:0,
+  subtotal:0
+  
 }
 
 //add to cart
@@ -35,6 +42,26 @@ export const addToCart = createAsyncThunk(
   }
 )
 
+
+export const getCart = createAsyncThunk(
+  "users/getCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await CartApi.getCart()
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            " failed to fetch cart. Please try again."
+        )
+      }
+
+      return rejectWithValue("failed to fetch cart. Please try again.")
+    }
+  }
+)
+
 export const CartSlice = createSlice({
   name: "cart",
   initialState,
@@ -49,9 +76,26 @@ export const CartSlice = createSlice({
       })
       .addCase(addToCart.fulfilled, (state, action) => {
         state.loading = false
-        state.cart = action.payload
+        
       })
       .addCase(addToCart.rejected, (state, action) => {
+        state.loading = false
+        state.errors = action.payload as string
+      })
+
+      //get cart
+      .addCase(getCart.pending, (state) => {
+        state.loading = true
+        state.errors = null
+      })
+      .addCase(getCart.fulfilled, (state, action) => {
+        state.loading = false
+        state.cartItems = action.payload.items
+        state.subtotal = action.payload.subtotal
+        state.totalItems = action.payload.totalItems
+        
+      })
+      .addCase(getCart.rejected, (state, action) => {
         state.loading = false
         state.errors = action.payload as string
       })

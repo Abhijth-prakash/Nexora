@@ -5,8 +5,9 @@ const CartController = require('../../controllers/users/cartController');
 
 router.use(authenticate)
 
-
+router.get('/cart',CartController.getCart)
 router.post('/cart',CartController.addtoCart)
+
 
 
 module.exports = router
