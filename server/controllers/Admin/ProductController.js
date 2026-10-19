@@ -15,7 +15,9 @@ if (req.body.size && req.body.size !== "undefined") {
   req.body.size = JSON.parse(req.body.size);
 } else {
   req.body.size = [];
-}
+}   
+
+   
         const validatedData = BaseController.validateRequest(
             ProductValidation,
             req.body
@@ -86,7 +88,7 @@ static UpdateProduct = BaseController.asyncHandler(
             req.body.size = JSON.parse(req.body.size);
         }
 
-
+      
         const id =  req.params.id
          const data = BaseController.validateRequest(
             UpdateProductValidation,req.body

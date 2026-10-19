@@ -27,6 +27,10 @@ export type Basecategory={
     _id: string
     name:string
     description:string
+    image:{
+        url:string
+        public_id:string
+    }
     isVisible:boolean
     productCount:number
     slug:string

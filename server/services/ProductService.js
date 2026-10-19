@@ -52,6 +52,7 @@ class ProductService {
                 stock:data.stock,
                 visible: data.visible,
                 price: data.price,
+                rating: data.rating,
                 size: data.size,
                 images: imageUrls,
                 category: category._id,
@@ -78,7 +79,6 @@ await Subcategory.updateOne(
             throw error;
         }
     }
-
 
     //visiblity toggle
 static async visibleToggle(id) {

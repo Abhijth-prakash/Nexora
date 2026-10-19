@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
@@ -221,6 +220,12 @@ const ProductForm = ({ onClose, editId }: props) => {
       const sort = "";
 
       if (editId) {
+        if (images.length === 0) {
+          setFormError("Please select at least one image");
+          toast.error("Please select at least one image");
+          return;
+        }
+
         const formData = new FormData();
 
         formData.append("name", data.name);

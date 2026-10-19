@@ -70,3 +70,13 @@ export type CategoryTreeItem = {
   slug: string
   subCategories: { _id: string; name: string; slug: string }[]
 }
+
+export type addtoCartResponse = null
+
+
+export type AddToCartPayload ={
+  productId: string;
+  variantId?: string | null;
+  size?: string | null;
+  quantity?: number;
+}

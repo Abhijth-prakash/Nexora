@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, ApiResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -113,6 +113,18 @@ export const ProductApi = {
   return response.data
 },
 }
+
+export const CartApi = {
+  addToCart: async (
+    payload: AddToCartPayload
+  ): Promise<ApiResponse<addtoCartResponse>> => {
+    const response = await ClientApi.post<ApiResponse<addtoCartResponse>>(
+      "/users/cart",
+      payload
+    );
+    return response.data;
+  },
+};
 
 
 
