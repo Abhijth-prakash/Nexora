@@ -11,7 +11,8 @@ const CategorySidebar = () => {
     dispatch(getCategoryTree())
   }, [dispatch])
 
-  const active = categoryTree.find(c => c._id === activeId) ?? categoryTree[0]
+  // only set after the user clicks a category
+  const active = categoryTree.find(c => c._id === activeId)
 
   return (
     <div className="w-full rounded-lg border border-gray-200 bg-white p-4">

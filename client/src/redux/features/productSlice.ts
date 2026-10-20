@@ -21,6 +21,9 @@ type ProductState = {
   sort: string
   minPrice: number
   maxPrice: number
+  // cache markers: what the current data was fetched with
+  categoriesLimit: number | null
+  productsKey: string | null
 }
 
 const initialState: ProductState = {
@@ -38,8 +41,25 @@ const initialState: ProductState = {
   subCategory: '',
   sort: '',
   minPrice: 0,
-  maxPrice: 10000
+  maxPrice: 10000,
+  categoriesLimit: null,
+  productsKey: null
 }
+
+type GetProductsArgs = {
+  limit:number,
+  slug:string,
+  page:number,
+  subCategory:string,
+  category:string,
+  brand:string[],
+  minprice:number,
+  maxprice:number,
+  sort:string
+}
+
+const getProductState = (getState: () => unknown) =>
+  (getState() as { productData: ProductState }).productData
 
 
 //getcategories
@@ -62,6 +82,13 @@ export const getCategories = createAsyncThunk(
      "Get categories failed. Please try again."
     );
         }
+    },
+    {
+      // skip if categories are already loaded with the same limit
+      condition: (limit, { getState }) => {
+        const s = getProductState(getState)
+        if (s.categories.length > 0 && s.categoriesLimit === limit) return false
+      }
     }
 )
 
@@ -69,17 +96,7 @@ export const getCategories = createAsyncThunk(
 export const getProducts = createAsyncThunk(
     'users/products',
     async(
-      {limit,slug,page,subCategory,category,brand,minprice,maxprice,sort}:{
-        limit:number,
-        slug:string,
-        page:number,
-        subCategory:string,
-        category:string,
-        brand:string[],
-        minprice:number,
-        maxprice:number,
-        sort:string
-      },
+      {limit,slug,page,subCategory,category,brand,minprice,maxprice,sort}:GetProductsArgs,
       {rejectWithValue}
     )=>{
         try{
@@ -98,6 +115,13 @@ export const getProducts = createAsyncThunk(
        "Get products failed. Please try again."
     );
         }
+    },
+    {
+      // skip only if the products in the store came from these exact arguments
+      condition: (args, { getState }) => {
+        const s = getProductState(getState)
+        if (s.products.length > 0 && s.productsKey === JSON.stringify(args)) return false
+      }
     }
 )
 
@@ -134,6 +158,12 @@ export const getCategoryTree = createAsyncThunk(
       return response.data
     } catch (error) {
       return rejectWithValue("Failed to load categories")
+    }
+  },
+  {
+    // skip if the tree is already loaded
+    condition: (_, { getState }) => {
+      if (getProductState(getState).categoryTree.length > 0) return false
     }
   }
 )
@@ -177,6 +207,7 @@ export const ProductSlice = createSlice({
     .addCase(getCategories.fulfilled,(state,action)=>{
         state.loading = false
         state.categories = action.payload
+        state.categoriesLimit = action.meta.arg
     })
     .addCase(getCategories.rejected,(state)=>{
         state.loading = false
@@ -189,6 +220,7 @@ export const ProductSlice = createSlice({
     .addCase(getProducts.fulfilled,(state,action)=>{
         state.loading = false
         state.products = action.payload
+        state.productsKey = JSON.stringify(action.meta.arg)
 
         // store brands only from the first fetch so the list stays stable
         if(state.brands.length === 0){
