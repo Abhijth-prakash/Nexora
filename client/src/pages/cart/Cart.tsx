@@ -1,8 +1,8 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getCart } from "../../redux/features/cartSlice";
+import { getCart, updateCartItem } from "../../redux/features/cartSlice";
 import Navbar from "../../components/Navbar";
 
 const Cart = () => {
@@ -11,9 +11,25 @@ const Cart = () => {
     (state) => state.cartData
   );
 
+  // id of the row currently being updated (stops double clicks)
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
   useEffect(() => {
     dispatch(getCart());
   }, [dispatch]);
+
+  const changeQuantity = async (itemId: string, quantity: number) => {
+    if (updatingId) return;
+
+    setUpdatingId(itemId);
+    try {
+      await dispatch(updateCartItem({ itemId, quantity })).unwrap();
+    } catch (err) {
+      toast.error(typeof err === "string" ? err : "Could not update cart");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,88 +84,137 @@ const Cart = () => {
                 </span>
               </div>
 
-              {cartItems.map((item) => (
-                <article
-                  key={item._id}
-                  className="flex flex-col gap-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:flex-row sm:p-5"
-                >
-                  <div className="flex h-36 w-full shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 sm:w-36">
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name ?? "Product"}
-                        className="h-full w-full object-contain p-2"
-                      />
-                    ) : (
-                      <span className="text-sm text-gray-400">
-                        No image available
-                      </span>
-                    )}
-                  </div>
+              {cartItems.map((item) => {
+                const isUpdating = updatingId === item._id;
+                // can't add more if stock is unknown (product gone) or reached
+                const plusDisabled =
+                  !!updatingId ||
+                  item.stock === undefined ||
+                  item.quantity >= item.stock;
 
-                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {item.name ?? "Unavailable product"}
-                        </h3>
-
-                        {item.brand && (
-                          <p className="mt-1 text-sm text-gray-500">
-                            {item.brand}
-                          </p>
-                        )}
-
-                        {item.color && (
-                          <p className="mt-2 text-sm text-gray-600">
-                            Color: {item.color}
-                          </p>
-                        )}
-
-                        {item.size && (
-                          <p className="mt-1 text-sm text-gray-600">
-                            Size: {item.size}
-                          </p>
-                        )}
-                      </div>
-
-                      {item.price !== undefined && (
-                        <p className="text-lg font-bold text-gray-900">
-                          ₹{item.price.toLocaleString("en-IN")}
-                        </p>
+                return (
+                  <article
+                    key={item._id}
+                    className="flex flex-col gap-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:flex-row sm:p-5"
+                  >
+                    <div className="flex h-36 w-full shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 sm:w-36">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name ?? "Product"}
+                          className="h-full w-full object-contain p-2"
+                        />
+                      ) : (
+                        <span className="text-sm text-gray-400">
+                          No image available
+                        </span>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-end justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                          Quantity
-                        </p>
-                        <p className="mt-1 font-semibold text-gray-900">
-                          {item.quantity}
-                        </p>
-                      </div>
+                    <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {item.name ?? "Unavailable product"}
+                          </h3>
 
-                      {item.lineTotal !== undefined && (
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">
-                            Item total
-                          </p>
-                          <p className="mt-1 font-bold text-gray-900">
-                            ₹{item.lineTotal.toLocaleString("en-IN")}
-                          </p>
+                          {item.brand && (
+                            <p className="mt-1 text-sm text-gray-500">
+                              {item.brand}
+                            </p>
+                          )}
+
+                          {item.color && (
+                            <p className="mt-2 text-sm text-gray-600">
+                              Color: {item.color}
+                            </p>
+                          )}
+
+                          {item.size && (
+                            <p className="mt-1 text-sm text-gray-600">
+                              Size: {item.size}
+                            </p>
+                          )}
                         </div>
+
+                        {item.price !== undefined && (
+                          <p className="text-lg font-bold text-gray-900">
+                            ₹{item.price.toLocaleString("en-IN")}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                            Quantity
+                          </p>
+
+                          <div
+                            className={`mt-1 inline-flex items-center overflow-hidden rounded-xl border border-gray-300 bg-white ${
+                              isUpdating ? "opacity-60" : ""
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              aria-label={
+                                item.quantity === 1
+                                  ? "Remove item"
+                                  : "Decrease quantity"
+                              }
+                              title={
+                                item.quantity === 1
+                                  ? "Remove item"
+                                  : "Decrease quantity"
+                              }
+                              disabled={!!updatingId}
+                              onClick={() =>
+                                changeQuantity(item._id, item.quantity - 1)
+                              }
+                              className="flex h-9 w-9 items-center justify-center text-lg font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              {item.quantity === 1 ? "🗑" : "−"}
+                            </button>
+
+                            <span className="flex h-9 w-10 items-center justify-center border-x border-gray-300 text-sm font-semibold text-gray-900">
+                              {item.quantity}
+                            </span>
+
+                            <button
+                              type="button"
+                              aria-label="Increase quantity"
+                              disabled={plusDisabled}
+                              onClick={() =>
+                                changeQuantity(item._id, item.quantity + 1)
+                              }
+                              className="flex h-9 w-9 items-center justify-center text-lg font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+
+                        {item.lineTotal !== undefined && (
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">
+                              Item total
+                            </p>
+                            <p className="mt-1 font-bold text-gray-900">
+                              ₹{item.lineTotal.toLocaleString("en-IN")}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {item.available === false && (
+                        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                          {item.reason ?? "This product is unavailable"}
+                        </p>
                       )}
                     </div>
-
-                    {item.available === false && (
-                      <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-                        {item.reason ?? "This product is unavailable"}
-                      </p>
-                    )}
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </section>
 
             <aside className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">

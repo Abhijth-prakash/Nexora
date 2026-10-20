@@ -36,6 +36,21 @@ class CartController extends BaseController {
       200
     );
   });
+
+
+
+//qunatity increase or decrese 
+static updateCartItem = BaseController.asyncHandler(async (req, res) => {
+  const cart = await CartService.updateCartItem(
+    req.userId,
+    req.params.itemId,
+    req.body.quantity
+  );
+  return this.sendSuccessResponse(res, "Cart updated successfully", cart, 200);
+});
+
+
+
 }
 
 module.exports = CartController;

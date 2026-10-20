@@ -42,7 +42,7 @@ export const addToCart = createAsyncThunk(
   }
 )
 
-
+//get cart
 export const getCart = createAsyncThunk(
   "users/getCart",
   async (_, { rejectWithValue }) => {
@@ -61,6 +61,30 @@ export const getCart = createAsyncThunk(
     }
   }
 )
+
+
+//updateCartItem
+export const updateCartItem = createAsyncThunk(
+  "users/updateCartItem",
+  async (
+    { itemId, quantity }: { itemId: string; quantity: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await CartApi.updateCartItem(itemId, quantity)
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message || "Update cart failed. Please try again."
+        )
+      }
+      return rejectWithValue("Update cart failed. Please try again.")
+    }
+  }
+)
+
+
 
 export const CartSlice = createSlice({
   name: "cart",
@@ -99,6 +123,23 @@ export const CartSlice = createSlice({
         state.loading = false
         state.errors = action.payload as string
       })
+
+
+      //updateQuanitty
+      .addCase(updateCartItem.fulfilled, (state, action) => {
+        state.loading = false
+        state.cartItems = action.payload.items
+        state.subtotal = action.payload.subtotal
+        state.totalItems = action.payload.totalItems
+        
+      })
+      .addCase(updateCartItem.rejected, (state, action) => {
+        state.loading = false
+        state.errors = action.payload as string
+      })
+
+      
+      
   },
 })
 

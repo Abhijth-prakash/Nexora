@@ -167,6 +167,57 @@ static async getCart(userId) {
   }
 }
 
+//quanity
+static async updateCartItem(userId, itemId, quantity) {
+  try {
+    if (!mongoose.isValidObjectId(itemId)) {
+      throw new ValidationError("Invalid cart item id");
+    }
+
+    quantity = Number(quantity);
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      throw new ValidationError("Invalid quantity");
+    }
+
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) throw new NotFoundError("Cart not found");
+
+    const item = cart.items.id(itemId);
+    if (!item) throw new NotFoundError("Cart item not found");
+
+    
+    if (quantity === 0) {
+      item.deleteOne();
+      await cart.save();
+      return this.getCart(userId);
+    }
+
+    const product = await Product.findOne({ _id: item.product, visible: true });
+    if (!product) throw new NotFoundError("Product is no longer available");
+
+    let availableStock = product.stock;
+    if (item.variantId) {
+      const variant = product.variants.id(item.variantId);
+      if (!variant) throw new NotFoundError("Variant is no longer available");
+      availableStock = variant.stock;
+    }
+
+    if (quantity > availableStock) {
+      throw new ConflictError(
+        availableStock === 0 ? "Out of stock" : `Only ${availableStock} left in stock`
+      );
+    }
+
+    item.quantity = quantity;
+    await cart.save();
+
+    return this.getCart(userId);
+  } catch (error) {
+    logger.error("failed to update cart item", error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = CartService;

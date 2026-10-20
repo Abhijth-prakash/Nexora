@@ -131,6 +131,17 @@ export const CartApi = {
     );
     return response.data;
   },
+  
+  updateCartItem: async (
+  itemId: string,
+  quantity: number
+): Promise<ApiResponse<CartResponse>> => {
+  const response = await ClientApi.patch<ApiResponse<CartResponse>>(
+    `/users/cart/${itemId}`,
+    { quantity }
+  );
+  return response.data;
+},
 };
 
 
