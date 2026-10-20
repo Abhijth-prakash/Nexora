@@ -15,84 +15,40 @@ import EditProfile from "./pages/Profile/EditProfile"
 import Product from "./pages/Products/Product"
 import ProductList from "./pages/Products/ProductList"
 import Cart from "./pages/cart/Cart"
+import ProtectedRoutes from "./components/ProtectedRoutes"
 
 function App() {
   return (
     <>
       <Routes>
+        {/* auth */}
+        <Route element={<ProtectedRoutes />}>
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/forgetpass" element={<Forgetpass />} />
+          <Route path="/auth/resetpass" element={<Resetpass />} />
+        </Route>
+
+        <Route path="/auth/verify" element={<OtpVerify />} />
+
+        {/* home */}
         <Route path="/" element={<Home />} />
 
-        <Route
-          path="/auth/register"
-          element={<Register />}
-        />
+        {/* profile */}
+        <Route path="/myprofile" element={<Profile />} />
+        <Route path="/profile/address" element={<Address />} />
+        <Route path="/profile/changePassword" element={<ChangePass />} />
+        <Route path="/profile/editProfile" element={<EditProfile />} />
 
-        <Route
-          path="/auth/verify"
-          element={<OtpVerify />}
-        />
+        {/* products */}
+        <Route path="/category/products/:slug" element={<ProductList />} />
+        <Route path="/product/:id" element={<Product />} />
 
-        <Route
-          path="/auth/login"
-          element={<Login />}
-        />
-
-        <Route
-          path="/auth/forgetpass"
-          element={<Forgetpass />}
-        />
-
-        <Route
-          path="/auth/resetpass"
-          element={<Resetpass />}
-        />
-
-        <Route
-          path="/myprofile"
-          element={<Profile />}
-        />
-
-        <Route
-          path="/profile/address"
-          element={<Address />}
-        />
-
-        <Route
-          path="/profile/changePassword"
-          element={<ChangePass />}
-        />
-
-        <Route
-          path="/profile/editProfile"
-          element={<EditProfile />}
-        />
-
-
-        <Route
-          path="/category/products/:slug"
-          element={<ProductList />}
-        />
-
-        <Route
-          path="/product/:id"
-          element={<Product />}
-        />
-
-
-        <Route
-          path="/users/cart"
-          element={<Cart />}
-        />
-
-
-
+        {/* cart */}
+        <Route path="/users/cart" element={<Cart />} />
       </Routes>
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        theme="light"
-      />
+      <ToastContainer position="top-right" autoClose={3000} theme="light" />
     </>
   )
 }
