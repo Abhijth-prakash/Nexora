@@ -20,6 +20,7 @@ const Product = () => {
   const { categories } = useAppSelector((state) => state.categoryData);
 
 
+
   const [form, setForm] = useState(false);
   const [visibleForm,setVisibleForm] = useState(false)
   const [visible,setVisible] = useState(false)
@@ -88,7 +89,7 @@ const Product = () => {
        dispatch(getProducts({ page, search, sort, filter }));
     }
 
-    if(!categories){
+    if(categories.length ===0){
           dispatch(getallCategories());
     }
     

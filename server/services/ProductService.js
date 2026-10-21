@@ -15,70 +15,74 @@ const {Category,Subcategory} = require("../models/Category");
 class ProductService {
 
     //adding product
-    static async addProduct(data, files) {
-        try {
-            const existingProduct = await Product.findOne({
-                name: data.name
-            });
+  static async addProduct(data, files) {
+    try {
+       
+        const [existingProduct, category, subcategory] = await Promise.all([
+            Product.findOne({ name: data.name }).select('_id').lean(),
+            Category.findById(data.category).select('_id').lean(),
+            Subcategory.findById(data.subCategory).select('_id').lean(),
+        ]);
 
-            if (existingProduct) {
-                throw new ConflictError('product already exists');
-            }
-
-            const imageUrls = await Promise.all(
-                files.map(async file => {
-                    const result = await uploadFile(file.path);
-                    return result.secure_url;
-                })
-            );
-
-            const category = await Category.findById(data.category)
-
-            if (!category) {
-                throw new NotFoundError('category not found');
-            }
-
-            const subcategory = await Subcategory.findById(data.subCategory);
-
-            if (!subcategory) {
-                throw new NotFoundError('subcategory not found');
-            }
-
-            const newProduct = new Product({
-                name: data.name,
-                description: data.description,
-                brand:data.brand,
-                color:data.color,
-                stock:data.stock,
-                visible: data.visible,
-                price: data.price,
-                rating: data.rating,
-                size: data.size,
-                images: imageUrls,
-                category: category._id,
-                subCategory: subcategory._id
-            });
-
-            await newProduct.save();
-await Category.findByIdAndUpdate(category._id, {
-  $inc: { productCount: 1 },
-});
-
-await Subcategory.updateOne(
-  { _id: subcategory._id, category: category._id },
-  {
-    $inc: { productCount: 1 },
-  }
-);
-            logger.info('new product added successfully');
-
-            return null;
-
-        } catch (error) {
-            logger.error('failed to add product', error);
-            throw error;
+      
+        if (existingProduct) {
+            throw new ConflictError('product already exists');
         }
+
+        if (!category) {
+            throw new NotFoundError('category not found');
+        }
+
+        if (!subcategory) {
+            throw new NotFoundError('subcategory not found');
+        }
+
+       
+        const imageUrls = await Promise.all(
+            files.map(async file => {
+                const result = await uploadFile(file.path);
+                return result.secure_url;
+            })
+        );
+
+        const newProduct = new Product({
+            name: data.name,
+            description: data.description,
+            brand: data.brand,
+            color: data.color,
+            stock: data.stock,
+            visible: data.visible,
+            price: data.price,
+            rating: data.rating,
+            size: data.size,
+            images: imageUrls,
+            category: category._id,
+            subCategory: subcategory._id
+        });
+
+      
+        await newProduct.save();
+
+      
+        await Promise.all([
+            Category.findByIdAndUpdate(category._id, {
+                $inc: { productCount: 1 },
+            }),
+            Subcategory.updateOne(
+                { _id: subcategory._id, category: category._id },
+                { $inc: { productCount: 1 } }
+            ),
+        ]);
+
+        logger.info('new product added successfully');
+
+        return null;
+
+    } catch (error) {
+        logger.error('failed to add product', error);
+        throw error;
     }
+}
 
     //visiblity toggle
 static async visibleToggle(id) {

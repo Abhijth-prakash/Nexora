@@ -104,7 +104,7 @@ const ProductForm = ({ onClose, editId }: props) => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ProductFormData>({
     resolver: zodResolver(
       editId ? updateproductSchema : productSchema
@@ -751,7 +751,8 @@ const ProductForm = ({ onClose, editId }: props) => {
               <input
                 type="submit"
                 value={editId ? "Update Product" : "Create Product"}
-                className="cursor-pointer rounded-md bg-[#F87552] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E96543] focus:outline-none focus:ring-2 focus:ring-[#F87552]/30 focus:ring-offset-2"
+                disabled={isSubmitting}
+                className="cursor-pointer rounded-md bg-[#F87552] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E96543] focus:outline-none focus:ring-2 focus:ring-[#F87552]/30 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#F87552]"
               />
             </div>
           </footer>

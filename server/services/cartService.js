@@ -32,7 +32,7 @@ class CartService {
         const variant = product.variants.id(variantId);
         if (!variant) throw new NotFoundError("Variant not found");
         availableStock = variant.stock;
-        // same fallback as the frontend: variant sizes, else product sizes
+       
         validSizes = variant.size.length > 0 ? variant.size : product.size;
       }
 
