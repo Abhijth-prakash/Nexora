@@ -136,12 +136,6 @@ static async Delete(id){
 //update product
 static async updateProduct(id, data, files) {
     try {
-        const product = await Product.findById(id);
-
-        if (!product) {
-            throw new NotFoundError('product not found');
-        }
-
         let imageUrls = [];
 
         if (files && files.length > 0) {
@@ -158,19 +152,29 @@ static async updateProduct(id, data, files) {
             description: data.description,
             price: data.price,
             size: data.size,
-            stock:data.stock,
-            color:data.color,
-            brand:data.brand,
-            rating:data.rating
+            stock: data.stock,
+            color: data.color,
+            brand: data.brand,
+            rating: data.rating
         };
 
         if (imageUrls.length > 0) {
             updateData.images = imageUrls;
         }
 
-        await Product.findByIdAndUpdate(id, { $set: updateData });
+        const product = await Product.findByIdAndUpdate(
+            id,
+            { $set: updateData },
+            { new: true }
+        )
+            .select('name')
+            .lean();
 
-        logger.info(`succesfully updated product ${product.name}`);
+        if (!product) {
+            throw new NotFoundError('product not found');
+        }
+
+        logger.info(`successfully updated product ${product.name}`);
         return true;
 
     } catch (error) {

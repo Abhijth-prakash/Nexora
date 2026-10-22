@@ -4,7 +4,8 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import {
     getCategories,
     addpage,
-    minuspage
+    minuspage,
+    resetpage
 } from "../../redux/features/categorySlice"
 import CategoryForm from "./CategoryForm"
 import CategoryDelete from "./CategoryDelete"
@@ -393,9 +394,10 @@ const Category = () => {
 
                             <input
                                 value={search}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                     setSearch(e.target.value)
-                                }
+                                    dispatch(resetpage())
+                                }}
                                 type="text"
                                 placeholder="Search categories..."
                                 className="h-11 w-full rounded-xl border border-[#e3dcd8] bg-white pl-11 pr-4 text-sm text-[#222] outline-none transition placeholder:text-[#b4a39c] focus:border-[#ff624d] focus:ring-4 focus:ring-[#ff624d]/10"
@@ -409,9 +411,10 @@ const Category = () => {
 
                             <select
                                 value={filter}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                     setFilter(e.target.value)
-                                }
+                                    dispatch(resetpage())
+                                }}
                                 className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-[#e3dcd8] bg-white px-4 pr-10 text-sm font-medium text-gray-700 outline-none transition hover:border-[#ffb0a4] focus:border-[#ff624d] focus:ring-4 focus:ring-[#ff624d]/10"
                             >
 

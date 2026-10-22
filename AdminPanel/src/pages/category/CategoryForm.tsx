@@ -14,12 +14,12 @@ import { useEffect, useState } from "react"
 export type props = {
     onClose: () => void
     editid: string
-    page:number
-    search:string
-    filter:string
+    page: number
+    search: string
+    filter: string
 }
 
-const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
+const CategoryForm = ({ onClose, editid, page, search, filter }: props) => {
     const dispatch = useAppDispatch()
 
     const { categories } = useAppSelector(
@@ -32,9 +32,10 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
 
     const [image, setImage] = useState<File | null>(null)
     const [preview, setPreview] = useState<string>("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
-        dispatch(getCategories({page,search,filter}))
+        dispatch(getCategories({ page, search, filter }))
     }, [])
 
     const {
@@ -57,7 +58,6 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
         }
     }, [category, reset])
 
-    // show a preview of the newly chosen file, and release it when it changes
     useEffect(() => {
         if (!image) return
 
@@ -103,6 +103,10 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
     }
 
     const handleData = async (data: categoryData) => {
+        if (isSubmitting) return
+
+        setIsSubmitting(true)
+
         try {
             if (editid) {
                 await dispatch(
@@ -121,7 +125,8 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
 
                 toast.success("Category added successfully")
             }
-            dispatch(getCategories({page,search,filter}))
+
+            dispatch(getCategories({ page, search, filter }))
             onClose()
 
         } catch (error) {
@@ -130,13 +135,14 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                     ? "Failed to update category"
                     : "Failed to add new  category"
             )
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
     return (
         <div className="fixed inset-0 z-50 flex min-h-screen w-full items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
 
-            {/* Full width container */}
             <div className="flex min-h-screen w-full items-center justify-center">
 
                 <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[#eee5e1] bg-white shadow-2xl">
@@ -149,9 +155,7 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                             </p>
 
                             <h1 className="mt-1 text-xl font-bold text-[#171717]">
-                                {editid
-                                    ? "Update Category"
-                                    : "Add Category"}
+                                {editid ? "Update Category" : "Add Category"}
                             </h1>
 
                             <p className="mt-1 text-sm text-[#8f7d75]">
@@ -164,7 +168,8 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-[#8f7d75] transition hover:bg-[#fff0ec] hover:text-[#ff624d]"
+                            disabled={isSubmitting}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-[#8f7d75] transition hover:bg-[#fff0ec] hover:text-[#ff624d] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             ×
                         </button>
@@ -188,7 +193,8 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                                     type="text"
                                     {...register("name")}
                                     placeholder="Enter category name"
-                                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-[#292421] outline-none transition placeholder:text-[#b3a49e] focus:ring-2 ${
+                                    disabled={isSubmitting}
+                                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-[#292421] outline-none transition placeholder:text-[#b3a49e] focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
                                         errors.name
                                             ? "border-red-300 focus:border-red-400 focus:ring-red-100"
                                             : "border-[#e2d9d5] focus:border-[#ff624d] focus:ring-[#ff624d]/10"
@@ -212,7 +218,8 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                                     {...register("description")}
                                     placeholder="Enter category description"
                                     rows={4}
-                                    className={`w-full resize-none rounded-xl border bg-white px-4 py-3 text-sm text-[#292421] outline-none transition placeholder:text-[#b3a49e] focus:ring-2 ${
+                                    disabled={isSubmitting}
+                                    className={`w-full resize-none rounded-xl border bg-white px-4 py-3 text-sm text-[#292421] outline-none transition placeholder:text-[#b3a49e] focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
                                         errors.description
                                             ? "border-red-300 focus:border-red-400 focus:ring-red-100"
                                             : "border-[#e2d9d5] focus:border-[#ff624d] focus:ring-[#ff624d]/10"
@@ -253,12 +260,13 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                                         )}
                                     </div>
 
-                                    <label className="cursor-pointer rounded-xl border border-[#ddd3ce] px-4 py-2.5 text-sm font-semibold text-[#625650] transition hover:bg-[#faf7f5]">
+                                    <label className={`rounded-xl border border-[#ddd3ce] px-4 py-2.5 text-sm font-semibold text-[#625650] transition hover:bg-[#faf7f5] ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
                                         {preview ? "Change image" : "Choose image"}
                                         <input
                                             type="file"
                                             accept="image/*"
                                             onChange={handleImageChange}
+                                            disabled={isSubmitting}
                                             className="hidden"
                                         />
                                     </label>
@@ -281,7 +289,8 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                                     type="text"
                                     {...register("subCategory")}
                                     placeholder="Enter subcategory"
-                                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-[#292421] outline-none transition placeholder:text-[#b3a49e] focus:ring-2 ${
+                                    disabled={isSubmitting}
+                                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-[#292421] outline-none transition placeholder:text-[#b3a49e] focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
                                         errors.subCategory
                                             ? "border-red-300 focus:border-red-400 focus:ring-red-100"
                                             : "border-[#e2d9d5] focus:border-[#ff624d] focus:ring-[#ff624d]/10"
@@ -303,18 +312,20 @@ const CategoryForm = ({ onClose, editid,page,search,filter }: props) => {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="w-full rounded-xl border border-[#ddd3ce] px-6 py-3 text-sm font-semibold text-[#625650] transition hover:bg-[#faf7f5] sm:w-auto"
+                                disabled={isSubmitting}
+                                className="w-full rounded-xl border border-[#ddd3ce] px-6 py-3 text-sm font-semibold text-[#625650] transition hover:bg-[#faf7f5] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                             >
                                 Cancel
                             </button>
 
                             <button
                                 type="submit"
-                                className="w-full rounded-xl bg-[#ff624d] px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ed5744] active:scale-[0.98] sm:w-auto"
+                                disabled={isSubmitting}
+                                className="w-full rounded-xl bg-[#ff624d] px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ed5744] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                             >
-                                {editid
-                                    ? "Update Category"
-                                    : "Add Category"}
+                                {isSubmitting
+                                    ? editid ? "Updating..." : "Adding..."
+                                    : editid ? "Update Category" : "Add Category"}
                             </button>
 
                         </div>

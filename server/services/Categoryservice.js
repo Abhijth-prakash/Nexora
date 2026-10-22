@@ -230,7 +230,7 @@ static async deleteCategory(id) {
       await destroyFile(publicId);
     }
 
-    logger.info("successfully deleted category");
+    logger.info(`successfully deleted category ${category.name} `);
     return true;
   } catch (error) {
     logger.error("failed to delete category", error);

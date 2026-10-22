@@ -15,7 +15,7 @@ const Product = () => {
   const { product } = useAppSelector(state => state.productData)
   const navigate = useNavigate()
 
-  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null) // null = original product
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
   const [size, setSize] = useState<string | null>(null)
   const [activeImage, setActiveImage] = useState(0)
   const [tab, setTab] = useState<'description' | 'specifications' | 'reviews'>('description')
@@ -29,15 +29,81 @@ const Product = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen w-full bg-gray-50">
         <Navbar />
+
+        <main className="w-full px-6 py-6 lg:px-16" aria-busy="true">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 animate-pulse">
+            {/* Gallery skeleton */}
+            <div className="flex gap-4 rounded-lg border border-gray-200 bg-white p-4">
+              <div className="h-[420px] flex-1 rounded-lg bg-gray-200" />
+
+              <div className="flex flex-col gap-3">
+                {[1, 2, 3, 4].map(item => (
+                  <div
+                    key={item}
+                    className="h-16 w-16 rounded bg-gray-200"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Product details skeleton */}
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div className="h-7 w-3/4 rounded bg-gray-200" />
+                <div className="h-3 w-1/4 rounded bg-gray-200" />
+                <div className="h-3 w-1/3 rounded bg-gray-200" />
+              </div>
+
+              <div className="space-y-3 border-t border-gray-200 pt-4">
+                <div className="h-8 w-1/3 rounded bg-gray-200" />
+                <div className="h-3 w-1/4 rounded bg-gray-200" />
+              </div>
+
+              <div className="flex gap-3">
+                {[1, 2, 3].map(item => (
+                  <div
+                    key={item}
+                    className="h-16 w-24 rounded-lg bg-gray-200"
+                  />
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <div className="h-4 w-16 rounded bg-gray-200" />
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4].map(item => (
+                    <div
+                      key={item}
+                      className="h-10 w-12 rounded-lg bg-gray-200"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-10 w-32 rounded-lg bg-gray-200" />
+
+              <div className="flex gap-3">
+                <div className="h-12 flex-1 rounded-lg bg-gray-200" />
+                <div className="h-12 flex-1 rounded-lg bg-gray-200" />
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs skeleton */}
+          <div className="mt-8 space-y-5 rounded-lg border border-gray-200 bg-white p-6 animate-pulse">
+            <div className="h-5 w-64 rounded bg-gray-200" />
+            <div className="h-3 w-full rounded bg-gray-200" />
+            <div className="h-3 w-4/5 rounded bg-gray-200" />
+          </div>
+        </main>
       </div>
     )
   }
 
   const variants = product.variants ?? []
 
-  // values for whatever is selected (variant, or original product if null)
   const price = selectedVariant ? selectedVariant.price : product.price
   const stock = selectedVariant ? selectedVariant.stock : product.stock
   const images = selectedVariant?.images?.length ? selectedVariant.images : product.images ?? []
@@ -71,7 +137,7 @@ const Product = () => {
       setQuantiy(1)
       toast.success('Added to bag')
       navigate('/users/cart')
-      
+
     } catch (err) {
       toast.error(typeof err === 'string' ? err : 'Could not add to bag')
     }
@@ -83,6 +149,7 @@ const Product = () => {
 
       <main className="w-full px-6 py-6 lg:px-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+
           {/* gallery */}
           <div className="flex gap-4 rounded-lg border border-gray-200 bg-white p-4">
             <div className="flex-1">
@@ -92,6 +159,7 @@ const Product = () => {
                 className="h-[420px] w-full object-contain"
               />
             </div>
+
             <div className="flex flex-col gap-3">
               {images.map((img, index) => (
                 <button
@@ -129,6 +197,7 @@ const Product = () => {
                 <p className="text-sm font-medium text-gray-800">
                   Options <span className="font-normal text-gray-500">: {colorLabel || 'Default'}</span>
                 </p>
+
                 <div className="flex flex-wrap gap-3">
                   {/* original product */}
                   <button
@@ -141,6 +210,7 @@ const Product = () => {
                     {product.images?.[0] && (
                       <img src={product.images[0]} alt="" className="h-10 w-10 rounded object-cover" />
                     )}
+
                     <span>
                       <span className="block text-gray-800">{product.color || 'Default'}</span>
                       <span className="block text-xs text-gray-500">₹{product.price}</span>
@@ -160,6 +230,7 @@ const Product = () => {
                       {v.images?.[0] && (
                         <img src={v.images[0]} alt="" className="h-10 w-10 rounded object-cover" />
                       )}
+
                       <span>
                         <span className="block text-gray-800">{v.color || `Variant ${index + 1}`}</span>
                         <span className="block text-xs text-gray-500">₹{v.price}</span>
@@ -174,6 +245,7 @@ const Product = () => {
             {sizes.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-800">Size</p>
+
                 <div className="flex flex-wrap gap-2">
                   {sizes.map(s => (
                     <button
@@ -199,6 +271,7 @@ const Product = () => {
             {/* quantity */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-800">Quantity</p>
+
               <div className="inline-flex items-center rounded-lg border border-gray-300">
                 <button
                   type="button"
@@ -208,9 +281,11 @@ const Product = () => {
                 >
                   −
                 </button>
+
                 <span className="w-12 text-center text-sm font-medium text-gray-900">
                   {quantity}
                 </span>
+
                 <button
                   type="button"
                   onClick={() => setQuantiy(prev => Math.min(stock, prev + 1))}
@@ -232,6 +307,7 @@ const Product = () => {
               >
                 Add to Bag
               </button>
+
               <button
                 type="button"
                 disabled={!canBuy}
@@ -259,6 +335,7 @@ const Product = () => {
               </button>
             ))}
           </div>
+
           <div className="p-6 text-sm text-gray-600">
             {tab === 'description' && <p>{product.description}</p>}
             {tab === 'specifications' && <p>No specifications added yet.</p>}

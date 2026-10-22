@@ -283,6 +283,10 @@ const categorySlice = createSlice({
         if(state.page>1){
             state.page -=1
         }
+    },
+    // go back to the first page (used when search or filter changes)
+    resetpage:(state)=>{
+        state.page = 1
     }
   },
 
@@ -300,8 +304,15 @@ const categorySlice = createSlice({
         state.fetched = true;
         state.categories = action.payload.categories
         state.totalCategries = action.payload.totalCategries
-       state.totalPages = action.payload.totalPages
-       state.lastQuery= action.meta.arg
+        state.totalPages = action.payload.totalPages
+        state.lastQuery= action.meta.arg
+
+        // if the current page no longer exists (e.g. filter left fewer pages,
+        // or the last item on the last page was deleted), jump to the last valid page.
+        // Changing `page` makes the component's useEffect fetch that page.
+        if (state.totalPages > 0 && state.page > state.totalPages) {
+          state.page = state.totalPages
+        }
       })
 
       .addCase(getCategories.rejected, (state, action) => {
@@ -432,4 +443,4 @@ const categorySlice = createSlice({
 });
 
 export default categorySlice.reducer;
-export const{addpage,minuspage} = categorySlice.actions
+export const{addpage,minuspage,resetpage} = categorySlice.actions

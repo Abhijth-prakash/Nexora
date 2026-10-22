@@ -1,37 +1,44 @@
+import { useState } from "react";
+import { toast } from "react-toastify";
 import { deleteCategory, getCategories } from "../../redux/features/categorySlice";
 import { useAppDispatch } from "../../redux/hooks";
 
 export type props = {
     id: string;
     Close: () => void;
-    page:number
-    search:string
-    filter:string
+    page: number;
+    search: string;
+    filter: string;
 };
 
-const CategoryDelete = ({ id, Close,page,search,filter }: props) => {
+const CategoryDelete = ({ id, Close, page, search, filter }: props) => {
     const dispatch = useAppDispatch();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async () => {
+        if (isDeleting) return;
+
+        setIsDeleting(true);
+
         try {
             await dispatch(deleteCategory(id)).unwrap();
-            await dispatch(getCategories({page,search,filter}));
+            toast.success("Category deleted successfully");
+
+            await dispatch(getCategories({ page, search, filter }));
             Close();
         } catch (error) {
-
+            toast.error("Failed to delete category");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-[2px]">
-
             <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#eee5e1] bg-white shadow-2xl">
-
                 {/* Header */}
                 <div className="border-b border-[#eee8e5] px-6 py-5">
-
                     <div className="flex items-start gap-4">
-
                         {/* Warning Icon */}
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff0ec] text-[#ff624d]">
                             !
@@ -47,16 +54,12 @@ const CategoryDelete = ({ id, Close,page,search,filter }: props) => {
                                 This action cannot be undone.
                             </p>
                         </div>
-
                     </div>
-
                 </div>
 
                 {/* Content */}
                 <div className="px-6 py-5">
-
                     <div className="rounded-lg border border-[#f0e5e1] bg-[#faf8f7] px-4 py-3">
-
                         <p className="text-xs text-[#9a8780]">
                             Category
                         </p>
@@ -64,32 +67,28 @@ const CategoryDelete = ({ id, Close,page,search,filter }: props) => {
                         <p className="mt-1 text-sm font-semibold text-[#25201e]">
                             This category and its data will be removed.
                         </p>
-
                     </div>
-
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 border-t border-[#eee8e5] bg-[#fffdfc] px-6 py-4">
-
                     <button
                         onClick={Close}
-                        className="rounded-lg border border-[#e1d9d5] px-5 py-2.5 text-sm font-medium text-[#5f5550] transition hover:bg-[#f7f4f2]"
+                        disabled={isDeleting}
+                        className="rounded-lg border border-[#e1d9d5] px-5 py-2.5 text-sm font-medium text-[#5f5550] transition hover:bg-[#f7f4f2] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Cancel
                     </button>
 
                     <button
                         onClick={handleDelete}
-                        className="rounded-lg bg-[#e34b3d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#cc3d31] active:scale-[0.98]"
+                        disabled={isDeleting}
+                        className="rounded-lg bg-[#e34b3d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#cc3d31] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Yes, Delete
+                        {isDeleting ? "Deleting..." : "Yes, Delete"}
                     </button>
-
                 </div>
-
             </div>
-
         </div>
     );
 };
