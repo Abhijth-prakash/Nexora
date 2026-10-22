@@ -8,7 +8,7 @@ import {
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import { changePassword } from "../../redux/features/userSlice"
 import { useNavigate } from "react-router-dom"
-import Navbar from "../../components/Navbar"
+
 
 const ChangePass = () => {
 
@@ -43,7 +43,6 @@ const ChangePass = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar></Navbar>
 
       <div className="grid min-h-[calc(100vh-72px)] grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
 

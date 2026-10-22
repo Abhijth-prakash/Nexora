@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { logout, resendOtp, UserProfile } from "../redux/features/userSlice"
-import Navbar from "../components/Navbar"
+
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 
@@ -88,8 +88,6 @@ const handleVerification = async () => {
 
   return (
     <div className="min-h-screen bg-[#f6f6f6] text-[#111111]">
-
-      <Navbar />
 
       <div className="w-full px-3 py-4 sm:px-4 lg:px-5">
 

@@ -306,10 +306,6 @@ const categorySlice = createSlice({
         state.totalCategries = action.payload.totalCategries
         state.totalPages = action.payload.totalPages
         state.lastQuery= action.meta.arg
-
-        // if the current page no longer exists (e.g. filter left fewer pages,
-        // or the last item on the last page was deleted), jump to the last valid page.
-        // Changing `page` makes the component's useEffect fetch that page.
         if (state.totalPages > 0 && state.page > state.totalPages) {
           state.page = state.totalPages
         }

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { useEffect } from "react";
 import { UserProfile } from "../redux/features/userSlice";
-import Navbar from "../components/Navbar";
+
 import { getCategories, getProducts } from "../redux/features/productSlice";
 
 
@@ -124,8 +124,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#f7f6f5]">
-      <Navbar />
-
       {/* ================= HERO (static for now) ================= */}
       <section className="w-full bg-white">
         <div className="grid w-full items-center gap-10 px-6 py-12 lg:grid-cols-2 lg:px-16 lg:py-16">
@@ -247,6 +245,7 @@ const Home = () => {
           {productList}
         </ul>
       </section>
+
     </div>
   );
 };

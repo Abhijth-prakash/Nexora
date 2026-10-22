@@ -5,7 +5,7 @@ import AddressForm from "./AddressForm"
 import type { BaseAddress } from "../../utils/baseTypes"
 import DeleteAddress from "./DeleteAddress"
 import type { Addressid } from "../../utils/Validation"
-import Navbar from "../../components/Navbar"
+
 
 const Address = () => {
   const { address, error,fetched } = useAppSelector(
@@ -51,8 +51,6 @@ const Address = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f6f8]">
-
-      <Navbar />
 
       <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
 

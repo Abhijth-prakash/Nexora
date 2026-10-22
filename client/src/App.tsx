@@ -16,6 +16,9 @@ import Product from "./pages/Products/Product"
 import ProductList from "./pages/Products/ProductList"
 import Cart from "./pages/cart/Cart"
 import ProtectedRoutes from "./components/ProtectedRoutes"
+import NotFound from "./pages/NotFound"
+import MainLayout from "./components/layouts/MainLayout"
+
 
 function App() {
   return (
@@ -31,21 +34,27 @@ function App() {
 
         <Route path="/auth/verify" element={<OtpVerify />} />
 
-        {/* home */}
-        <Route path="/" element={<Home />} />
+     
+        <Route element={<MainLayout />}>
+          {/* home */}
+          <Route path="/" element={<Home />} />
 
-        {/* profile */}
-        <Route path="/myprofile" element={<Profile />} />
-        <Route path="/profile/address" element={<Address />} />
-        <Route path="/profile/changePassword" element={<ChangePass />} />
-        <Route path="/profile/editProfile" element={<EditProfile />} />
+          {/* profile */}
+          <Route path="/myprofile" element={<Profile />} />
+          <Route path="/profile/address" element={<Address />} />
+          <Route path="/profile/changePassword" element={<ChangePass />} />
+          <Route path="/profile/editProfile" element={<EditProfile />} />
 
-        {/* products */}
-        <Route path="/category/products/:slug" element={<ProductList />} />
-        <Route path="/product/:id" element={<Product />} />
+          {/* products */}
+          <Route path="/category/products/:slug" element={<ProductList />} />
+          <Route path="/product/:id" element={<Product />} />
 
-        {/* cart */}
-        <Route path="/users/cart" element={<Cart />} />
+          {/* cart */}
+          <Route path="/users/cart" element={<Cart />} />
+
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFound />} />
+        </Route>
       </Routes>
 
       <ToastContainer position="top-right" autoClose={3000} theme="light" />

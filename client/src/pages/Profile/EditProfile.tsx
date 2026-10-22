@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ProfileSchema, type ProfileData } from "../../utils/Validation"
 import { useNavigate } from "react-router-dom"
-import Navbar from "../../components/Navbar"
+
 
 
 const EditProfile = () => {
@@ -47,7 +47,6 @@ const EditProfile = () => {
     }
   return (
     <div className="min-h-screen bg-[#f4f4f5]">
-        <Navbar></Navbar>
 
         <div className="mx-auto w-full max-w-xl px-4 py-8 sm:py-12">
             {/* Hero header */}

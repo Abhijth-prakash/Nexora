@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { getCart, updateCartItem } from "../../redux/features/cartSlice";
-import Navbar from "../../components/Navbar";
+
 
 const Cart = () => {
   const dispatch = useAppDispatch();
@@ -33,8 +33,6 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-widest text-red-700">
