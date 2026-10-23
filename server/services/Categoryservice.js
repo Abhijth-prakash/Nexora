@@ -192,7 +192,7 @@ static async getCategory(id) {
 static async deleteCategory(id) {
   try {
     const uncategorisedId = config.UncategorisedId;
-
+    
     if (String(id) === String(uncategorisedId)) {
       throw new AuthorizationError("Uncategorised category cannot be deleted");
     }

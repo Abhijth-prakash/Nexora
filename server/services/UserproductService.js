@@ -8,22 +8,38 @@ const config = require('../config/config')
 class UserproductService{
 
     //getproducts
-   static async getProducts(limit, slug, page, subCategory, category, brand, minprice, maxprice, sort) {
+ static async getProducts(
+    limit,
+    slug,
+    page,
+    subCategory,
+    category,
+    brand,
+    minprice,
+    maxprice,
+    sort
+) {
     try {
         const uncategorisedId = config.UncategorisedId;
+        console.log(uncategorisedId)
         const currentlimit = Number(limit);
         const currentPage = Number(page);
 
         const skip = (currentPage - 1) * currentlimit;
 
-        const query = { visible: true };
+        const query = {
+            visible: true,
+            $and: [
+                { category: { $ne: uncategorisedId } }
+            ]
+        };
 
         if (slug) {
-            query.category = slug;
+            query.$and.push({ category: slug });
         }
 
         if (category) {
-            query.category = category;
+            query.$and.push({ category: category });
         }
 
         if (subCategory) {
@@ -39,13 +55,15 @@ class UserproductService{
 
         if (min > 0 || max > 0) {
             query.price = {};
-            if (min > 0) query.price.$gte = min;
-            if (max > 0) query.price.$lte = max;
-        }
 
-        query.$and = [
-            { category: { $ne: uncategorisedId } }
-        ];
+            if (min > 0) {
+                query.price.$gte = min;
+            }
+
+            if (max > 0) {
+                query.price.$lte = max;
+            }
+        }
 
         const sortMap = {
             low: { price: 1, _id: 1 },
@@ -61,10 +79,10 @@ class UserproductService{
             .populate("subCategory", "name");
 
         logger.info("products fetched for userside");
-        return product;
 
+        return product;
     } catch (error) {
-        logger.error("failed to fetch products");
+        logger.error("failed to fetch products", error);
         throw error;
     }
 }

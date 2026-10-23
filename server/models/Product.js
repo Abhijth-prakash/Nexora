@@ -1,14 +1,11 @@
 const mongoose = require("mongoose");
 
-
-
-
 const VariantSchema = new mongoose.Schema(
   {
-     color: { type: String, trim: true, lowercase: true },
+    color: { type: String, trim: true, lowercase: true },
 
-    size:{
-      type:[String],
+    size: {
+      type: [String],
       default: [],
     },
 
@@ -29,22 +26,21 @@ const VariantSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-     rating: {
+
+    rating: {
       type: Number,
       default: 0,
       min: 0,
       max: 5,
     },
+
     public_ids: {
-  type: [String],
-  default: [],
-},
-    
+      type: [String],
+      default: [],
+    },
   },
   { _id: true }
 );
-
-
 
 const ProductSchema = new mongoose.Schema(
   {
@@ -58,12 +54,15 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-   color: { type: String, trim: true, lowercase: true },
-     brand: {
+
+    color: { type: String, trim: true, lowercase: true },
+
+    brand: {
       type: String,
       required: true,
       trim: true,
     },
+
     stock: {
       type: Number,
       required: true,
@@ -93,10 +92,12 @@ const ProductSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    size:{
-      type:[String],
+
+    size: {
+      type: [String],
       default: [],
     },
+
     rating: {
       type: Number,
       default: 0,
@@ -112,7 +113,8 @@ const ProductSchema = new mongoose.Schema(
     images: {
       type: [String],
       default: [],
-    }, 
+    },
+
     variants: {
       type: [VariantSchema],
       default: [],
@@ -126,6 +128,7 @@ const ProductSchema = new mongoose.Schema(
 ProductSchema.index({ category: 1, visible: 1, createdAt: -1 });
 ProductSchema.index({ subCategory: 1, visible: 1, createdAt: -1 });
 
+// Populate category and subcategory details
 ProductSchema.methods.populateDetails = async function () {
   await this.populate([
     { path: "category", select: "name" },
@@ -135,5 +138,50 @@ ProductSchema.methods.populateDetails = async function () {
   return this;
 };
 
+// Fetch products excluding the "Uncategorised" category
+ProductSchema.statics.getCategorisedProducts = async function () {
+  return this.aggregate([
+    {
+      $lookup: {
+        from: "categories",
+        localField: "category",
+        foreignField: "_id",
+        as: "categoryDetails",
+      },
+    },
+    {
+      $match: {
+        "categoryDetails.name": {
+          $ne: "Uncategorised",
+        },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $lookup: {
+        from: "subcategories",
+        localField: "subCategory",
+        foreignField: "_id",
+        as: "subCategoryDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$categoryDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $unwind: {
+        path: "$subCategoryDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+  ]);
+};
 
 module.exports = mongoose.model("Product", ProductSchema);
