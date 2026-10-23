@@ -218,6 +218,41 @@ static async updateCartItem(userId, itemId, quantity) {
   }
 }
 
+
+
+//mergeGuestcart
+static async mergeGuestCart(userId, items) {
+  try {
+    if (!Array.isArray(items)) {
+      throw new ValidationError("Items must be an array");
+    }
+
+    const skippedItems = [];
+
+    for (const item of items) {
+      try {
+        await this.addToCart(userId, item);
+      } catch (error) {
+        logger.warn(
+          `Skipping guest cart item ${item.productId}: ${error.message}`
+        );
+
+        skippedItems.push({
+          productId: item.productId,
+          reason: error.message,
+        });
+      }
+    }
+
+   
+    logger.info(`merged cart succesfully for user ${userId}`)
+    return skippedItems 
+  } catch (error) {
+    logger.error("Failed to merge guest cart", error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = CartService;

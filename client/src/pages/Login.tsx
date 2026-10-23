@@ -7,6 +7,8 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { Loginuser } from "../redux/features/userSlice"
 import { toast } from "react-toastify"
+import { mergeGuestCart } from '../redux/features/cartSlice'
+import { clearGuestCart } from '../utils/guestCart'
 
 
 const Login = () => {
@@ -14,6 +16,7 @@ const Login = () => {
     resolver: zodResolver(LoginSchema)
   })
   const {error} = useAppSelector(state=> state.userData)
+  const {guestItems} = useAppSelector(state=> state.cartData)
 
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -33,22 +36,20 @@ const Login = () => {
 
 const datahandle = async (data: LoginData) => {
   try {
-    await dispatch(Loginuser(data)).unwrap()
+    await dispatch(Loginuser(data)).unwrap();
+    toast.success("Login successful!");
 
-    toast.success("Login successful!")
-
-    navigate("/", { replace: true })
-
+    navigate("/", { replace: true });
   } catch (error: any) {
-    console.log(error)
+    console.log(error);
 
     toast.error(
       typeof error === "string"
         ? error
         : error?.message || "Login failed"
-    )
+    );
   }
-}
+};
 
   return (
     <div
@@ -186,6 +187,7 @@ const datahandle = async (data: LoginData) => {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   {...register('password')}
                   className="w-full h-11 px-0.5 pr-12 bg-transparent border-0 border-b border-[#D8D0C3] text-[15px] text-[#14110F] placeholder:text-[#B5AD9F] outline-none transition-colors duration-300 focus:border-[#C1583C]"
                 />

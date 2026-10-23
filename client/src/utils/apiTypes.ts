@@ -89,4 +89,9 @@ export type CartResponse = {
 };
 
 
-
+export type MergeCartResponse = {
+  skippedItems: {
+    productId: string;
+    reason: string;
+  }[];
+};

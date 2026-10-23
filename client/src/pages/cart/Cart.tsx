@@ -1,31 +1,95 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "react-toastify"
+import { toast } from "react-toastify";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getCart, updateCartItem } from "../../redux/features/cartSlice";
-
+import {
+  getCart,
+  updateCartItem,
+  setGuestItems,
+} from "../../redux/features/cartSlice";
+import { UserProfile } from "../../redux/features/userSlice";
+import {
+  updateGuestQuantity,
+  removeFromGuestCart,
+} from "../../utils/guestCart";
+import type { BaseCartItem } from "../../utils/baseTypes";
 
 const Cart = () => {
   const dispatch = useAppDispatch();
-  const { cartItems, subtotal, totalItems } = useAppSelector(
+
+  const { cartItems, subtotal, totalItems, guestItems } = useAppSelector(
     (state) => state.cartData
   );
 
-  // id of the row currently being updated (stops double clicks)
+  const { logged, isStale } = useAppSelector((state) => state.userData);
+
+  // ID of the row currently being updated
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // Restore authentication after refresh, then fetch the server cart.
   useEffect(() => {
-    dispatch(getCart());
-  }, [dispatch]);
+    if (isStale) {
+      dispatch(UserProfile());
+      return;
+    }
+
+    if (logged) {
+      dispatch(getCart());
+    }
+  }, [dispatch, logged, isStale]);
+
+  // Guest items converted to the same shape as server items
+  const guestRows: BaseCartItem[] = guestItems.map((g) => ({
+    _id: g.itemId,
+    productId: g.productId,
+    variantId: g.variantId,
+    name: g.name,
+    image: g.image,
+    brand: g.brand,
+    size: g.size,
+    price: g.price,
+    quantity: g.quantity,
+    stock: g.stock,
+    lineTotal: g.price * g.quantity,
+    available: true,
+  }));
+
+  // One list used by the whole page
+  const items = logged ? cartItems : guestRows;
+
+  const shownTotalItems = logged
+    ? totalItems
+    : guestItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  const shownSubtotal = logged
+    ? subtotal
+    : guestItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
 
   const changeQuantity = async (itemId: string, quantity: number) => {
     if (updatingId) return;
 
+    // Guest: update localStorage, then Redux
+    if (!logged) {
+      if (quantity < 1) {
+        dispatch(setGuestItems(removeFromGuestCart(itemId)));
+      } else {
+        dispatch(setGuestItems(updateGuestQuantity(itemId, quantity)));
+      }
+      return;
+    }
+
+    // Logged-in user: update the server cart
     setUpdatingId(itemId);
+
     try {
       await dispatch(updateCartItem({ itemId, quantity })).unwrap();
     } catch (err) {
-      toast.error(typeof err === "string" ? err : "Could not update cart");
+      toast.error(
+        typeof err === "string" ? err : "Could not update cart"
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -48,7 +112,7 @@ const Cart = () => {
           </p>
         </div>
 
-        {!cartItems || cartItems.length === 0 ? (
+        {!items || items.length === 0 ? (
           <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-4xl">
               🛍️
@@ -78,13 +142,13 @@ const Cart = () => {
                 </h2>
 
                 <span className="rounded-full bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700">
-                  {totalItems} items
+                  {shownTotalItems} items
                 </span>
               </div>
 
-              {cartItems.map((item) => {
+              {items.map((item) => {
                 const isUpdating = updatingId === item._id;
-                // can't add more if stock is unknown (product gone) or reached
+
                 const plusDisabled =
                   !!updatingId ||
                   item.stock === undefined ||
@@ -197,6 +261,7 @@ const Cart = () => {
                             <p className="text-xs text-gray-500">
                               Item total
                             </p>
+
                             <p className="mt-1 font-bold text-gray-900">
                               ₹{item.lineTotal.toLocaleString("en-IN")}
                             </p>
@@ -224,7 +289,7 @@ const Cart = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Total items</span>
                   <span className="font-medium text-gray-900">
-                    {totalItems}
+                    {shownTotalItems}
                   </span>
                 </div>
 
@@ -242,11 +307,11 @@ const Cart = () => {
                 </span>
 
                 <span className="text-2xl font-bold text-gray-900">
-                  ₹{(subtotal ?? 0).toLocaleString("en-IN")}
+                  ₹{(shownSubtotal ?? 0).toLocaleString("en-IN")}
                 </span>
               </div>
 
-              {cartItems.some((item) => item.available === false) && (
+              {items.some((item) => item.available === false) && (
                 <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
                   Some products are unavailable and are excluded from your subtotal.
                 </p>
@@ -254,7 +319,7 @@ const Cart = () => {
 
               <button
                 type="button"
-                disabled={!totalItems}
+                disabled={!shownTotalItems}
                 className="mt-6 w-full rounded-xl bg-red-700 px-5 py-3.5 font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-gray-300"
               >
                 Proceed to Checkout

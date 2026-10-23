@@ -364,10 +364,13 @@ const userSlice = createSlice({
         state.isStale = false
       })
 
-      .addCase(UserProfile.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.payload as string
-      })
+     .addCase(UserProfile.rejected, (state, action) => {
+  state.loading = false;
+  state.logged = false;
+  state.user = null;
+  state.isStale = false;
+  state.error = action.payload as string;
+})
 
       //logout
 

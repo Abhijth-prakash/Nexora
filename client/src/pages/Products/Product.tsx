@@ -4,8 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from "react-toastify"
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
 import { getProductbyID } from '../../redux/features/productSlice'
-import { addToCart } from '../../redux/features/cartSlice'
+import { addToCart, setGuestItems } from '../../redux/features/cartSlice'
 import type { BaseProduct } from '../../utils/baseTypes'
+import { addToGuestCart } from '../../utils/guestCart'
 
 type Variant = NonNullable<BaseProduct['variants']>[number]
 
@@ -13,6 +14,7 @@ const Product = () => {
   const { id } = useParams()
   const dispatch = useAppDispatch()
   const { product } = useAppSelector(state => state.productData)
+  const { logged } = useAppSelector(state => state.userData)
   const navigate = useNavigate()
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
@@ -20,6 +22,8 @@ const Product = () => {
   const [activeImage, setActiveImage] = useState(0)
   const [tab, setTab] = useState<'description' | 'specifications' | 'reviews'>('description')
   const [quantity, setQuantiy] = useState(1)
+  
+  
 
   useEffect(() => {
     if (id) {
@@ -117,27 +121,49 @@ const Product = () => {
     setQuantiy(1)
   }
 
-  const cartHandle = async () => {
-    if (!canBuy) return
+const cartHandle = async () => {
+  if (!canBuy) return
 
-    try {
-      await dispatch(
-        addToCart({
-          productId: product._id,
-          variantId: selectedVariant?._id ?? null,
-          size: sizes.length > 0 ? size : null,
-          quantity,
-        })
-      ).unwrap()
+  
+  if (!logged) {
+    const items = addToGuestCart({
+      productId: product._id,
+      variantId: selectedVariant?._id ?? null,
+      size: sizes.length > 0 ? size : null,
+      quantity,
+      name: product.name,
+      image: images[0],
+      price,
+      brand: product.brand,
+      stock,
+    })
 
-      setQuantiy(1)
-      toast.success('Added to bag')
-      navigate('/users/cart')
+    dispatch(setGuestItems(items))
+    setQuantiy(1)
+    toast.success('Added to bag')
 
-    } catch (err) {
-      toast.error(typeof err === 'string' ? err : 'Could not add to bag')
-    }
+    return
   }
+
+  
+  try {
+    await dispatch(
+      addToCart({
+        productId: product._id,
+        variantId: selectedVariant?._id ?? null,
+        size: sizes.length > 0 ? size : null,
+        quantity,
+      })
+    ).unwrap()
+
+    setQuantiy(1)
+    toast.success('Added to bag')
+  } catch (err) {
+    toast.error(typeof err === 'string' ? err : 'Could not add to bag')
+  }
+}
+
+
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-16">

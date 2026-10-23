@@ -2,69 +2,72 @@ const {Category,Subcategory} = require("../models/Category")
 const { NotFoundError } = require("../utils/errors")
 const logger = require("../utils/logger")
 const Product = require('../models/Product')
-
+const config = require('../config/config')
+ 
 
 class UserproductService{
 
     //getproducts
-      static async getProducts(limit,slug,page,subCategory,category,brand,minprice,maxprice,sort){
-        try{
-            
-             const currentlimit = Number(limit) 
-             const currentPage = Number(page)
+   static async getProducts(limit, slug, page, subCategory, category, brand, minprice, maxprice, sort) {
+    try {
+        const uncategorisedId = config.UncategorisedId;
+        const currentlimit = Number(limit);
+        const currentPage = Number(page);
 
-             
-             const skip = (currentPage-1) *currentlimit
+        const skip = (currentPage - 1) * currentlimit;
 
+        const query = { visible: true };
 
-
-             const query= { visible: true }
-             if(slug){
-                query.category = slug
-             }
-
-             if(category){
-                query.category = category
-             }
-
-             if(subCategory){
-                query.subCategory = subCategory
-             }
-
-             if(brand && brand.length > 0){
-                query.brand = { $in: brand }
-             }
-
-             const min = Number(minprice)
-             const max = Number(maxprice)
-             if(min > 0 || max > 0){
-                query.price = {}
-                if(min > 0) query.price.$gte = min
-                if(max > 0) query.price.$lte = max
-             }
-
-             const sortMap = {
-                low: { price: 1, _id: 1 },
-                high: { price: -1, _id: 1 },
-                new: { createdAt: -1, _id: 1 },
-             }
-
-            const product = await Product.find(query)
-                .sort(sortMap[sort] || { createdAt: -1, _id: 1 })
-                .skip(skip)
-                .limit(currentlimit)
-                .populate('category', 'name')
-                .populate('subCategory', 'name')
-
-
-            logger.info('products fetched for userside')
-            return product
-
-        }catch(error){
-            logger.error('failed to fetch products')
-            throw error
+        if (slug) {
+            query.category = slug;
         }
+
+        if (category) {
+            query.category = category;
+        }
+
+        if (subCategory) {
+            query.subCategory = subCategory;
+        }
+
+        if (brand && brand.length > 0) {
+            query.brand = { $in: brand };
+        }
+
+        const min = Number(minprice);
+        const max = Number(maxprice);
+
+        if (min > 0 || max > 0) {
+            query.price = {};
+            if (min > 0) query.price.$gte = min;
+            if (max > 0) query.price.$lte = max;
+        }
+
+        query.$and = [
+            { category: { $ne: uncategorisedId } }
+        ];
+
+        const sortMap = {
+            low: { price: 1, _id: 1 },
+            high: { price: -1, _id: 1 },
+            new: { createdAt: -1, _id: 1 },
+        };
+
+        const product = await Product.find(query)
+            .sort(sortMap[sort] || { createdAt: -1, _id: 1 })
+            .skip(skip)
+            .limit(currentlimit)
+            .populate("category", "name")
+            .populate("subCategory", "name");
+
+        logger.info("products fetched for userside");
+        return product;
+
+    } catch (error) {
+        logger.error("failed to fetch products");
+        throw error;
     }
+}
 
 
     //get product by id

@@ -50,6 +50,26 @@ static updateCartItem = BaseController.asyncHandler(async (req, res) => {
 });
 
 
+//merging guest cart
+
+static mergeGuestCart = BaseController.asyncHandler(
+  async (req, res) => {
+    const { items } = req.body;
+
+    
+    const skippedItems  =
+      await CartService.mergeGuestCart(req.userId, items);
+
+    return this.sendSuccessResponse(
+      res,
+      "Guest cart merged successfully",
+        skippedItems,
+      200
+    );
+  }
+);
+
+
 
 }
 

@@ -1,8 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
+import type { PayloadAction } from "@reduxjs/toolkit"
 import axios from "axios"
 import { CartApi } from "../../utils/api"
 import type { AddToCartPayload } from "../../utils/apiTypes"
 import type { BaseCartItem } from "../../utils/baseTypes"
+import { getGuestCart } from "../../utils/guestCart"
+import type { GuestCartItem } from "../../utils/guestCart"
 
 export type Carttype = {
   cartItems:BaseCartItem[]
@@ -10,7 +13,7 @@ export type Carttype = {
   errors: null | string
   totalItems:number
   subtotal:number
- 
+  guestItems: GuestCartItem[]
 }
 
 const initialState: Carttype = {
@@ -18,8 +21,8 @@ const initialState: Carttype = {
   loading: false,
   errors: null,
   totalItems:0,
-  subtotal:0
-  
+  subtotal:0,
+  guestItems: getGuestCart()
 }
 
 //add to cart
@@ -85,11 +88,34 @@ export const updateCartItem = createAsyncThunk(
 )
 
 
+export const mergeGuestCart = createAsyncThunk(
+  "users/cart/mergeGuestCart",
+  async (items: AddToCartPayload[], { rejectWithValue }) => {
+    try {
+      const response = await CartApi.mergeGuestCart(items);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to merge guest cart. Please try again."
+        );
+      }
+
+      return rejectWithValue("Failed to merge guest cart. Please try again.");
+    }
+  }
+);
+
 
 export const CartSlice = createSlice({
   name: "cart",
   initialState,
-  reducers: {},
+  reducers: {
+    setGuestItems: (state, action: PayloadAction<GuestCartItem[]>) => {
+      state.guestItems = action.payload
+    },
+  },
   extraReducers: (build) => {
     build
 
@@ -125,6 +151,21 @@ export const CartSlice = createSlice({
       })
 
 
+      //merge guest cart
+      .addCase(mergeGuestCart.pending, (state) => {
+        state.loading = true
+        state.errors = null
+      })
+      .addCase(mergeGuestCart.fulfilled, (state, action) => {
+        state.loading = false
+        
+      })
+      .addCase(mergeGuestCart.rejected, (state, action) => {
+        state.loading = false
+        state.errors = action.payload as string
+      })
+
+
       //updateQuanitty
       .addCase(updateCartItem.fulfilled, (state, action) => {
         state.loading = false
@@ -142,5 +183,7 @@ export const CartSlice = createSlice({
       
   },
 })
+
+export const { setGuestItems } = CartSlice.actions
 
 export default CartSlice.reducer

@@ -8,13 +8,18 @@ import { logout } from "../redux/features/userSlice"
 
 const Navbar = () => {
   const dispatch = useAppDispatch()
-  const { totalItems } = useAppSelector(state => state.cartData)
+  const { totalItems,guestItems } = useAppSelector(state => state.cartData)
   const {logged} = useAppSelector(state=> state.userData)
   const navigate = useNavigate()
 
+  // logged in: server count, guest: number of items saved in localStorage
+  const cartCount = logged ? totalItems : guestItems.length
+
   useEffect(() => {
-    dispatch(getCart())
-  }, [])
+    if (logged) {
+      dispatch(getCart())
+    }
+  }, [logged])
 
   const handleLogout = async () => {
       try{
@@ -221,7 +226,7 @@ const Navbar = () => {
               <ShoppingBag size={20} strokeWidth={1.75} />
 
               <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ff5a1f] px-1 text-[10px] font-bold text-white ring-2 ring-white">
-                {totalItems > 99 ? "99+" : totalItems}
+                {cartCount > 99 ? "99+" : cartCount}
               </span>
             </Link>
           </div>

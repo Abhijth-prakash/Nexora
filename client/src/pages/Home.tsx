@@ -1,10 +1,16 @@
+
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { UserProfile } from "../redux/features/userSlice";
 
 import { getCategories, getProducts } from "../redux/features/productSlice";
-
+import {
+  getCart,
+  mergeGuestCart,
+  setGuestItems,
+} from "../redux/features/cartSlice";
+import { clearGuestCart } from "../utils/guestCart";
 
 const features = [
   { title: "Free Shipping", text: "On orders over $50" },
@@ -14,13 +20,25 @@ const features = [
 ];
 
 const Home = () => {
-  const { isStale } = useAppSelector(
+  const { isStale, logged } = useAppSelector(
     (state) => state.userData
   );
 
- const {products,page,brand,category,subCategory,categories} = useAppSelector(state=> state.productData)
+  const { guestItems } = useAppSelector(
+    (state) => state.cartData
+  );
+
+  const {
+    products,
+    page,
+    brand,
+    category,
+    subCategory,
+    categories,
+  } = useAppSelector((state) => state.productData);
 
   const dispatch = useAppDispatch();
+  const mergeStarted = useRef(false);
 
   useEffect(() => {
     if (isStale) {
@@ -28,24 +46,79 @@ const Home = () => {
     }
   }, [dispatch, isStale]);
 
+  // Merge guest cart after authentication
+  useEffect(() => {
+    if (
+      !logged ||
+      isStale ||
+      mergeStarted.current ||
+      guestItems.length === 0
+    ) {
+      return;
+    }
+
+    mergeStarted.current = true;
+
+    const mergeCart = async () => {
+      try {
+        const items = guestItems.map(
+          ({ productId, variantId, size, quantity }) => ({
+            productId,
+            variantId,
+            size,
+            quantity,
+          })
+        );
+
+        await dispatch(mergeGuestCart(items)).unwrap();
+
+        clearGuestCart();
+        dispatch(setGuestItems([]));
+
+        await dispatch(getCart()).unwrap();
+      } catch (error) {
+        console.error("Guest cart merge failed:", error);
+        mergeStarted.current = false;
+      }
+    };
+
+    void mergeCart();
+  }, [dispatch, logged, isStale, guestItems]);
+
   useEffect(() => {
     const limit = 6;
 
     dispatch(getCategories(limit));
 
     const slug = "";
-    const minprice = 0
-    const maxprice = 0
-    const sort = ""
-    dispatch(getProducts({ limit, slug, page,brand,category,subCategory,minprice,maxprice,sort }));
+    const minprice = 0;
+    const maxprice = 0;
+    const sort = "";
+
+    dispatch(
+      getProducts({
+        limit,
+        slug,
+        page,
+        brand,
+        category,
+        subCategory,
+        minprice,
+        maxprice,
+        sort,
+      })
+    );
   }, [dispatch]);
 
   const renderStars = (rating: number) => {
     const filled = Math.round(rating);
+
     return (
       <span className="text-[11px] tracking-tight text-[#ff624d]">
         {"★".repeat(filled)}
-        <span className="text-gray-300">{"★".repeat(5 - filled)}</span>
+        <span className="text-gray-300">
+          {"★".repeat(5 - filled)}
+        </span>
       </span>
     );
   };
@@ -127,7 +200,6 @@ const Home = () => {
       {/* ================= HERO (static for now) ================= */}
       <section className="w-full bg-white">
         <div className="grid w-full items-center gap-10 px-6 py-12 lg:grid-cols-2 lg:px-16 lg:py-16">
-
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-[#ff624d]">
               Trending Now
@@ -164,13 +236,9 @@ const Home = () => {
             </p>
           </div>
 
-          {/* hero visual */}
           <div className="relative mx-auto flex h-80 w-full max-w-md items-center justify-center lg:h-96">
             <div className="absolute h-64 w-64 rounded-full bg-[#ffd9d1] lg:h-80 lg:w-80" />
             <div className="absolute h-52 w-52 rounded-full bg-[#ff8a75] lg:h-64 lg:w-64" />
-
-            {/* place the hero image here later */}
-            {/* <img src="/hero.png" alt="" className="relative h-full object-contain" /> */}
 
             <div className="absolute left-0 top-6 rounded-lg bg-white px-3 py-2 shadow-md">
               <p className="text-xs font-semibold text-gray-900">Air Max 270</p>
@@ -183,7 +251,9 @@ const Home = () => {
             </div>
 
             <div className="absolute bottom-10 left-2 rounded-lg bg-white px-3 py-2 shadow-md">
-              <p className="text-xs font-semibold text-gray-900">Wireless Headphones</p>
+              <p className="text-xs font-semibold text-gray-900">
+                Wireless Headphones
+              </p>
               <p className="text-[10px] text-gray-400">$99.99</p>
             </div>
 
@@ -192,7 +262,6 @@ const Home = () => {
               <p className="text-[10px] text-gray-400">$24.99</p>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -245,7 +314,6 @@ const Home = () => {
           {productList}
         </ul>
       </section>
-
     </div>
   );
 };
