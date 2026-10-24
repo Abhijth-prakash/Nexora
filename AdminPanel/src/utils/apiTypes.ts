@@ -92,3 +92,5 @@ export type GetCouponsResponse = {
   totalCoupons: number;
 };
 
+export type activeToggleresponse = null
+

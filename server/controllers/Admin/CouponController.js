@@ -23,7 +23,7 @@ class CouponController extends BaseController{
         }
     )
 
-
+    //getcoupns
     static getCoupons = BaseController.asyncHandler(
     async (req, res) => {
         const {
@@ -48,6 +48,37 @@ class CouponController extends BaseController{
         );
     }
 );
+
+
+//activeToggle
+static activeToggle = BaseController.asyncHandler(
+    async (req, res) => {
+        const { id } = req.params;
+
+        const result = await CouponService.activeToggle(id);
+
+        BaseController.sendSuccessResponse(
+            res,
+            `Successfully ${result.isActive ? "activated" : "deactivated"} coupon ${result.code}`,
+            result,
+            200
+        );
+    }
+);
+
+//delete coupon
+static delete = BaseController.asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  await CouponService.delete(id);
+
+  BaseController.sendSuccessResponse(
+    res,
+    "Coupon deleted successfully",
+    null,
+    200
+  );
+});
 }
 
 

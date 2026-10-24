@@ -49,7 +49,7 @@ export const addCoupon = createAsyncThunk(
 );
 
 
-
+//getcoupns
 export const getCoupons = createAsyncThunk(
   "coupon/getCoupons",
   async (
@@ -85,6 +85,51 @@ export const getCoupons = createAsyncThunk(
 
       return rejectWithValue(
         "Failed to fetch coupons. Please try again."
+      );
+    }
+  }
+);
+
+//activetoglle
+
+export const activeToggle = createAsyncThunk(
+  "coupon/activeToggle",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await Coupon_Api.activeToggle(id);
+      return response;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to toggle coupon status. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to toggle coupon status. Please try again."
+      );
+    }
+  }
+);
+
+//deleteCOupon
+export const deleteCoupon = createAsyncThunk(
+  "coupon/deleteCoupon",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await Coupon_Api.deleteCoupon(id);
+      return response;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to delete coupon. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to delete coupon. Please try again."
       );
     }
   }
@@ -148,6 +193,41 @@ const CouponSlice = createSlice({
 
       
       .addCase(getCoupons.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          "Failed to add coupon. Please try again.";
+      })
+
+      //activetoggle
+      .addCase(activeToggle.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+
+      
+      .addCase(activeToggle.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          "Failed to add coupon. Please try again.";
+      })
+
+      //deleteCoupon
+      .addCase(deleteCoupon.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+
+      .addCase(deleteCoupon.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+
+      
+      .addCase(deleteCoupon.rejected, (state, action) => {
         state.loading = false;
         state.error =
           (action.payload as string) ||

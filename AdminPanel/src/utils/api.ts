@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, CouponFormData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, addCouponResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,GetCouponsResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
+import type { activeToggleresponse, AddCategoryResponse, addCouponResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,GetCouponsResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
 
 
 
@@ -158,6 +158,22 @@ getCoupons: async (
   return response.data;
 },
 
+activeToggle: async (
+  id: string
+): Promise<ApiResponse<activeToggleresponse>> => {
+  const response = await ClientApi.patch<ApiResponse<activeToggleresponse>>(
+    `/admin/coupon/${id}/toggle`
+  );
+  return response.data;
+},
+
+deleteCoupon: async (id: string): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.delete<ApiResponse<null>>(
+    `/admin/coupon/${id}`
+  );
+
+  return response.data;
+},
 
 }
 

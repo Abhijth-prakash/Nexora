@@ -2,21 +2,33 @@
 import React, { useEffect, useState } from "react";
 import CouponForm from "./CouponForm";
 import {
+    activeToggle,
   addpage,
   getCoupons,
   minusPage,
 } from "../../redux/features/CouponSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import AdminSidebar from "../../components/Adminsidebar";
+import { toast } from 'react-toastify'
+import CouponDelete from "./CouponDelete";
 
 const Coupon = () => {
   const [form, setForm] = useState(false);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [remove,setRemove] =useState(false)
+  const [id,setId] = useState("")
 
   const dispatch = useAppDispatch();
 
   const onCLose = () => setForm(false);
+
+  const removeClose = ()=>{
+    setRemove(false)
+    setId("")
+  }
+
+
 
   const {
     page,
@@ -47,6 +59,7 @@ const Coupon = () => {
     <div className="flex min-h-screen w-full bg-[#f8f9fc] text-slate-800">
       <AdminSidebar />
 
+        {remove && <CouponDelete removeClose={removeClose} id={id}></CouponDelete>}
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
         {/* Header */}
         <header className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
@@ -333,24 +346,35 @@ const Coupon = () => {
                         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 xl:hidden">
                           Active
                         </p>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={coupon.isActive}
-                          aria-label={`Toggle ${coupon.code} status`}
-                          onClick={() => {
-                            // Connect your active-toggle thunk here.
-                          }}
-                          className={`relative h-6 w-11 rounded-full transition ${
-                            coupon.isActive ? "bg-orange-500" : "bg-slate-300"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${
-                              coupon.isActive ? "left-6" : "left-1"
-                            }`}
-                          />
-                        </button>
+                     <button
+  type="button"
+  role="switch"
+  aria-checked={coupon.isActive}
+  aria-label={`Toggle ${coupon.code} status`}
+  onClick={async () => {
+    try {
+      const result = await dispatch(activeToggle(coupon._id)).unwrap();
+      dispatch(getCoupons({page,search,filter,limit}))
+      toast.success(result.message || "Coupon status updated successfully");
+
+    } catch (error) {
+      toast.error(
+        typeof error === "string"
+          ? error
+          : "Failed to update coupon status. Please try again."
+      );
+    }
+  }}
+  className={`relative h-6 w-11 rounded-full transition ${
+    coupon.isActive ? "bg-orange-500" : "bg-slate-300"
+  }`}
+>
+  <span
+    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${
+      coupon.isActive ? "left-6" : "left-1"
+    }`}
+  />
+</button>
                       </div>
 
                       <div>
@@ -371,7 +395,8 @@ const Coupon = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              // Connect your delete thunk here.
+                              setRemove(true)
+                              setId(coupon._id)
                             }}
                             className="rounded-lg border border-red-100 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
                           >
