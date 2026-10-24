@@ -308,6 +308,81 @@ const VariantValidation = Joi.object({
   rating: Joi.number().min(0).max(5).required().default(0),
 });
 
+
+
+
+const couponValidation = Joi.object({
+  code: Joi.string()
+    .trim()
+    .uppercase()
+    .required(),
+
+  description: Joi.string()
+    .trim()
+    .max(300)
+    .optional(),
+
+  discountType: Joi.string()
+    .valid("percentage", "fixed")
+    .required(),
+
+  discountValue: Joi.number()
+    .positive()
+    .required(),
+
+  maxDiscount: Joi.number()
+    .min(0)
+    .allow(null)
+    .optional(),
+
+  minOrderAmount: Joi.number()
+    .min(0)
+    .default(0),
+
+  expiryDate: Joi.date()
+    .required(),
+
+  usageLimit: Joi.number()
+    .integer()
+    .min(1)
+    .allow(null)
+    .optional(),
+
+  perUserLimit: Joi.number()
+    .integer()
+    .min(1)
+    .default(1),
+
+  applicableCategories: Joi.array()
+    .items(Joi.string().hex().length(24))
+    .default([]),
+
+  isActive: Joi.boolean()
+    .default(true),
+}).custom((value, helpers) => {
+  if (
+    value.discountType === "percentage" &&
+    value.discountValue > 100
+  ) {
+    return helpers.error("any.invalid", {
+      message: "Percentage discount cannot exceed 100",
+    });
+  }
+
+  if (
+    value.discountType === "fixed" &&
+    value.maxDiscount != null
+  ) {
+    return helpers.error("any.invalid", {
+      message: "maxDiscount is only applicable to percentage coupons",
+    });
+  }
+
+  return value;
+});
+
+
+
 module.exports = {
   registerValidate,
   OTPValidation,
@@ -321,5 +396,6 @@ module.exports = {
   Idvalidation,
   ProductValidation,
   UpdateProductValidation,
-  VariantValidation
+  VariantValidation,
+  couponValidation
 };
