@@ -1,5 +1,5 @@
 
-import mongoose from "mongoose";
+const mongoose = require('mongoose')
 
 const couponSchema = new mongoose.Schema(
   {
@@ -68,7 +68,7 @@ const couponSchema = new mongoose.Schema(
       min: 1,
       default: 1,
     },
-    
+
     applicableCategories: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -135,4 +135,6 @@ const CouponRedemption = mongoose.model(
   couponRedemptionSchema
 );
 
-export { Coupon, CouponRedemption };
+
+module.exports = {Coupon,CouponRedemption}
+

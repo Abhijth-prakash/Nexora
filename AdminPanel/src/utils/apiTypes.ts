@@ -1,4 +1,4 @@
-import type { BaseAdmin, Basecategory, BaseUser,BaseSubcategory, BaseProduct } from "./BaseType"
+import type { BaseAdmin, Basecategory, BaseUser,BaseSubcategory, BaseProduct,BaseCoupon } from "./BaseType"
 
 
 export type ApiResponse<T> = {
@@ -79,3 +79,16 @@ export type updateProductResponse = null
 export type addVarientResponse = null
 export type deleteVarientResponse = null
 export type getProductbyidResponse = BaseProduct
+
+
+//coupons
+
+export type addCouponResponse = null
+
+export type GetCouponsResponse = {
+  coupons: BaseCoupon[];
+  totalPages: number;
+  currentPage: number;
+  totalCoupons: number;
+};
+

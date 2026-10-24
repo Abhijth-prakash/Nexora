@@ -169,6 +169,66 @@ class CouponService {
             throw error;
         }
     }
+
+
+
+
+    // get all coupons
+    static async getAllCoupons(page = 1, limit = 10, search = "", filter = "") {
+        try {
+            const currentPage = Math.max(1, Number(page) || 1);
+            const pageLimit = Math.max(1, Number(limit) || 10);
+            const skip = (currentPage - 1) * pageLimit;
+
+            const query = {};
+
+            // Search by coupon code or description
+            if (search && search.trim()) {
+                query.$or = [
+                    { code: { $regex: search.trim(), $options: "i" } },
+                    { description: { $regex: search.trim(), $options: "i" } },
+                ];
+            }
+
+            // Filter by active status
+            if (filter === "active") {
+                query.isActive = true;
+            } else if (filter === "inactive") {
+                query.isActive = false;
+            }
+
+            const [coupons, totalCoupons] = await Promise.all([
+                Coupon.find(query)
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(pageLimit)
+                    .lean(),
+
+                Coupon.countDocuments(query),
+            ]);
+
+            const totalPages = Math.ceil(totalCoupons / pageLimit);
+
+            logger.info("Coupons fetched successfully", {
+                page: currentPage,
+                totalCoupons,
+            });
+
+            return {
+                coupons,
+                totalPages,
+                currentPage,
+                totalCoupons,
+            };
+        } catch (error) {
+            logger.error("Failed to fetch coupons", {
+                error: error.message,
+            });
+
+            throw error;
+        }
+    }
+
 }
 
 module.exports = CouponService;

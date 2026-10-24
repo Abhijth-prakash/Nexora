@@ -140,39 +140,39 @@ const AdminSidebar = () => {
             <span>Products</span>
           </Link>
 
-          {/* ORDERS */}
-          <Link
-            to="/admin/orders"
-            className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 3h12l1 4H5l1-4z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 7h14v13H5V7z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 11h6M9 15h4"
-                />
-              </svg>
-            </div>
+          {/* coupons */}
+       
 
-            <span>Orders</span>
-          </Link>
+<Link
+  to="/admin/coupon"
+  className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+>
+  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 8a2 2 0 002-2h14a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H5a2 2 0 00-2-2v-2a2 2 0 000-4V8z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="2 2"
+        d="M13 7v10"
+      />
+    </svg>
+  </div>
+
+  <span>Coupon</span>
+</Link>
+
+
 
           {/* CATEGORIES */}
           <Link

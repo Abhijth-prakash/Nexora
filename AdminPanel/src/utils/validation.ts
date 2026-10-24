@@ -140,3 +140,93 @@ export const variantValidation = z.object({
 });
 
 export type VariantFormData = z.output<typeof variantValidation>;
+
+
+
+export const couponSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .min(1, "Coupon code is required"),
+
+    description: z
+      .string()
+      .trim()
+      .max(300, "Description cannot exceed 300 characters")
+      .optional(),
+
+    discountType: z.enum(["percentage", "fixed"], {
+      message: "Discount type must be percentage or fixed",
+    }),
+
+    discountValue: z.coerce
+      .number()
+      .positive("Discount value must be greater than 0"),
+
+    maxDiscount: z.coerce
+      .number()
+      .min(0, "Maximum discount cannot be negative")
+      .nullable()
+      .optional(),
+
+    minOrderAmount: z.coerce
+      .number()
+      .min(0, "Minimum order amount cannot be negative")
+      .default(0),
+
+    expiryDate: z.coerce.date({
+      message: "A valid expiry date is required",
+    }),
+
+  usageLimit: z.preprocess(
+  (value) => (value === "" || value === null ? undefined : value),
+  z.number()
+    .int("Usage limit must be an integer")
+    .min(1, "Usage limit must be at least 1")
+    .optional()
+    .nullable()
+),
+    perUserLimit: z.coerce
+      .number()
+      .int("Per-user limit must be an integer")
+      .min(1, "Per-user limit must be at least 1")
+      .default(1),
+
+    applicableCategories: z
+      .array(
+        z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID")
+      )
+      .default([]),
+
+    isActive: z.boolean().default(true),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.discountType === "percentage" &&
+      value.discountValue > 100
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["discountValue"],
+        message: "Percentage discount cannot exceed 100",
+      });
+    }
+
+    if (
+      value.discountType === "fixed" &&
+      value.maxDiscount != null
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["maxDiscount"],
+        message:
+          "maxDiscount is only applicable to percentage coupons",
+      });
+    }
+  });
+
+export type CouponFormInput = z.input<typeof couponSchema>;
+
+export type CouponFormData = z.output<typeof couponSchema>;

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
-import type { categoryData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { AddCategoryResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
+import type { categoryData, CouponFormData, Email, LoginData,  Resetpassdata } from "./validation";
+import type { AddCategoryResponse, addCouponResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,GetCouponsResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
 
 
 
@@ -137,6 +137,29 @@ deleteVarient: async (id: string, variantId: string): Promise<ApiResponse<delete
 },
   
 };
+
+
+export const Coupon_Api = {
+  addCoupon: async (data:CouponFormData):  Promise<ApiResponse<addCouponResponse>> => {
+    const response = await ClientApi.post<ApiResponse<addCouponResponse>>(`/admin/coupon`,data);
+  return response.data;
+},
+
+getCoupons: async (
+  page: number,
+  limit: number,
+  search: string,
+  filter: string
+): Promise<ApiResponse<GetCouponsResponse>> => {
+  const response = await ClientApi.get<ApiResponse<GetCouponsResponse>>(
+    `/admin/coupon`,
+    { params: { page, limit, search, filter } }
+  );
+  return response.data;
+},
+
+
+}
 
 
 
