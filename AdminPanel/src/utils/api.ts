@@ -2,6 +2,7 @@ import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, CouponFormData, Email, LoginData,  Resetpassdata } from "./validation";
 import type { activeToggleresponse, AddCategoryResponse, addCouponResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,GetCouponsResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
+import type { BaseCoupon } from "./BaseType";
 
 
 
@@ -169,6 +170,28 @@ activeToggle: async (
 
 deleteCoupon: async (id: string): Promise<ApiResponse<null>> => {
   const response = await ClientApi.delete<ApiResponse<null>>(
+    `/admin/coupon/${id}`
+  );
+
+  return response.data;
+},
+
+updateCoupon: async (
+  id: string,
+  data: CouponFormData
+): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.patch<ApiResponse<null>>(
+    `/admin/coupon/${id}`,
+    data
+  );
+
+  return response.data;
+},
+
+getCouponById: async (
+  id: string
+): Promise<ApiResponse<BaseCoupon>> => {
+  const response = await ClientApi.get<ApiResponse<BaseCoupon>>(
     `/admin/coupon/${id}`
   );
 

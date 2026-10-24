@@ -1,34 +1,36 @@
-
 import React, { useEffect, useState } from "react";
 import CouponForm from "./CouponForm";
 import {
-    activeToggle,
+  activeToggle,
   addpage,
   getCoupons,
   minusPage,
 } from "../../redux/features/CouponSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import AdminSidebar from "../../components/Adminsidebar";
-import { toast } from 'react-toastify'
+import { toast } from "react-toastify";
 import CouponDelete from "./CouponDelete";
+import { Link } from "react-router-dom";
 
 const Coupon = () => {
   const [form, setForm] = useState(false);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
-  const [remove,setRemove] =useState(false)
-  const [id,setId] = useState("")
+  const [remove, setRemove] = useState(false);
+  const [id, setId] = useState("");
+  const [editId, setEditid] = useState("");
 
   const dispatch = useAppDispatch();
 
-  const onCLose = () => setForm(false);
+  const onCLose = () => {
+    setForm(false);
+    setEditid("");
+  };
 
-  const removeClose = ()=>{
-    setRemove(false)
-    setId("")
-  }
-
-
+  const removeClose = () => {
+    setRemove(false);
+    setId("");
+  };
 
   const {
     page,
@@ -52,14 +54,16 @@ const Coupon = () => {
   const activeCoupons =
     Coupons?.filter((coupon) => coupon.isActive).length ?? 0;
 
-  const inactiveCoupons =
-    (Coupons?.length ?? 0) - activeCoupons;
+  const inactiveCoupons = (Coupons?.length ?? 0) - activeCoupons;
 
   return (
     <div className="flex min-h-screen w-full bg-[#f8f9fc] text-slate-800">
       <AdminSidebar />
 
-        {remove && <CouponDelete removeClose={removeClose} id={id}></CouponDelete>}
+      {remove && (
+        <CouponDelete removeClose={removeClose} id={id} />
+      )}
+
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
         {/* Header */}
         <header className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
@@ -88,7 +92,7 @@ const Coupon = () => {
           </button>
         </header>
 
-        {form && <CouponForm onCLose={onCLose} />}
+        {form && <CouponForm onCLose={onCLose} editId={editId} />}
 
         {/* Summary cards */}
         <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -246,7 +250,9 @@ const Coupon = () => {
                 </div>
               ) : error ? (
                 <div className="flex flex-1 items-center justify-center px-5 py-16 text-center">
-                  <p className="text-sm font-medium text-red-600">{error}</p>
+                  <p className="text-sm font-medium text-red-600">
+                    {error}
+                  </p>
                 </div>
               ) : Coupons?.length ? (
                 Coupons.map((coupon) => {
@@ -256,34 +262,36 @@ const Coupon = () => {
                   return (
                     <div
                       key={coupon._id}
-                      className="grid grid-cols-1 gap-4 border-b border-slate-100 px-5 py-5 transition-colors last:border-b-0 hover:bg-slate-50/80 sm:px-6 xl:grid-cols-[1.5fr_1fr_1.2fr_1.3fr_0.6fr_0.9fr_0.8fr_1.2fr] xl:items-center xl:gap-4"
+                      className="grid grid-cols-1 gap-4 border-b border-slate-100 px-5 py-5 last:border-b-0 hover:bg-slate-50/60 sm:px-6 xl:grid-cols-[1.5fr_1fr_1.2fr_1.3fr_0.6fr_0.9fr_0.8fr_1.2fr] xl:items-center"
                     >
-                      <div className="min-w-0">
+                      <div>
                         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 xl:hidden">
                           Coupon Code
                         </p>
-                        <p className="break-words text-sm font-bold text-slate-900">
-                          {coupon.code}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex rounded-lg border border-orange-100 bg-orange-50 px-2.5 py-1.5 font-mono text-sm font-bold tracking-wide text-orange-600">
+                            {coupon.code}
+                          </span>
+                        </div>
                       </div>
 
                       <div>
                         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 xl:hidden">
                           Discount
                         </p>
-                        <p className="text-sm font-medium text-slate-700">
+                        <p className="text-sm font-semibold text-slate-800">
                           {coupon.discountType === "percentage"
-                            ? `${coupon.discountValue}% OFF`
-                            : `₹${coupon.discountValue} OFF`}
+                            ? `${coupon.discountValue}%`
+                            : `₹${coupon.discountValue}`}
                         </p>
                       </div>
 
                       <div>
                         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 xl:hidden">
-                          Minimum Order
+                          Min. Order
                         </p>
                         <p className="text-sm text-slate-600">
-                          ₹{coupon.minOrderAmount.toLocaleString("en-IN")}
+                          ₹{coupon.minOrderAmount}
                         </p>
                       </div>
 
@@ -346,46 +354,81 @@ const Coupon = () => {
                         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 xl:hidden">
                           Active
                         </p>
-                     <button
-  type="button"
-  role="switch"
-  aria-checked={coupon.isActive}
-  aria-label={`Toggle ${coupon.code} status`}
-  onClick={async () => {
-    try {
-      const result = await dispatch(activeToggle(coupon._id)).unwrap();
-      dispatch(getCoupons({page,search,filter,limit}))
-      toast.success(result.message || "Coupon status updated successfully");
 
-    } catch (error) {
-      toast.error(
-        typeof error === "string"
-          ? error
-          : "Failed to update coupon status. Please try again."
-      );
-    }
-  }}
-  className={`relative h-6 w-11 rounded-full transition ${
-    coupon.isActive ? "bg-orange-500" : "bg-slate-300"
-  }`}
->
-  <span
-    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${
-      coupon.isActive ? "left-6" : "left-1"
-    }`}
-  />
-</button>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={coupon.isActive}
+                          aria-label={`Toggle ${coupon.code} status`}
+                          onClick={async () => {
+                            try {
+                              const result = await dispatch(
+                                activeToggle(coupon._id)
+                              ).unwrap();
+
+                              dispatch(
+                                getCoupons({ page, search, filter, limit })
+                              );
+
+                              toast.success(
+                                result.message ||
+                                  "Coupon status updated successfully"
+                              );
+                            } catch (error) {
+                              toast.error(
+                                typeof error === "string"
+                                  ? error
+                                  : "Failed to update coupon status. Please try again."
+                              );
+                            }
+                          }}
+                          className={`relative h-6 w-11 rounded-full transition ${
+                            coupon.isActive
+                              ? "bg-orange-500"
+                              : "bg-slate-300"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${
+                              coupon.isActive ? "left-6" : "left-1"
+                            }`}
+                          />
+                        </button>
                       </div>
 
                       <div>
                         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 xl:hidden">
                           Actions
                         </p>
+
                         <div className="flex flex-wrap items-center gap-2">
+                          {/* Styled View button */}
+                          <Link
+                            to={`/admin/coupon/${coupon._id}`}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                            aria-label={`View details for ${coupon.code}`}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            View
+                          </Link>
+
                           <button
                             type="button"
                             onClick={() => {
-                              // Connect your edit form here.
+                              setForm(true);
+                              setEditid(coupon._id);
                             }}
                             className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-600 transition hover:bg-orange-100"
                           >
@@ -395,8 +438,8 @@ const Coupon = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              setRemove(true)
-                              setId(coupon._id)
+                              setRemove(true);
+                              setId(coupon._id);
                             }}
                             className="rounded-lg border border-red-100 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
                           >
@@ -423,9 +466,11 @@ const Coupon = () => {
                       <path d="M13 7v10" />
                     </svg>
                   </div>
+
                   <h3 className="text-base font-semibold text-slate-800">
                     No coupons found
                   </h3>
+
                   <p className="mt-1 max-w-sm text-sm text-slate-500">
                     Try changing your search or filter to see available coupons.
                   </p>

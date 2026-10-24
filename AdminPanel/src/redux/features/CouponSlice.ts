@@ -13,6 +13,7 @@ export type CouponType = {
   page:number
   totalPages:number,
   totalCoupons:number
+  Coupon:BaseCoupon |null
 };
 
 const initialState: CouponType = {
@@ -21,7 +22,8 @@ const initialState: CouponType = {
   Coupons:[],
   page:1,
   totalPages:1,
-  totalCoupons:0
+  totalCoupons:0,
+  Coupon:null
   
 };
 
@@ -136,6 +138,54 @@ export const deleteCoupon = createAsyncThunk(
 );
 
 
+//updateCoupon
+export const updateCoupon = createAsyncThunk(
+  "coupon/updateCoupon",
+  async (
+    { id, data }: { id: string; data: CouponFormData },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await Coupon_Api.updateCoupon(id, data);
+      return response;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to update coupon. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to update coupon. Please try again."
+      );
+    }
+  }
+);
+
+
+export const getCouponById = createAsyncThunk(
+  "coupon/getCouponById",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await Coupon_Api.getCouponById(id);
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to fetch coupon details. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to fetch coupon details. Please try again."
+      );
+    }
+  }
+);
+
+
 
 const CouponSlice = createSlice({
   name: "couponSlice",
@@ -212,7 +262,7 @@ const CouponSlice = createSlice({
         state.error =
           (action.payload as string) ||
           action.error.message ||
-          "Failed to add coupon. Please try again.";
+          "Failed to toggle coupon. Please try again.";
       })
 
       //deleteCoupon
@@ -232,7 +282,49 @@ const CouponSlice = createSlice({
         state.error =
           (action.payload as string) ||
           action.error.message ||
-          "Failed to add coupon. Please try again.";
+          "Failed to delete coupon. Please try again.";
+      })
+
+     //updateCoupon
+      .addCase(updateCoupon.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+
+      .addCase(updateCoupon.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+
+      
+      .addCase(updateCoupon.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          "Failed to update coupon. Please try again.";
+      })
+
+      //getbyid
+      .addCase(getCouponById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.Coupon = null
+      })
+
+      .addCase(getCouponById.fulfilled, (state,action) => {
+        state.loading = false;
+        state.error = null;
+        state.Coupon = action.payload
+      })
+
+      
+      .addCase(getCouponById.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          "Failed to get coupon. Please try again.";
       })
   },
 });

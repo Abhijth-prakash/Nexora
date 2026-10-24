@@ -13,6 +13,7 @@ import Product from "./pages/products/Product"
 import PublicRoute from "./components/PublicRoute"
 import ProductDetails from "./pages/products/ProductDetails"
 import Coupon from "./pages/coupon/Coupon"
+import CouponDetails from "./pages/coupon/CouponDetails"
 
 
 
@@ -42,7 +43,7 @@ function App() {
 
 
       <Route path="/admin/coupon" element={<Coupon></Coupon>}></Route>
-      <Route path="/admin/products/:id" element={<ProductDetails></ProductDetails>}></Route>
+      <Route path="/admin/coupon/:id" element={<CouponDetails></CouponDetails>}></Route>
 
 
 

@@ -79,6 +79,35 @@ static delete = BaseController.asyncHandler(async (req, res) => {
     200
   );
 });
+
+//update coupon
+static update = BaseController.asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+
+  await CouponService.update(id, data);
+
+  BaseController.sendSuccessResponse(
+    res,
+    "Coupon updated successfully",
+    null,
+    200
+  );
+});
+
+//getByid 
+static getByid = BaseController.asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await CouponService.getByid(id);
+
+  BaseController.sendSuccessResponse(
+    res,
+    "Coupon fetched successfully",
+    result,
+    200
+  );
+});
 }
 
 

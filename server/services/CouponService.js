@@ -153,7 +153,7 @@ class CouponService {
                 code: coupon.code,
             });
 
-            return coupon;
+            return true;
         } catch (error) {
             logger.error("Error updating coupon:", {
                 id,
@@ -226,6 +226,26 @@ class CouponService {
             });
 
             throw error;
+        }
+    }
+
+    //get coupon by id
+    static async getByid(id){
+        try{
+            const coupon =  await Coupon.findById(id)
+
+            if(!coupon){
+                throw new NotFoundError('coupon not found')
+            }
+
+
+            logger.info(`fetched coupon ${coupon.code} succefullly`)
+            return coupon
+
+
+        }catch(error){
+            logger.error('failed to get coupon')
+            throw error
         }
     }
 
