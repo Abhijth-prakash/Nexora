@@ -108,6 +108,36 @@ static getByid = BaseController.asyncHandler(async (req, res) => {
     200
   );
 });
+
+
+//getCoupnsForuser
+static getCouponsForUser = BaseController.asyncHandler(async (req, res) => {
+  const result = await CouponService.getCouponsForUser();
+
+  BaseController.sendSuccessResponse(
+    res,
+    "Coupons fetched successfully",
+    result,
+    200
+  );
+});
+
+
+//validateCOupon
+static validateCoupon = BaseController.asyncHandler(async (req, res) => {
+  const result = await CouponService.validateCoupon(
+   req.userId,
+    req.body
+  );
+
+  BaseController.sendSuccessResponse(
+    res,
+    "Coupon validated successfully",
+    result,
+    200
+  );
+});
+
 }
 
 

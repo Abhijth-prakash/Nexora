@@ -1,4 +1,4 @@
-import  type { BaseUser,BaseAddress, Basecategory, BaseProduct,BaseCartItem } from "./baseTypes"
+import  type { BaseUser,BaseAddress, Basecategory, BaseProduct,BaseCartItem, BaseCoupon } from "./baseTypes"
 
 export type ApiResponse<T> = {
   success: boolean
@@ -94,4 +94,18 @@ export type MergeCartResponse = {
     productId: string;
     reason: string;
   }[];
+};
+
+export type CouponResponse = BaseCoupon[]
+
+export type CouponValidationResponse = {
+  coupon: {
+    _id: string;
+    code: string;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+    maxDiscount: number | null;
+  };
+  discount: number;
+  finalAmount: number;
 };

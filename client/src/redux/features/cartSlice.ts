@@ -3,7 +3,7 @@ import type { PayloadAction } from "@reduxjs/toolkit"
 import axios from "axios"
 import { CartApi } from "../../utils/api"
 import type { AddToCartPayload } from "../../utils/apiTypes"
-import type { BaseCartItem } from "../../utils/baseTypes"
+import type { BaseCartItem, BaseCoupon } from "../../utils/baseTypes"
 import { getGuestCart } from "../../utils/guestCart"
 import type { GuestCartItem } from "../../utils/guestCart"
 
@@ -14,6 +14,10 @@ export type Carttype = {
   totalItems:number
   subtotal:number
   guestItems: GuestCartItem[]
+  coupons:BaseCoupon[]
+  discount:number,
+  finalAmount:number
+  coupon:string|null
 }
 
 const initialState: Carttype = {
@@ -22,7 +26,12 @@ const initialState: Carttype = {
   errors: null,
   totalItems:0,
   subtotal:0,
-  guestItems: getGuestCart()
+  guestItems: getGuestCart(),
+  coupons:[],
+  discount:0,
+  finalAmount:0,
+  coupon:null
+
 }
 
 //add to cart
@@ -108,6 +117,62 @@ export const mergeGuestCart = createAsyncThunk(
 );
 
 
+
+
+//get coupons for user
+
+export const getCoupons = createAsyncThunk(
+  'cart/getCoupons',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await CartApi.getCoupons()
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Get coupons failed. Please try again."
+        )
+      }
+      return rejectWithValue("Get coupons failed. Please try again.")
+    }
+  }
+)
+
+
+
+
+//validatecoupon
+export const validateCoupon = createAsyncThunk(
+  'cart/validateCoupon',
+  async (
+    data: {
+      couponID: string;
+      subtotal: number;
+      category: string[];
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await CartApi.validateCoupon(data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Coupon validation failed. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Coupon validation failed. Please try again."
+      );
+    }
+  }
+);
+
+
+
 export const CartSlice = createSlice({
   name: "cart",
   initialState,
@@ -161,6 +226,40 @@ export const CartSlice = createSlice({
         
       })
       .addCase(mergeGuestCart.rejected, (state, action) => {
+        state.loading = false
+        state.errors = action.payload as string
+      })
+
+
+      //get coupns for user
+      .addCase(getCoupons.pending, (state) => {
+        state.loading = true
+        state.errors = null
+      })
+      .addCase(getCoupons.fulfilled, (state, action) => {
+        state.coupons= action.payload
+        state.loading = false
+        
+      })
+      .addCase(getCoupons.rejected, (state, action) => {
+        state.loading = false
+        state.errors = action.payload as string
+      })
+
+
+      //get coupns for user
+      .addCase(validateCoupon.pending, (state) => {
+        state.loading = true
+        state.errors = null
+      })
+      .addCase(validateCoupon.fulfilled, (state, action) => {
+        state.coupon= action.payload.coupon._id
+        state.finalAmount = action.payload.finalAmount
+        state.discount = action.payload.discount
+        state.loading = false
+        
+      })
+      .addCase(validateCoupon.rejected, (state, action) => {
         state.loading = false
         state.errors = action.payload as string
       })

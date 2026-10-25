@@ -77,6 +77,7 @@ export type BaseCartItem = {
   _id: string;
   productId?: string;
   variantId?: string | null;
+  category?: string;
   name?: string;
   brand?: string;
   size?: string | null;
@@ -90,4 +91,21 @@ export type BaseCartItem = {
   lineTotal?: number;
 };
 
+
+export type BaseCoupon = {
+  _id: string;
+  code: string;
+  description?: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  maxDiscount?: number | null;
+  minOrderAmount: number;
+  startDate: string;
+  expiryDate: string;
+  usageLimit?: number | null;
+  usedCount: number;
+  perUserLimit: number;
+  applicableCategories: string[];
+  isActive: boolean;
+};
 

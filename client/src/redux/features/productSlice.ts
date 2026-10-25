@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import type { Basecategory, BaseProduct } from "../../utils/baseTypes"
 import axios from "axios"
-import { ProductApi } from "../../utils/api"
+import { CartApi, ProductApi } from "../../utils/api"
 import type { CategoryTreeItem } from "../../utils/apiTypes"
 import type { PayloadAction } from "@reduxjs/toolkit"
 
@@ -149,6 +149,8 @@ export const getCategoryTree = createAsyncThunk(
     }
   }
 )
+
+
 
 export const ProductSlice = createSlice({
   name: "product",

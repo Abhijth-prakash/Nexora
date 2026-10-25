@@ -78,6 +78,7 @@ class CartService {
 
 
   //get cart
+
 static async getCart(userId) {
   try {
     const cart = await Cart.findOne({ user: userId })
@@ -129,6 +130,7 @@ static async getCart(userId) {
       return {
         _id: item._id,
         productId: product._id,
+        category: product.category,
         variantId: item.variantId,
         name: product.name,
         brand: product.brand,
@@ -166,6 +168,7 @@ static async getCart(userId) {
     throw error;
   }
 }
+
 
 //quanity
 static async updateCartItem(userId, itemId, quantity) {

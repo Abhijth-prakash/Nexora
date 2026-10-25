@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, MergeCartResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, MergeCartResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -89,6 +89,8 @@ export const addressApi = {
 
 }
 
+
+//productApi
 export const ProductApi = {
   getCategories: async (limit: number): Promise<ApiResponse<categoryresponse>> => {
     const response = await ClientApi.get<ApiResponse<categoryresponse>>('/users/category', {
@@ -114,6 +116,8 @@ export const ProductApi = {
 },
 }
 
+
+//cart api
 export const CartApi = {
   addToCart: async (
     payload: AddToCartPayload
@@ -124,34 +128,52 @@ export const CartApi = {
     );
     return response.data;
   },
-  getCart: async (
-  ): Promise<ApiResponse<CartResponse>> => {
+
+  getCart: async (): Promise<ApiResponse<CartResponse>> => {
     const response = await ClientApi.get<ApiResponse<CartResponse>>(
-      "/users/cart",
+      "/users/cart"
     );
     return response.data;
   },
-  
+
   updateCartItem: async (
-  itemId: string,
-  quantity: number
-): Promise<ApiResponse<CartResponse>> => {
-  const response = await ClientApi.patch<ApiResponse<CartResponse>>(
-    `/users/cart/${itemId}`,
-    { quantity }
-  );
-  return response.data;
-},
-mergeGuestCart: async (
-  items: AddToCartPayload[]
-): Promise<ApiResponse<MergeCartResponse>> => {
+    itemId: string,
+    quantity: number
+  ): Promise<ApiResponse<CartResponse>> => {
+    const response = await ClientApi.patch<ApiResponse<CartResponse>>(
+      `/users/cart/${itemId}`,
+      { quantity }
+    );
+    return response.data;
+  },
+
+  mergeGuestCart: async (
+    items: AddToCartPayload[]
+  ): Promise<ApiResponse<MergeCartResponse>> => {
+    const response = await ClientApi.post<ApiResponse<MergeCartResponse>>(
+      "/users/cart/merge",
+      { items }
+    );
+    return response.data;
+  },
+
+ 
+  getCoupons: async (): Promise<ApiResponse<CouponResponse>> => {
+    const response = await ClientApi.get<ApiResponse<CouponResponse>>(
+      "/users/cart/coupons"
+    );
+    return response.data;
+  },
+
+  validateCoupon: async (
+  data: { couponID: string; subtotal: number; category: string[] }
+): Promise<ApiResponse<CouponValidationResponse>> => {
   const response = await ClientApi.post<
-    ApiResponse<MergeCartResponse>
-  >("/users/cart/merge", { items });
+    ApiResponse<CouponValidationResponse>
+  >("/users/cart/coupons", data);
 
   return response.data;
 },
-
 };
 
 

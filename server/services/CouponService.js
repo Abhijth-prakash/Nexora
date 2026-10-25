@@ -1,7 +1,7 @@
 
 const logger = require("../utils/logger");
-const { Coupon } = require("../models/Coupon");
-const { NotFoundError, ConflictError } = require("../utils/errors");
+const { Coupon,CouponRedemption } = require("../models/Coupon");
+const { NotFoundError, ConflictError,ValidationError } = require("../utils/errors");
 
 class CouponService {
     // add coupon
@@ -248,6 +248,151 @@ class CouponService {
             throw error
         }
     }
+
+
+
+    //get coupons for user
+
+static async getCouponsForUser() {
+    try {
+        const coupons = await Coupon.find({
+            isActive: true,
+            startDate: { $lte: new Date() },
+            expiryDate: { $gt: new Date() },
+        });
+
+        logger.info("Coupons fetched for user");
+
+        return coupons;
+    } catch (error) {
+        logger.error("Failed to get coupons for user", error);
+        throw error;
+    }
+}
+
+//validateCoupon
+
+static async validateCoupon(user, data) {
+  try {
+    const coupon = await Coupon.findById(data.couponID);
+
+    if (!coupon) {
+      throw new NotFoundError("Coupon not found");
+    }
+
+    const now = new Date();
+
+    if (!coupon.isActive) {
+      throw new ValidationError("Coupon is inactive");
+    }
+
+    if (coupon.startDate > now) {
+      throw new ValidationError("Coupon is not active yet");
+    }
+
+    if (coupon.expiryDate < now) {
+      throw new ValidationError("Coupon has expired");
+    }
+
+    if (
+      coupon.usageLimit !== null &&
+      coupon.usedCount >= coupon.usageLimit
+    ) {
+      throw new ConflictError(
+        "Coupon usage limit has been reached"
+      );
+    }
+
+    const redemptionCount = await CouponRedemption.countDocuments({
+      coupon: coupon._id,
+      user: user,
+    });
+
+    if (redemptionCount >= coupon.perUserLimit) {
+      throw new ConflictError(
+        "You have already reached the usage limit for this coupon"
+      );
+    }
+
+    const orderAmount = Number(data.subtotal);
+
+    if (!Number.isFinite(orderAmount) || orderAmount < 0) {
+      throw new ValidationError("Invalid order subtotal");
+    }
+
+    if (orderAmount < coupon.minOrderAmount) {
+      throw new ValidationError(
+        `Minimum order amount of ${coupon.minOrderAmount} is required to use this coupon`
+      );
+    }
+
+    const applicable =
+      coupon.applicableCategories.length === 0 ||
+      data.category.every((categoryId) =>
+        coupon.applicableCategories.some(
+          (applicableCategory) =>
+            categoryId.toString() ===
+            applicableCategory.toString()
+        )
+      );
+
+    if (!applicable) {
+      throw new ConflictError(
+        "Coupon is not applicable to all selected categories"
+      );
+    }
+
+    let discount = 0;
+
+    if (coupon.discountType === "percentage") {
+      discount = (orderAmount * coupon.discountValue) / 100;
+
+      if (
+        coupon.maxDiscount !== null &&
+        coupon.maxDiscount !== undefined &&
+        discount > coupon.maxDiscount
+      ) {
+        discount = coupon.maxDiscount;
+      }
+    } else {
+      discount = coupon.discountValue;
+    }
+
+    // Discount must not exceed the order amount.
+    discount = Math.min(discount, orderAmount);
+
+    // Round to two decimal places.
+    discount = Math.round((discount + Number.EPSILON) * 100) / 100;
+
+    logger.info("Coupon validated successfully", {
+      code: coupon.code,
+      orderAmount,
+      discount,
+    });
+
+    return {
+      coupon: {
+        _id: coupon._id,
+        code: coupon.code,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        maxDiscount: coupon.maxDiscount,
+      },
+      discount,
+      finalAmount: Math.round(
+        (orderAmount - discount + Number.EPSILON) * 100
+      ) / 100,
+    };
+  } catch (error) {
+    logger.error(
+      `Failed to validate coupon ${data.couponID}: ${error.message}`
+    );
+
+    throw error;
+  }
+}
+
+
 
 }
 

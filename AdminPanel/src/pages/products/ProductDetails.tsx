@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getProductbyid } from "../../redux/features/ProductSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import VariantForm from "./VariantForm";
@@ -52,48 +52,46 @@ const StarRating = ({ rating }: { rating?: number }) => {
 
 const ProductDetails = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { id } = useParams();
 
-  const { product,productId } = useAppSelector((state) => state.productData);
-  const [form,setForm] = useState(false)
-  const [category,setCategory] = useState("")
-  const [remove,setRemove] = useState(false)
-  const [variantId,setVariantId] = useState('')
-
+  const { product, productId } = useAppSelector((state) => state.productData);
+  const [form, setForm] = useState(false);
+  const [category, setCategory] = useState("");
+  const [remove, setRemove] = useState(false);
+  const [variantId, setVariantId] = useState("");
 
   useEffect(() => {
     if (id) {
-      if(productId!==id){
+      if (productId !== id) {
         dispatch(getProductbyid(id));
       }
-      
     }
   }, [dispatch, id]);
 
-  //formhandle
-  const formhandle = ()=>{
-    setForm(true)
-    if(product?.category){
-          setCategory(product?.category.name)
+  // formhandle
+  const formhandle = () => {
+    setForm(true);
+    if (product?.category) {
+      setCategory(product?.category.name);
     }
+  };
 
-  }
+  const onClose = () => {
+    setForm(false);
+    setCategory("");
+  };
 
-  const onClose = ()=>{
-    setForm(false)
-    setCategory("")
-  }
+  // deletehandle
+  const deleteHandle = (id: string) => {
+    setRemove(true);
+    setVariantId(id);
+  };
 
-  //deletehandle
-  const deleteHandle = (id:string)=>{
-      setRemove(true)
-      setVariantId(id)
-  }
-
-  const Close = ()=>{
-    setRemove(false)
-    setVariantId("")
-  }
+  const Close = () => {
+    setRemove(false);
+    setVariantId("");
+  };
 
   if (!product) {
     return (
@@ -106,10 +104,23 @@ const ProductDetails = () => {
   }
 
   return (
-    
     <div className="min-h-screen w-full bg-[#f8f9fb] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
-      {remove && product._id && <VarientDelete variantId={variantId} Close={Close} id={product._id}></VarientDelete>}
-      {form && product._id&& <VariantForm onClose={onClose} id={product._id} category={category} ></VariantForm>}
+      {remove && product._id && (
+        <VarientDelete
+          variantId={variantId}
+          Close={Close}
+          id={product._id}
+        />
+      )}
+
+      {form && product._id && (
+        <VariantForm
+          onClose={onClose}
+          id={product._id}
+          category={category}
+        />
+      )}
+
       <div className="w-full space-y-7">
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -127,20 +138,43 @@ const ProductDetails = () => {
             </p>
           </div>
 
-          <span
-            className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold ${
-              product.visible
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
+          {/* Right-side actions */}
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#ff624d] hover:bg-orange-50 hover:text-[#ff624d] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Back
+            </button>
+
             <span
-              className={`h-2 w-2 rounded-full ${
-                product.visible ? "bg-emerald-500" : "bg-gray-400"
+              className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold ${
+                product.visible
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-gray-100 text-gray-600"
               }`}
-            />
-            {product.visible ? "Published" : "Hidden"}
-          </span>
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  product.visible ? "bg-emerald-500" : "bg-gray-400"
+                }`}
+              />
+              {product.visible ? "Published" : "Hidden"}
+            </span>
+          </div>
         </div>
 
         {/* Product Overview */}
@@ -303,7 +337,7 @@ const ProductDetails = () => {
             </div>
 
             <button
-            onClick={()=> formhandle()}
+              onClick={() => formhandle()}
               type="button"
               className="inline-flex w-fit items-center justify-center gap-2 rounded-xl bg-[#ff624d] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ed503c]"
             >
@@ -446,17 +480,17 @@ const ProductDetails = () => {
                       </span>
                     </div>
 
-                   <button
-  type="button"
-  onClick={() => {
-    if (variant._id) {
-      deleteHandle(variant._id)
-    }
-  }}
-  className="w-full rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
->
-  Delete Variant
-</button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (variant._id) {
+                          deleteHandle(variant._id);
+                        }
+                      }}
+                      className="w-full rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                    >
+                      Delete Variant
+                    </button>
                   </div>
                 </article>
               ))}
