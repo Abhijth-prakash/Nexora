@@ -5,6 +5,7 @@ const authRoutes = require('./user/authRoutes')
 const addressRoutes = require('./user/addressRoutes')
 const productRoutes = require('./user/ProductRoutes')
 const cartRoutes = require('./user/CartRoutes')
+const orderRoutes = require('./user/orderRoutes')
 
 //admin Routes
 const adminRoutes = require('./admin/adminRoutes')
@@ -23,6 +24,7 @@ const setupRoutes = (app) => {
   app.use('/api/profile',addressRoutes)
   app.use('/api/users',productRoutes)
   app.use('/api/users',cartRoutes)
+  app.use('/api/users',orderRoutes)
 
   //test
   app.use('/api/test',test)
