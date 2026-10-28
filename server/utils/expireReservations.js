@@ -3,7 +3,7 @@ const StockReservation = require("../models/StockReservation");
 const OrderService = require("../services/Orderservice");
 const logger = require("./logger");
 
-cron.schedule("* * * * *", async () => {
+const expireReservations = async () => {
   try {
     const reservations = await StockReservation.find({
       status: "reserved",
@@ -13,7 +13,20 @@ cron.schedule("* * * * *", async () => {
     for (const reservation of reservations) {
       await OrderService.expireReservation(reservation._id);
     }
+
+    if (reservations.length) {
+      logger.info("Reservation expiry job completed", {
+        expiredCount: reservations.length,
+      });
+    }
   } catch (error) {
     logger.error("Expired reservation job failed", { error });
   }
-});
+};
+
+const startReservationJob = () => {
+  cron.schedule("* * * * *", expireReservations);
+  logger.info("Reservation expiry job scheduled");
+};
+
+module.exports = { startReservationJob, expireReservations };

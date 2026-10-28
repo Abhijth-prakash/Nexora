@@ -11,6 +11,7 @@ const { errorHandler,notFound } = require("./middilewares/errorHandler");
 const passport = require('passport')
 require("./config/passport");
 const {runSeeders} = require('./utils/seeder')
+const { startReservationJob } = require("./utils/expireReservations");
 
 
 
@@ -46,6 +47,8 @@ initialize() {
   async start() {
     await mongodb.connect();
     await runSeeders();
+    startReservationJob();
+
     this.initialize();
 
     this.server.listen(this.port, () => {

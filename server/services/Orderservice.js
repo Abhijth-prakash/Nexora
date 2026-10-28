@@ -136,12 +136,15 @@ class OrderService{
 }
 
 
-//release the user's existing active reservations (NEW)
+//release the user's existing active reservations
 static async releaseUserReservations(user) {
   const session = await mongoose.startSession();
+  const released = []; // CHANGED: collects released reservations for logging
 
   try {
     await session.withTransaction(async () => {
+      released.length = 0; // reset in case the transaction is retried
+
       let reservation;
 
       // findOneAndDelete is atomic, so stock is restored only once
@@ -181,8 +184,22 @@ static async releaseUserReservations(user) {
             );
           }
         }
+
+        released.push({
+          reservationId: reservation._id,
+          items: reservation.items,
+        });
       }
     });
+
+    // CHANGED: log only after the transaction has committed
+    for (const r of released) {
+      logger.info("Previous reservation released and stock restored", {
+        user,
+        reservationId: r.reservationId,
+        items: r.items,
+      });
+    }
   } catch (error) {
     logger.error("Failed to release previous reservations", { error });
     throw error;
@@ -208,7 +225,7 @@ static async orderVerification(user, data) {
       throw new NotFoundError("Address not found");
     }
 
-    // CHANGED: release any earlier reservation first, so repeated calls don't drain stock
+    // release any earlier reservation first, so repeated calls don't drain stock
     await this.releaseUserReservations(user);
 
     const cart = await this.StockValidation(user);
@@ -219,8 +236,11 @@ static async orderVerification(user, data) {
     const reservationId = new mongoose.Types.ObjectId();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+    // CHANGED: moved outside the callback so it can be logged after commit
+    const reservationItems = [];
+
     await session.withTransaction(async () => {
-      const reservationItems = [];
+      reservationItems.length = 0; // CHANGED: reset in case the transaction is retried
 
       for (const item of cart.items) {
         const product = item.product;
@@ -292,6 +312,14 @@ static async orderVerification(user, data) {
       );
     });
 
+    // CHANGED: log after the transaction has committed
+    logger.info("Stock reserved", {
+      user,
+      reservationId,
+      expiresAt,
+      items: reservationItems,
+    });
+
     return {
       reservationId,
       expiresAt,
@@ -310,9 +338,12 @@ static async orderVerification(user, data) {
 //delete expired
 static async expireReservation(reservationId) {
   const session = await mongoose.startSession();
+  let expired = null; // CHANGED: holds the expired reservation for logging
 
   try {
     await session.withTransaction(async () => {
+      expired = null; // reset in case the transaction is retried
+
       const reservation = await StockReservation.findOne({
         _id: reservationId,
         status: "reserved",
@@ -361,7 +392,18 @@ static async expireReservation(reservationId) {
           );
         }
       }
+
+      expired = reservation; // CHANGED
     });
+
+  
+    if (expired) {
+      logger.info("Reservation expired and stock restored", {
+        reservationId: expired._id,
+        user: expired.user,
+        items: expired.items,
+      });
+    }
   } catch (error) {
     logger.error("Failed to expire stock reservation", {
       reservationId,

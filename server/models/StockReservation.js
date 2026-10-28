@@ -41,10 +41,6 @@ const stockReservationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-stockReservationSchema.index(
-  { expiresAt: 1 },
-  { expireAfterSeconds: 0 }
-);
 
 module.exports = mongoose.model(
   "StockReservation",
