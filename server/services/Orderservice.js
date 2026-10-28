@@ -1,6 +1,7 @@
 const Cart = require("../models/Cart")
 const logger = require("../utils/logger")
 const { NotFoundError, ConflictError,ValidationError } = require("../utils/errors");
+const { Coupon,CouponRedemption } = require("../models/Coupon");
 
 class OrderService{
 
@@ -56,6 +57,76 @@ class OrderService{
         logger.error("Failed to place the order", { error });
         throw error;
     }
+}
+
+
+
+    //order summary
+  static async orderSummary(user, couponId) {
+  try {
+    const cart = await Cart.findOne({ user }).populate("items.product");
+
+    if (!cart) {
+      throw new NotFoundError("Cart not found");
+    }
+
+    // Calculate subtotal
+    const subtotal = cart.items.reduce((total, item) => {
+      const product = item.product;
+
+      if (!product) {
+        throw new NotFoundError("Product in cart not found");
+      }
+
+      return total + product.price * item.quantity;
+    }, 0);
+
+    let discount = 0;
+    let finalAmount = subtotal;
+    let coupon = null;
+
+    if (couponId) {
+      coupon = await Coupon.findById(couponId);
+
+      if (!coupon) {
+        throw new NotFoundError("Coupon not found");
+      }
+
+      // Calculate discount
+      if (coupon.discountType === "percentage") {
+        discount = (subtotal * coupon.discountValue) / 100;
+
+        if (coupon.maxDiscount !== null) {
+          discount = Math.min(discount, coupon.maxDiscount);
+        }
+      } else {
+        discount = coupon.discountValue;
+      }
+
+      // Discount cannot exceed subtotal
+      discount = Math.min(discount, subtotal);
+      discount = Math.round(discount * 100) / 100;
+
+      finalAmount = subtotal - discount;
+    }
+
+    return {
+      subtotal,
+      discount,
+      finalAmount,
+      coupon: coupon
+        ? {
+            _id: coupon._id,
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+          }
+        : null,
+    };
+  } catch (error) {
+    logger.error("Failed to calculate order summary", { error });
+    throw error;
+  }
 }
 
 }

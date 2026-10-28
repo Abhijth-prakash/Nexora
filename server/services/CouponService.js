@@ -2,6 +2,7 @@
 const logger = require("../utils/logger");
 const { Coupon,CouponRedemption } = require("../models/Coupon");
 const { NotFoundError, ConflictError,ValidationError } = require("../utils/errors");
+const {Category} = require("../models/Category");
 
 class CouponService {
     // add coupon
@@ -326,21 +327,33 @@ static async validateCoupon(user, data) {
       );
     }
 
-    const applicable =
-      coupon.applicableCategories.length === 0 ||
-      data.category.every((categoryId) =>
-        coupon.applicableCategories.some(
-          (applicableCategory) =>
-            categoryId.toString() ===
-            applicableCategory.toString()
-        )
-      );
 
-    if (!applicable) {
-      throw new ConflictError(
-        "Coupon is not applicable to all selected categories"
-      );
-    }
+
+   const invalidCategories = data.category.filter(
+  (categoryId) =>
+    !coupon.applicableCategories.some(
+      (applicableCategory) =>
+        categoryId.toString() === applicableCategory.toString()
+    )
+);
+
+if (
+  coupon.applicableCategories.length > 0 &&
+  invalidCategories.length > 0
+) { 
+  const categories = await Category.find({
+    _id: { $in: invalidCategories },
+  }).select("name");
+
+  const categoryNames = categories.map((category) => category.name);
+
+  throw new ConflictError(
+    `Coupon is not applicable to these categories: ${categoryNames.join(", ")}`
+  );
+}
+
+
+
 
     let discount = 0;
 

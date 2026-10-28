@@ -7,6 +7,7 @@ router.use(authenticate)
 
 
 router.post("/order/stockvalidation", OrderController.StockValidation);
+router.get("/order/orderSummary", OrderController.orderSummary);
 
 
 module.exports = router

@@ -109,3 +109,18 @@ export type CouponValidationResponse = {
   discount: number;
   finalAmount: number;
 };
+
+
+
+export type orderSummaryResponse = {
+  coupon: {
+    _id: string;
+    code: string;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+    maxDiscount: number | null;
+  };
+  discount: number;
+  finalAmount: number;
+  subtotal:number
+};

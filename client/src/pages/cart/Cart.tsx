@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
@@ -16,9 +16,11 @@ import {
   removeFromGuestCart,
 } from "../../utils/guestCart";
 import type { BaseCartItem } from "../../utils/baseTypes";
+import { validateCart } from "../../redux/features/orderSlice";
 
 const Cart = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate()
 
   const {
     cartItems,
@@ -36,6 +38,7 @@ const Cart = () => {
   const { logged, isStale } = useAppSelector(
     (state) => state.userData
   );
+  const {ordererrors} = useAppSelector((state)=> state.orderData)
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(
@@ -60,7 +63,7 @@ const Cart = () => {
 
 
 
-  // Guest items converted to the same shape as server items.
+ 
   const guestRows: BaseCartItem[] = guestItems.map((g) => ({
     _id: g.itemId,
     productId: g.productId,
@@ -108,6 +111,12 @@ const Cart = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+
+
+
+
+
+
 
   // Validate and apply coupon.
   const couponValidation = async (selectedCoupon: any) => {
@@ -182,6 +191,9 @@ const Cart = () => {
     }
   };
 
+
+
+
   // Cancel the applied coupon.
   const cancelCoupon = () => {
     setAppliedCouponId(null);
@@ -215,12 +227,44 @@ const Cart = () => {
     }
   };
 
-  // Use the backend-calculated final amount and discount only when applied.
+
   const displayedDiscount = isCouponApplied ? Number(discount ?? 0) : 0;
 
   const displayedFinalAmount = isCouponApplied
     ? Number(finalAmount ?? shownSubtotal)
     : Number(shownSubtotal ?? 0);
+
+
+
+//checkout handle
+const checkoutHanlde = async () => {
+  try {
+    await dispatch(validateCart()).unwrap();
+
+    navigate("/users/Checkout", {
+      state: appliedCouponId
+        ? { couponId: appliedCouponId }
+        : null,
+    });
+  } catch (error) {
+   toast.error(
+  typeof error === "string"
+    ? error
+    : ordererrors || "Cart validation failed. Please try again.",
+  {
+    position: "top-center",
+    style: {
+      fontSize: "18px",
+      maxWidth: "500px",
+      padding: "20px 24px",
+      minHeight: "80px",
+    },
+  }
+);
+  }
+};
+
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -632,6 +676,7 @@ const Cart = () => {
               <button
                 type="button"
                 disabled={!shownTotalItems}
+                onClick={checkoutHanlde}
                 className="mt-6 w-full rounded-xl bg-red-700 px-5 py-3.5 font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-gray-300"
               >
                 Proceed to Checkout

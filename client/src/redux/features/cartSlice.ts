@@ -18,6 +18,7 @@ export type Carttype = {
   discount:number,
   finalAmount:number
   coupon:string|null
+  cartId:string|null
 }
 
 const initialState: Carttype = {
@@ -30,7 +31,8 @@ const initialState: Carttype = {
   coupons:[],
   discount:0,
   finalAmount:0,
-  coupon:null
+  coupon:null,
+  cartId:null
 
 }
 
@@ -170,6 +172,9 @@ export const validateCoupon = createAsyncThunk(
     }
   }
 );
+
+
+
 
 
 

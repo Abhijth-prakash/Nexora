@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, MergeCartResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -174,6 +174,32 @@ export const CartApi = {
 
   return response.data;
 },
+};
+
+
+export const orderApi = {
+  //stock validation
+  stockValidation: async (): Promise<ApiResponse<null>> => {
+    const response = await ClientApi.post<ApiResponse<null>>(
+      "/users/order/stockvalidation"
+    );
+    return response.data;
+  },
+
+  //order Summary
+  orderSummary: async (
+  couponId?: string
+): Promise<ApiResponse<orderSummaryResponse>> => {
+  const response = await ClientApi.get<ApiResponse<orderSummaryResponse>>(
+    "/users/order/orderSummary",
+    {
+      params: couponId ? { couponId } : {},
+    }
+  );
+
+  return response.data;
+},
+
 };
 
 

@@ -18,6 +18,7 @@ import Cart from "./pages/cart/Cart"
 import ProtectedRoutes from "./components/ProtectedRoutes"
 import NotFound from "./pages/NotFound"
 import MainLayout from "./components/layouts/MainLayout"
+import Checkout from "./pages/orders/Checkout"
 
 
 function App() {
@@ -51,6 +52,10 @@ function App() {
 
           {/* cart */}
           <Route path="/users/cart" element={<Cart />} />
+
+
+          {/* order */}
+          <Route path="/users/Checkout" element={<Checkout />} />
 
           {/* 404 catch-all */}
           <Route path="*" element={<NotFound />} />
