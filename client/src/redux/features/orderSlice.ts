@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { orderApi } from "../../utils/api"
 import axios from "axios"
+import type { BaseAddress } from "../../utils/baseTypes";
 
 
 export type orderType = {
@@ -16,6 +17,8 @@ export type orderType = {
     discountValue: number;
     maxDiscount: number | null;
   } | null;
+  reservationId:string|null
+  address:BaseAddress|null
 };
 
 
@@ -25,7 +28,9 @@ const initialState:orderType = {
     coupon:null,
     discount:0,
     finalAmount:0,
-    subtotal:0
+    subtotal:0,
+    reservationId:null,
+    address:null
 }
 
 
@@ -74,6 +79,35 @@ export const getOrderSummary = createAsyncThunk(
   }
 );
 
+//orderVerification
+export const orderVerification = createAsyncThunk(
+  "order/orderVerification",
+  async (
+    data: { addressId: string; couponId?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.orderVerification(
+        data.addressId,
+        data.couponId
+      );
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to verify order. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to verify order. Please try again."
+      );
+    }
+  }
+);
+
 
 const orderSlice = createSlice({
     name:'orderSLice',
@@ -106,6 +140,23 @@ const orderSlice = createSlice({
             state.finalAmount = action.payload.finalAmount
         })
         .addCase(getOrderSummary.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+        .addCase(orderVerification.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(orderVerification.fulfilled,(state,action)=>{
+            state.loading = false
+            state.coupon = action.payload.summary.coupon
+            state.discount = action.payload.summary.discount
+            state.subtotal = action.payload.summary.subtotal
+            state.finalAmount = action.payload.summary.finalAmount
+            state.address = action.payload.address
+            state.reservationId = action.payload.reservationId
+        })
+        .addCase(orderVerification.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

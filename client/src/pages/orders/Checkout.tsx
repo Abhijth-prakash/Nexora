@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getOrderSummary } from "../../redux/features/orderSlice";
+import { getOrderSummary, orderVerification } from "../../redux/features/orderSlice";
 import { getCart } from "../../redux/features/cartSlice";
 import { getAddress } from "../../redux/features/addressSlice";
 import type { BaseAddress } from "../../utils/baseTypes";
@@ -59,20 +59,42 @@ const Checkout = () => {
     }
   }, [addresses, selectedAddress]);
 
-  const handlePlaceOrder = () => {
-    if (!cartItems?.length) {
-      toast.error("Your cart is empty.");
-      return;
-    }
 
+
+
+//order placing logic
+
+const handlePlaceOrder = async () => {
+  try {
     if (!selectedAddress) {
       toast.error("Please select a delivery address.");
       return;
     }
 
-    // Connect your order-placement API here.
-    toast.info("Connect your order placement API.");
-  };
+    const result = await dispatch(
+      orderVerification({
+        addressId: selectedAddress,
+        couponId,
+      })
+    ).unwrap();
+
+    navigate("/users/payment", {
+      state: {
+        reservationId: result.reservationId,
+        expiresAt: result.expiresAt,
+        addressId: selectedAddress,
+        couponId,
+      },
+    });
+  } catch (error) {
+    toast.error(
+      typeof error === "string"
+        ? error
+        : "Failed to verify checkout."
+    );
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50">

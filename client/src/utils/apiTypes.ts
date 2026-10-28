@@ -124,3 +124,11 @@ export type orderSummaryResponse = {
   finalAmount: number;
   subtotal:number
 };
+
+
+export type orderVerificationResponse = {
+  reservationId: string;
+  expiresAt: string;
+  address: BaseAddress;
+  summary: orderSummaryResponse;
+};

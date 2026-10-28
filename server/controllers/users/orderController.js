@@ -36,6 +36,28 @@ static orderSummary = BaseController.asyncHandler(async (req, res) => {
   );
 });
 
+//orderVerification
+static orderVerification = BaseController.asyncHandler(
+  async (req, res) => {
+    const result = await OrderService.orderVerification(
+      req.userId,
+      req.body
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "Checkout verified and stock reserved successfully",
+      {
+        reservationId: result.reservationId,
+        expiresAt: result.expiresAt,
+        address: result.address,
+        summary: result.summary,
+      },
+      200
+    );
+  }
+);
+
 }
 
 
