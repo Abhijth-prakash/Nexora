@@ -10,5 +10,8 @@ router.post("/order/stockvalidation", OrderController.StockValidation);
 router.get("/order/orderSummary", OrderController.orderSummary);
 router.post("/order/orderVerification", OrderController.orderVerification);
 
+//payment
+router.post('/order/payment',OrderController.PaymentController)
+
 
 module.exports = router

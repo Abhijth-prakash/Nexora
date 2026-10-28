@@ -19,6 +19,10 @@ export type orderType = {
   } | null;
   reservationId:string|null
   address:BaseAddress|null
+   razorpayOrderId: string|null
+  amount: number
+  currency: string|null
+  keyId: string|null
 };
 
 
@@ -30,7 +34,11 @@ const initialState:orderType = {
     finalAmount:0,
     subtotal:0,
     reservationId:null,
-    address:null
+    address:null,
+    razorpayOrderId:null,
+    amount: 0,
+    currency: null,
+  keyId: null
 }
 
 
@@ -109,6 +117,36 @@ export const orderVerification = createAsyncThunk(
 );
 
 
+
+
+//createPaymentOrder
+export const createPaymentOrder = createAsyncThunk(
+  "order/createPaymentOrder",
+  async (
+    {reservationId,addressId}:{reservationId:string,addressId:string},
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.createPaymentOrder(
+        reservationId,addressId
+      );
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to create payment order. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to create payment order. Please try again."
+      );
+    }
+  }
+);
+
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,
@@ -144,6 +182,8 @@ const orderSlice = createSlice({
             state.ordererrors = action.payload as string
         })
 
+        //order verification
+
         .addCase(orderVerification.pending,(state)=>{
             state.loading = true
         })
@@ -157,6 +197,24 @@ const orderSlice = createSlice({
             state.reservationId = action.payload.reservationId
         })
         .addCase(orderVerification.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+
+        //paymentorder
+        .addCase(createPaymentOrder.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(createPaymentOrder.fulfilled,(state,action)=>{
+            state.loading = false
+            state.razorpayOrderId = action.payload.razorpayOrderId
+            state.keyId = action.payload.keyId
+            state.amount = action.payload.amount
+            state.currency = action.payload.currency
+           
+        })
+        .addCase(createPaymentOrder.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

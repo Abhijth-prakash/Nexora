@@ -7,6 +7,9 @@ const CartService = require("./cartService");
 const mongoose = require("mongoose");
 const Product = require("../models/Product");
 const StockReservation = require("../models/StockReservation");
+const razorpay = require("../config/razorpay");
+const Order = require("../models/Order");
+const config = require('../config/config')
 
 class OrderService{
 
@@ -236,11 +239,11 @@ static async orderVerification(user, data) {
     const reservationId = new mongoose.Types.ObjectId();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // CHANGED: moved outside the callback so it can be logged after commit
+    
     const reservationItems = [];
 
     await session.withTransaction(async () => {
-      reservationItems.length = 0; // CHANGED: reset in case the transaction is retried
+      reservationItems.length = 0; 
 
       for (const item of cart.items) {
         const product = item.product;
@@ -304,6 +307,8 @@ static async orderVerification(user, data) {
             _id: reservationId,
             user,
             items: reservationItems,
+            totalAmount:summary.finalAmount,
+            coupon:summary.coupon?._id,
             status: "reserved",
             expiresAt,
           },
@@ -312,7 +317,7 @@ static async orderVerification(user, data) {
       );
     });
 
-    // CHANGED: log after the transaction has committed
+  
     logger.info("Stock reserved", {
       user,
       reservationId,
@@ -415,7 +420,101 @@ static async expireReservation(reservationId) {
   }
 }
 
+
+
+//paymentorder
+
+static async PaymentOrder(data) {
+  try {
+    const { reservationId, addressId } = data;
+
+    const reservation = await StockReservation.findById(reservationId);
+
+    if (!reservation) {
+      throw new NotFoundError("Reservation not found");
+    }
+
+    if (reservation.status !== "reserved") {
+      throw new Error("Reservation is no longer active");
+    }
+
+    if (reservation.expiresAt <= new Date()) {
+      throw new Error("Reservation has expired");
+    }
+
+   
+    const items = await Promise.all(
+      reservation.items.map(async (item) => {
+        const product = await Product.findById(item.product);
+
+        if (!product) {
+          throw new NotFoundError("Product not found");
+        }
+
+        let price = product.price;
+
+        if (item.variantId) {
+          const variant = product.variants.id(item.variantId);
+
+          if (!variant) {
+            throw new NotFoundError("Product variant not found");
+          }
+
+          price = variant.price;
+        }
+
+        return {
+          product: item.product,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          price,
+        };
+      })
+    );
+
+    const amount = reservation.totalAmount;
+
+    
+    const razorpayOrder = await razorpay.orders.create({
+      amount: Math.round(amount * 100),
+      currency: "INR",
+      receipt: `nexora_${Date.now()}`,
+    });
+
+    
+    const newOrder = new Order({
+      user: reservation.user,
+      items,
+      address: addressId,
+      totalAmount: amount,
+      coupon: reservation.coupon,
+      paymentStatus: "pending",
+      paymentMethod: "razorpay",
+      razorpayOrderId: razorpayOrder.id,
+    });
+
+    await newOrder.save();
+
+    logger.info(
+      `Payment order created successfully: ${razorpayOrder.id}`
+    );
+
+    return {
+      razorpayOrderId: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      keyId: config.RazorPay.api_key,
+      applicationOrderId: newOrder._id,
+    };
+  } catch (error) {
+    logger.error("Failed to create payment order", error);
+    throw error;
+  }
 }
+
+}
+
+
 
 
 

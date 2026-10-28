@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getOrderSummary, orderVerification } from "../../redux/features/orderSlice";
+import { createPaymentOrder, getOrderSummary, orderVerification } from "../../redux/features/orderSlice";
 import { getCart } from "../../redux/features/cartSlice";
 import { getAddress } from "../../redux/features/addressSlice";
 import type { BaseAddress } from "../../utils/baseTypes";
@@ -18,9 +18,9 @@ const Checkout = () => {
     location.state?.couponId ?? undefined;
 
   const {
-    subtotal = 0,
-    finalAmount = 0,
-    discount = 0,
+    subtotal ,
+    finalAmount ,
+    discount ,
     coupon,
     loading,
     ordererrors,
@@ -28,6 +28,9 @@ const Checkout = () => {
 
   const { cartItems } = useAppSelector((state) => state.cartData);
   const { address } = useAppSelector((state) => state.addressData);
+  const { razorpayOrderId, keyId, amount, currency } = useAppSelector(
+  (state) => state.orderData
+);
 
   const [selectedAddress, setSelectedAddress] = useState("");
 
@@ -77,13 +80,23 @@ const handlePlaceOrder = async () => {
         couponId,
       })
     ).unwrap();
+const paymentOrder = await dispatch(
+  createPaymentOrder({
+    reservationId: result.reservationId,
+    addressId: selectedAddress,
+  })
+).unwrap();
 
     navigate("/users/payment", {
       state: {
         reservationId: result.reservationId,
         expiresAt: result.expiresAt,
         addressId: selectedAddress,
-        couponId,
+        finalAmount: result.summary.finalAmount,
+         razorpayOrderId,
+         keyId,
+         amount,
+         currency
       },
     });
   } catch (error) {

@@ -1,5 +1,6 @@
 const OrderService = require("../../services/Orderservice");
 const BaseController = require("../baseController");
+const config = require('../../config/config')
 
 
 class OrderController extends BaseController{
@@ -57,6 +58,25 @@ static orderVerification = BaseController.asyncHandler(
     );
   }
 );
+
+//payment
+static PaymentController = BaseController.asyncHandler(
+  async (req,res)=>{
+    
+    const result = await OrderService.PaymentOrder(req.body)
+
+    return this.sendSuccessResponse(
+      res,
+      {
+        orderId: result.id,
+        amount: result.amount,
+        currency: result.currency,
+        keyId: config.RazorPay.api_key,
+      },
+      201
+    )
+  }
+)
 
 }
 

@@ -132,3 +132,10 @@ export type orderVerificationResponse = {
   address: BaseAddress;
   summary: orderSummaryResponse;
 };
+
+export type PaymentOrderResponse = {
+  razorpayOrderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+};

@@ -27,6 +27,18 @@ const stockReservationSchema = new mongoose.Schema(
       },
     ],
 
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    coupon: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Coupon",
+      default: null,
+    },
+
     status: {
       type: String,
       enum: ["reserved", "confirmed", "released", "expired"],
@@ -40,7 +52,6 @@ const stockReservationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 
 module.exports = mongoose.model(
   "StockReservation",
