@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { createPaymentOrder, getOrderSummary, GenerateOrder } from "../../redux/features/orderSlice";
+import {  getOrderSummary, GenerateOrder } from "../../redux/features/orderSlice";
 import { getCart } from "../../redux/features/cartSlice";
 import { getAddress } from "../../redux/features/addressSlice";
 import type { BaseAddress } from "../../utils/baseTypes";
@@ -28,7 +28,6 @@ const Checkout = () => {
 
   const { cartItems } = useAppSelector((state) => state.cartData);
   const { address } = useAppSelector((state) => state.addressData);
-  const {razorpayOrderId,orderId,keyId,amount,currency} = useAppSelector(state=> state.orderData)
   const [selectedAddress, setSelectedAddress] = useState("");
 
   const addresses: BaseAddress[] = Array.isArray(address)
@@ -78,27 +77,7 @@ const handlePlaceOrder = async () => {
       })
     ).unwrap();
 
-// const paymentOrder = await dispatch(
-//   createPaymentOrder({
-//     reservationId: result.reservationId,
-//     addressId: selectedAddress,
-//   })
-// ).unwrap();
-
-
-    navigate("/users/payment", {
-      state: {
-        reservationId: result.reservationId,
-        expiresAt: result.expiresAt,
-        addressId: selectedAddress,
-        finalAmount: result.summary.finalAmount,
-         razorpayOrderId,
-         keyId,
-         amount,
-         currency,
-         orderId
-      },
-    });
+    navigate("/users/payment");
   } catch (error) {
     toast.error(
       typeof error === "string"

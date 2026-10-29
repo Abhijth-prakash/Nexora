@@ -1,6 +1,7 @@
 const OrderService = require("../../services/Orderservice");
 const BaseController = require("../baseController");
-const config = require('../../config/config')
+const config = require('../../config/config');
+const PaymentService = require("../../services/Paymentservice");
 
 
 class OrderController extends BaseController{
@@ -67,26 +68,32 @@ static GenerateOrder = BaseController.asyncHandler(
   }
 );
 
-//payment
-static PaymentController = BaseController.asyncHandler(
+//razorpay payment handler
+static razorPaymentController = BaseController.asyncHandler(
   async (req,res)=>{
-    
-    const result = await OrderService.PaymentOrder(req.body)
+    const {orderId} = req.body
+    const result = await PaymentService.razorpayService(orderId)
+
+    BaseController.logAction(
+  `Razorpay order created successfully | Razorpay Order ID: ${result.razorpayOrderId} | Time: ${new Date().toISOString()}`
+);
 
     return this.sendSuccessResponse(
       res,
       `paymentOrder succesfully created ${result.OrderId}`  ,
       { 
         razorpayOrderId:result.razorpayOrderId,
-        orderId: result.OrderId,
         amount: result.amount,
         currency: result.currency,
         keyId: config.RazorPay.api_key,
+        orderId:result.orderId
       },
       201
     )
   }
 )
+
+
 
 //verify payment
 static verifyPayment = BaseController.asyncHandler(

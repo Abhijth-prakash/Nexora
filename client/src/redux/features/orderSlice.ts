@@ -122,15 +122,15 @@ export const GenerateOrder = createAsyncThunk(
 
 
 //createPaymentOrder
-export const createPaymentOrder = createAsyncThunk(
+export const createRazorpayment = createAsyncThunk(
   "order/createPaymentOrder",
   async (
-    {reservationId,addressId}:{reservationId:string,addressId:string},
+    orderId:string,
     { rejectWithValue }
   ) => {
     try {
-      const response = await orderApi.createPaymentOrder(
-        reservationId,addressId
+      const response = await orderApi.createRazorpayment(
+        orderId
       );
 
       return response.data;
@@ -251,7 +251,6 @@ const orderSlice = createSlice({
             state.address = action.payload.address
             state.reservationId = action.payload.reservationId
             state.orderId = action.payload.orderId
-          
         })
         .addCase(GenerateOrder.rejected,(state,action)=>{
             state.loading = false
@@ -260,20 +259,19 @@ const orderSlice = createSlice({
 
 
         //paymentorder
-        .addCase(createPaymentOrder.pending,(state)=>{
+        .addCase(createRazorpayment.pending,(state)=>{
             state.loading = true
         })
-        .addCase(createPaymentOrder.fulfilled,(state,action)=>{
+        .addCase(createRazorpayment.fulfilled,(state,action)=>{
             state.loading = false
             state.razorpayOrderId = action.payload.razorpayOrderId
             state.keyId = action.payload.keyId
             state.amount = action.payload.amount
             state.currency = action.payload.currency
             state.orderId = action.payload.orderId
-            console.log(action.payload,"from thunk")
-           
+      
         })
-        .addCase(createPaymentOrder.rejected,(state,action)=>{
+        .addCase(createRazorpayment.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

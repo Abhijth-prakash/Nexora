@@ -24,7 +24,7 @@ router.delete('/products/:id/:variantId',ProductController.deleteVariant)
 
 //users
 
-router.post('/order/payment',OrderController.PaymentController)
+
 
 
 module.exports = router

@@ -85,7 +85,7 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-orderSchema.index({ createdAt: -1 });
+orderSchema.index({ createdAt: 1 });
 
 const Order = mongoose.model("Order", orderSchema);
 

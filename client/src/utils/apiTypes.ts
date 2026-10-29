@@ -134,7 +134,7 @@ export type GenerateOrderResponse = {
   orderId:string
 };
 
-export type PaymentOrderResponse = {
+export type RazorpaymentResponse = {
   razorpayOrderId: string;
   amount: number;
   currency: string;

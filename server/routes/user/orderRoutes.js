@@ -11,7 +11,7 @@ router.get("/order/orderSummary", OrderController.orderSummary);
 router.post("/order/GenerateOrder", OrderController.GenerateOrder);
 
 //payment
-router.post('/order/payment',OrderController.PaymentController)
+router.post('/order/payment/razorpay',OrderController.razorPaymentController)
 router.post('/order/verifypayment',OrderController.verifyPayment)
 router.post('/order/cod/sendOtp',OrderController.codVerify)
 

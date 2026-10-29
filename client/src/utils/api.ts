@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  PaymentOrderResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -214,17 +214,19 @@ GenerateOrder: async (
   return response.data;
 },
 
-createPaymentOrder: async (
-  reservationId: string,addressId:string
-): Promise<ApiResponse<PaymentOrderResponse>> => {
+createRazorpayment: async (
+  orderId: string
+): Promise<ApiResponse<RazorpaymentResponse>> => {
   const response = await ClientApi.post<
-    ApiResponse<PaymentOrderResponse>
-  >("/users/order/payment", {
-    reservationId,addressId
+    ApiResponse<RazorpaymentResponse>
+  >("/users/order/payment/razorpay", {
+    orderId
   });
 
   return response.data;
 },
+
+
 verifyPayment: async (payload: {
   razorpay_payment_id: string;
   razorpay_order_id: string;

@@ -1,8 +1,22 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../../redux/hooks";
-import { sendCodOtp, verifyPayment } from "../../redux/features/orderSlice";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { createRazorpayment, sendCodOtp, verifyPayment } from "../../redux/features/orderSlice";
 import CodOtpModal from "../../components/CodOtpModal";
+import { toast } from "react-toastify";
+
+
+//states coming from checkout
+interface PaymentLocationState {
+  reservationId: string;
+  expiresAt: string;
+  finalAmount: number;
+  razorpayOrderId: string;
+  orderId: string;
+  keyId: string;
+  amount: number;
+  currency: string;
+}
 
 interface RazorpaySuccessResponse {
   razorpay_payment_id: string;
@@ -52,45 +66,42 @@ declare global {
   }
 }
 
-interface PaymentLocationState {
-  reservationId: string;
-  expiresAt: string;
-  finalAmount: number;
-  razorpayOrderId: string;
-  orderId: string;
-  keyId: string;
-  amount: number;
-  currency: string;
-}
-
 const Payment = () => {
+
+
+
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch()
   
   const [cod,setCod] = useState(false)
-  const state = location.state as PaymentLocationState | null;
+   
 
-  const {
-    reservationId,
-    expiresAt,
-    finalAmount,
-    razorpayOrderId,
-    orderId,
-    keyId,
-    amount,
-    currency,
-  } = state ?? ({} as Partial<PaymentLocationState>);
+  const {amount,razorpayOrderId,currency,keyId ,orderId}= useAppSelector(state=> state.orderData)
 
+
+//     const logging= ()=>{
+// console.log('amount',amount) 
+//      console.log('razorpayOrderId',razorpayOrderId) 
+//      console.log('currency',currency) 
+//      console.log('keyId',keyId) 
+//     }
   
-  useEffect(() => {
-    if (!razorpayOrderId) {
-      navigate(-1);
-    }
-  }, [razorpayOrderId, navigate]);
 
-  const handlePayment = () => {
-    if (!window.Razorpay) {
+
+
+
+  //razor pay page open function
+
+const handleRazorpay = async () => {
+
+  try{
+    if(orderId){
+       await dispatch(createRazorpayment(orderId)).unwrap()
+    }
+      // logging()
+
+     if (!window.Razorpay) {
       alert("Razorpay failed to load. Please refresh and try again.");
       return;
     }
@@ -106,27 +117,12 @@ const Payment = () => {
       currency: currency,
       name: "nexora",
       order_id: razorpayOrderId, 
+
+      //response from razorpay
     handler: async (response: RazorpaySuccessResponse) => {
   console.log("success", response);
 
-  try {
-    if(orderId)
-    await dispatch(
-      verifyPayment({
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_signature: response.razorpay_signature,
-        paymentMethod:"razorpay",
-        otp:"0",
-        orderId:orderId
-      })
-    ).unwrap();
 
-    navigate("/order-success");
-  } catch (error) {
-    console.log("verification failed", error);
-  
-  }
 },
       modal: {
         ondismiss: () => {
@@ -142,9 +138,14 @@ const Payment = () => {
     });
 
     razorpay.open();
+
+  }catch(error){
+    toast.error('razor pay unaviable')
+  }
+   
   };
 
-
+  
 
 
   const handleCod = async ()=>{
@@ -156,14 +157,27 @@ const Payment = () => {
    
   }
 
+// const paymentOrder = await dispatch(
+//   createPaymentOrder({
+//     reservationId: result.reservationId,
+//     addressId: selectedAddress,
+//   })
+// ).unwrap();
+
+
+
   return (
     <div className="min-h-[80vh] bg-gray-50 px-4 py-10 sm:px-6">
-      <button
-        onClick={handlePayment}
+
+
+         <button
+        onClick={handleRazorpay}
         className="rounded bg-black px-6 py-3 text-white"
       >
         Razorpay
       </button>
+
+
 
     {cod&& orderId&&  <CodOtpModal orderId={orderId} email=""></CodOtpModal>}
       <button
