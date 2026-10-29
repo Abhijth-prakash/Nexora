@@ -1,4 +1,4 @@
-import  type { BaseUser,BaseAddress, Basecategory, BaseProduct,BaseCartItem, BaseCoupon } from "./baseTypes"
+import  type { BaseUser,BaseAddress, Basecategory, BaseProduct,BaseCartItem, BaseCoupon, Baseorder } from "./baseTypes"
 
 export type ApiResponse<T> = {
   success: boolean
@@ -141,3 +141,5 @@ export type RazorpaymentResponse = {
   keyId: string;
   orderId:string;
 };
+
+export type verifyPaymentResponse = Baseorder

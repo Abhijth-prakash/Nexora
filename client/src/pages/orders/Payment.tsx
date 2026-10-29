@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { createRazorpayment, sendCodOtp, verifyPayment } from "../../redux/features/orderSlice";
 import CodOtpModal from "../../components/CodOtpModal";
 import { toast } from "react-toastify";
+import OrderSuccess from "../../components/OrderSuccess";
 
 
 //states coming from checkout
@@ -78,14 +79,10 @@ const Payment = () => {
    
 
   const {amount,razorpayOrderId,currency,keyId ,orderId}= useAppSelector(state=> state.orderData)
+  const [success,setSuccess] = useState(false)
 
 
-//     const logging= ()=>{
-// console.log('amount',amount) 
-//      console.log('razorpayOrderId',razorpayOrderId) 
-//      console.log('currency',currency) 
-//      console.log('keyId',keyId) 
-//     }
+
   
 
 
@@ -94,36 +91,58 @@ const Payment = () => {
   //razor pay page open function
 
 const handleRazorpay = async () => {
-
-  try{
-    if(orderId){
-       await dispatch(createRazorpayment(orderId)).unwrap()
+  try {
+    if (!orderId) {
+      toast.error("Order ID is missing");
+      return;
     }
-      // logging()
 
-     if (!window.Razorpay) {
+    // Wait until the backend returns Razorpay order details
+    const paymentData = await dispatch(
+      createRazorpayment(orderId)
+    ).unwrap();
+
+    if (!window.Razorpay) {
       alert("Razorpay failed to load. Please refresh and try again.");
       return;
     }
 
-    if (!keyId || !razorpayOrderId || !amount || !currency) {
+    if (
+      !paymentData.keyId ||
+      !paymentData.razorpayOrderId ||
+      !paymentData.amount ||
+      !paymentData.currency
+    ) {
       alert("Payment details are missing.");
       return;
     }
 
     const options: RazorpayOptions = {
-      key: keyId,
-      amount: amount, 
-      currency: currency,
-      name: "nexora",
-      order_id: razorpayOrderId, 
+      key: paymentData.keyId,
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      name: "Nexora",
+      order_id: paymentData.razorpayOrderId,
 
-      //response from razorpay
-    handler: async (response: RazorpaySuccessResponse) => {
-  console.log("success", response);
+      handler: async (response: RazorpaySuccessResponse) => {
+        try {
+          await dispatch(
+            verifyPayment({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              paymentMethod: "razorpay",
+              orderId,
+            })
+          ).unwrap();
 
+          setSuccess(true);
+        } catch (error) {
+          console.error("Payment verification failed:", error);
+          toast.error("Payment verification failed");
+        }
+      },
 
-},
       modal: {
         ondismiss: () => {
           console.log("Payment popup closed");
@@ -133,17 +152,22 @@ const handleRazorpay = async () => {
 
     const razorpay = new window.Razorpay(options);
 
-    razorpay.on("payment.failed", (response: RazorpayFailureResponse) => {
-      console.log("payment failed", response.error);
-    });
+    razorpay.on(
+      "payment.failed",
+      (response: RazorpayFailureResponse) => {
+        console.error("Payment failed:", response.error);
+        toast.error(
+          response.error.description || "Payment failed"
+        );
+      }
+    );
 
     razorpay.open();
-
-  }catch(error){
-    toast.error('razor pay unaviable')
+  } catch (error) {
+    console.error("Razorpay initialization failed:", error);
+    toast.error("Unable to initialize Razorpay");
   }
-   
-  };
+};
 
   
 
@@ -157,14 +181,6 @@ const handleRazorpay = async () => {
    
   }
 
-// const paymentOrder = await dispatch(
-//   createPaymentOrder({
-//     reservationId: result.reservationId,
-//     addressId: selectedAddress,
-//   })
-// ).unwrap();
-
-
 
   return (
     <div className="min-h-[80vh] bg-gray-50 px-4 py-10 sm:px-6">
@@ -176,7 +192,8 @@ const handleRazorpay = async () => {
       >
         Razorpay
       </button>
-
+  
+  {success && <OrderSuccess></OrderSuccess>}
 
 
     {cod&& orderId&&  <CodOtpModal orderId={orderId} email=""></CodOtpModal>}

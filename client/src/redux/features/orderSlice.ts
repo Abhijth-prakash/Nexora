@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { orderApi } from "../../utils/api"
 import axios from "axios"
-import type { BaseAddress } from "../../utils/baseTypes";
+import type { BaseAddress, Baseorder } from "../../utils/baseTypes";
 
 
 export type orderType = {
@@ -24,6 +24,7 @@ export type orderType = {
   currency: string|null
   keyId: string|null
   orderId:string|null
+  orderDetails:Baseorder|null
 };
 
 
@@ -40,7 +41,8 @@ const initialState:orderType = {
     amount: 0,
     currency: null,
   keyId: null,
-  orderId:null
+  orderId:null,
+  orderDetails:null
 }
 
 
@@ -158,7 +160,6 @@ export const verifyPayment = createAsyncThunk(
       razorpay_order_id: string;
       razorpay_signature: string;
       paymentMethod:string;
-      otp:string;
       orderId:string
     },
     { rejectWithValue }
@@ -283,6 +284,8 @@ const orderSlice = createSlice({
         })
         .addCase(verifyPayment.fulfilled,(state,action)=>{
             state.loading = false
+            state.orderDetails = action.payload
+            console.log(state.orderDetails)
            
         })
         .addCase(verifyPayment.rejected,(state,action)=>{

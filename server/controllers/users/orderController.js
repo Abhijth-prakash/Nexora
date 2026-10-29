@@ -98,12 +98,16 @@ static razorPaymentController = BaseController.asyncHandler(
 //verify payment
 static verifyPayment = BaseController.asyncHandler(
   async (req,res)=>{
-    const result = await OrderService.verifyPayment(req.body)
+    const result = await PaymentService.verifyPayment(req.body)
+
+BaseController.logAction(
+  `Payment verified successfully | Order ID: ${result._id} | Razorpay Order ID: ${req.body.razorpay_order_id} | Payment ID: ${req.body.razorpay_payment_id} | Time: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`
+);
 
      return this.sendSuccessResponse(
       res,
       `payment verified successfully`  ,
-      null,
+      result,
       201
     )
   }

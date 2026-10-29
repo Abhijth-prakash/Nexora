@@ -3,6 +3,7 @@ const { NotFoundError } = require("../utils/errors");
 const logger = require("../utils/logger");
 const config = require('../config/config')
 const razorpay = require("../config/razorpay");
+const crypto = require("crypto");
 
 
 class PaymentService{
@@ -58,62 +59,69 @@ static async razorpayService(orderId) {
 
 //verifyPaymenet
 
-static async verifyPayment(data){
-  try{
+static async verifyPayment(data) {
+  try {
+    const {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      orderId,
+    } = data;
 
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature,orderId } = data
+    const order = await Order.findById(orderId);
 
-   if (paymentMethod === "cod") {
-    console.log(otp)
-    console.log(orderId)
-  if (!orderId || !otp) {
-    throw new ValidationError("orderId and otp are required");
-  }
+    if (!order) {
+      throw new NotFoundError("Order not found");
+    }
 
-  const order = await Order.findById(orderId);
+    if (order.razorpayOrderId !== razorpay_order_id) {
+      throw new ValidationError("Razorpay order ID mismatch");
+    }
 
-  if (!order) {
-    throw new NotFoundError("order not found");
-  }
+    // Verify Razorpay signature
+    const expected = crypto
+      .createHmac("sha256", config.RazorPay.api_secret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
 
+    if (
+      expected.length !== razorpay_signature.length ||
+      !crypto.timingSafeEqual(
+        Buffer.from(expected, "hex"),
+        Buffer.from(razorpay_signature, "hex")
+      )
+    ) {
+      throw new ValidationError("Payment signature verification failed");
+    }
 
+   
+    if (order.paymentStatus === "paid") {
+      return true
+    }
 
-  if (!order.otp || !order.otpExpiry) {
-    throw new ValidationError("No OTP was requested for this order");
-  }
+   
+    const payment = await razorpay.payments.fetch(razorpay_payment_id);
 
-  if (order.otpExpiry < new Date()) {
-    throw new ValidationError("OTP has expired. Please request a new one");
-  }
+    if (
+      payment.order_id !== razorpay_order_id ||
+      payment.status !== "captured"
+    ) {
+      throw new ValidationError("Payment has not been captured");
+    }
 
-  if (order.otp !== String(otp)) {
-    throw new ValidationError("Invalid OTP");
-  }
+ 
+    order.paymentStatus = "paid";
+order.orderDate = new Date();
+await order.save();
 
   
-  order.otp = undefined;
-  order.otpExpiry = undefined;
-  order.paymentMethod = "cod";       
-  await order.save();
+    logger.info(`Payment verified successfully: ${razorpay_payment_id}`);
 
-  return true;
-}
+    return order
 
-    const expected = crypto
-  .createHmac("sha256", config.RazorPay.api_secret)
-  .update(razorpay_order_id + "|" + razorpay_payment_id)
-  .digest("hex");
-
-if (expected !== razorpay_signature) {
- throw new ValidationError('payment failed')
-}
-
-  logger.info('payment success')
-const payment = await razorpay.payments.fetch(razorpay_payment_id);
-
-console.log(payment); 
-  }catch(error){
-    logger.error('failed to verify payment')
+  } catch (error) {
+    logger.error("Failed to verify payment", error);
+    throw error;
   }
 }
 
