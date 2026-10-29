@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../redux/hooks";
-import { verifyPayment } from "../../redux/features/orderSlice";
+import { sendCodOtp, verifyPayment } from "../../redux/features/orderSlice";
+import CodOtpModal from "../../components/CodOtpModal";
 
 interface RazorpaySuccessResponse {
   razorpay_payment_id: string;
@@ -67,7 +68,7 @@ const Payment = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch()
   
-
+  const [cod,setCod] = useState(false)
   const state = location.state as PaymentLocationState | null;
 
   const {
@@ -81,7 +82,7 @@ const Payment = () => {
     currency,
   } = state ?? ({} as Partial<PaymentLocationState>);
 
-  // If the page is opened directly (no state), send the user back
+  
   useEffect(() => {
     if (!razorpayOrderId) {
       navigate(-1);
@@ -109,11 +110,15 @@ const Payment = () => {
   console.log("success", response);
 
   try {
+    if(orderId)
     await dispatch(
       verifyPayment({
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_order_id: response.razorpay_order_id,
         razorpay_signature: response.razorpay_signature,
+        paymentMethod:"razorpay",
+        otp:"0",
+        orderId:orderId
       })
     ).unwrap();
 
@@ -139,13 +144,33 @@ const Payment = () => {
     razorpay.open();
   };
 
+
+
+
+  const handleCod = async ()=>{
+    if(orderId){
+      console.log(orderId)
+      await dispatch(sendCodOtp(orderId)).unwrap()
+      setCod(true)
+    }
+   
+  }
+
   return (
     <div className="min-h-[80vh] bg-gray-50 px-4 py-10 sm:px-6">
       <button
         onClick={handlePayment}
         className="rounded bg-black px-6 py-3 text-white"
       >
-        Pay now
+        Razorpay
+      </button>
+
+    {cod&& orderId&&  <CodOtpModal orderId={orderId} email=""></CodOtpModal>}
+      <button
+        onClick={handleCod}
+        className="rounded bg-black px-6 py-3 text-white"
+      >
+        cod
       </button>
     </div>
   );

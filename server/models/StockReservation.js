@@ -7,6 +7,11 @@ const stockReservationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    orderId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Order",
+  default: null,
+},
 
     items: [
       {

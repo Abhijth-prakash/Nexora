@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { createPaymentOrder, getOrderSummary, orderVerification } from "../../redux/features/orderSlice";
+import { createPaymentOrder, getOrderSummary, GenerateOrder } from "../../redux/features/orderSlice";
 import { getCart } from "../../redux/features/cartSlice";
 import { getAddress } from "../../redux/features/addressSlice";
 import type { BaseAddress } from "../../utils/baseTypes";
@@ -72,18 +72,18 @@ const handlePlaceOrder = async () => {
     }
 
     const result = await dispatch(
-      orderVerification({
+      GenerateOrder({
         addressId: selectedAddress,
         couponId,
       })
     ).unwrap();
 
-const paymentOrder = await dispatch(
-  createPaymentOrder({
-    reservationId: result.reservationId,
-    addressId: selectedAddress,
-  })
-).unwrap();
+// const paymentOrder = await dispatch(
+//   createPaymentOrder({
+//     reservationId: result.reservationId,
+//     addressId: selectedAddress,
+//   })
+// ).unwrap();
 
 
     navigate("/users/payment", {

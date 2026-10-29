@@ -1,6 +1,6 @@
 const Cart = require("../models/Cart")
 const logger = require("../utils/logger")
-const { NotFoundError, ConflictError,ValidationError } = require("../utils/errors");
+const { NotFoundError, ConflictError,ValidationError, AuthenticationError } = require("../utils/errors");
 const { Coupon,CouponRedemption } = require("../models/Coupon");
 const Address = require("../models/Address");
 const CartService = require("./cartService");
@@ -11,6 +11,8 @@ const razorpay = require("../config/razorpay");
 const Order = require("../models/Order");
 const config = require('../config/config')
 const crypto = require("crypto");
+const User = require("../models/User");
+const Mail = require('../utils/mail')
 
 class OrderService{
 
@@ -213,51 +215,69 @@ static async releaseUserReservations(user) {
 }
 
 
-//orderVerification
-static async orderVerification(user, data) {
+
+
+
+//generateorder
+static async GenerateOrder(user, data) {
   const session = await mongoose.startSession();
 
   try {
     const { addressId, couponId } = data;
 
-    const address = await Address.findOne({
-      _id: addressId,
-      user,
-    });
+    if (!mongoose.isValidObjectId(addressId)) {
+      throw new BadRequestError("Invalid address");
+    }
+    if (couponId && !mongoose.isValidObjectId(couponId)) {
+      throw new BadRequestError("Invalid coupon");
+    }
 
+    // ---- Lookups ----
+    const address = await Address.findOne({ _id: addressId, user });
     if (!address) {
       throw new NotFoundError("Address not found");
     }
 
-    // release any earlier reservation first, so repeated calls don't drain stock
     await this.releaseUserReservations(user);
 
     const cart = await this.StockValidation(user);
+    if (!cart || !cart.items || cart.items.length === 0) {
+      throw new BadRequestError("Your cart is empty");
+    }
 
- 
     const summary = await this.orderSummary(user, couponId);
+    if (!summary || !(summary.finalAmount > 0)) {
+      throw new BadRequestError("Invalid order amount");
+    }
 
     const reservationId = new mongoose.Types.ObjectId();
+    const orderId = new mongoose.Types.ObjectId();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    
     const reservationItems = [];
+    const orderItems = [];
 
     await session.withTransaction(async () => {
-      reservationItems.length = 0; 
+      reservationItems.length = 0;
+      orderItems.length = 0;
 
       for (const item of cart.items) {
         const product = item.product;
-
         if (!product) {
           throw new NotFoundError("Product not found");
         }
 
         const quantity = item.quantity;
         let stockUpdate;
+        let price;
 
         if (item.variantId) {
-       
+          const variant = product.variants.id(item.variantId);
+          if (!variant) {
+            throw new NotFoundError("Variant not found");
+          }
+          price = variant.price;
+
           stockUpdate = await Product.updateOne(
             {
               _id: product._id,
@@ -268,23 +288,15 @@ static async orderVerification(user, data) {
                 },
               },
             },
-            {
-              $inc: {
-                "variants.$.stock": -quantity,
-              },
-            },
+            { $inc: { "variants.$.stock": -quantity } },
             { session }
           );
         } else {
-        
+          price = product.price;
+
           stockUpdate = await Product.updateOne(
-            {
-              _id: product._id,
-              stock: { $gte: quantity },
-            },
-            {
-              $inc: { stock: -quantity },
-            },
+            { _id: product._id, stock: { $gte: quantity } },
+            { $inc: { stock: -quantity } },
             { session }
           );
         }
@@ -300,6 +312,13 @@ static async orderVerification(user, data) {
           variantId: item.variantId || null,
           quantity,
         });
+
+        orderItems.push({
+          product: product._id,
+          variantId: item.variantId || null,
+          quantity,
+          price,
+        });
       }
 
       await StockReservation.create(
@@ -308,29 +327,46 @@ static async orderVerification(user, data) {
             _id: reservationId,
             user,
             items: reservationItems,
-            totalAmount:summary.finalAmount,
-            coupon:summary.coupon?._id,
+            totalAmount: summary.finalAmount,
+            coupon: summary.coupon?._id,
+            orderId,
             status: "reserved",
             expiresAt,
           },
         ],
         { session }
       );
+
+      await Order.create(
+        [
+          {
+            _id: orderId,
+            user,
+            items: orderItems,
+            address: addressId,
+            totalAmount: summary.finalAmount,
+            coupon: summary.coupon?._id || null,
+            paymentStatus: "pending",
+          },
+        ],
+        { session }
+      );
     });
 
-  
-    logger.info("Stock reserved", {
+    logger.info("Stock reserved and order created", {
       user,
       reservationId,
+      orderId,
       expiresAt,
-      items: reservationItems,
     });
 
     return {
+      orderId,
       reservationId,
       expiresAt,
       address,
       summary,
+      user,
     };
   } catch (error) {
     logger.error("Failed to verify checkout details", { error });
@@ -339,6 +375,8 @@ static async orderVerification(user, data) {
     await session.endSession();
   }
 }
+
+
 
 
 //delete expired
@@ -423,123 +461,215 @@ static async expireReservation(reservationId) {
 
 
 
-//paymentorder
+// //paymentorder
 
-static async PaymentOrder(data) {
-  try {
-    const { reservationId, addressId } = data;
+// static async PaymentOrder(data) {
+//   try {
+//     const { reservationId, addressId } = data;
 
-    const reservation = await StockReservation.findById(reservationId);
+//     const reservation = await StockReservation.findById(reservationId);
 
-    if (!reservation) {
-      throw new NotFoundError("Reservation not found");
-    }
+//     if (!reservation) {
+//       throw new NotFoundError("Reservation not found");
+//     }
 
-    if (reservation.status !== "reserved") {
-      throw new Error("Reservation is no longer active");
-    }
+//     if (reservation.status !== "reserved") {
+//       throw new Error("Reservation is no longer active");
+//     }
 
-    if (reservation.expiresAt <= new Date()) {
-      throw new Error("Reservation has expired");
-    }
+//     if (reservation.expiresAt <= new Date()) {
+//       throw new Error("Reservation has expired");
+//     }
 
    
-    const items = await Promise.all(
-      reservation.items.map(async (item) => {
-        const product = await Product.findById(item.product);
+//     const items = await Promise.all(
+//       reservation.items.map(async (item) => {
+//         const product = await Product.findById(item.product);
 
-        if (!product) {
-          throw new NotFoundError("Product not found");
-        }
+//         if (!product) {
+//           throw new NotFoundError("Product not found");
+//         }
 
-        let price = product.price;
+//         let price = product.price;
 
-        if (item.variantId) {
-          const variant = product.variants.id(item.variantId);
+//         if (item.variantId) {
+//           const variant = product.variants.id(item.variantId);
 
-          if (!variant) {
-            throw new NotFoundError("Product variant not found");
-          }
+//           if (!variant) {
+//             throw new NotFoundError("Product variant not found");
+//           }
 
-          price = variant.price;
-        }
+//           price = variant.price;
+//         }
 
-        return {
-          product: item.product,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          price,
-        };
-      })
-    );
+//         return {
+//           product: item.product,
+//           variantId: item.variantId,
+//           quantity: item.quantity,
+//           price,
+//         };
+//       })
+//     );
 
-    const amount = reservation.totalAmount;
-
-    
-    const razorpayOrder = await razorpay.orders.create({
-      amount: Math.round(amount * 100),
-      currency: "INR",
-      receipt: `nexora_${Date.now()}`,
-    });
+//     const amount = reservation.totalAmount;
 
     
-    const newOrder = new Order({
-      user: reservation.user,
-      items,
-      address: addressId,
-      totalAmount: amount,
-      coupon: reservation.coupon,
-      paymentStatus: "pending",
-      paymentMethod: "razorpay",
-      razorpayOrderId: razorpayOrder.id,
-    });
+//     const razorpayOrder = await razorpay.orders.create({
+//       amount: Math.round(amount * 100),
+//       currency: "INR",
+//       receipt: `nexora_${Date.now()}`,
+//     });
 
-    await newOrder.save();
+    
+//     const newOrder = new Order({
+//       user: reservation.user,
+//       items,
+//       address: addressId,
+//       totalAmount: amount,
+//       coupon: reservation.coupon,
+//       paymentStatus: "pending",
+//       paymentMethod: "razorpay",
+//       razorpayOrderId: razorpayOrder.id,
+//     });
 
-    logger.info(
-      `Payment order created successfully: ${razorpayOrder.id}`
-    );
+//     await newOrder.save();
 
-    return {
-      razorpayOrderId: razorpayOrder.id,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
-      keyId: config.RazorPay.api_key,
-      OrderId: newOrder._id,
-    };
-  } catch (error) {
-    logger.error("Failed to create payment order", error);
-    throw error;
-  }
+//     logger.info(
+//       `Payment order created successfully: ${razorpayOrder.id}`
+//     );
+
+//     return {
+//       razorpayOrderId: razorpayOrder.id,
+//       amount: razorpayOrder.amount,
+//       currency: razorpayOrder.currency,
+//       keyId: config.RazorPay.api_key,
+//       OrderId: newOrder._id,
+//     };
+//   } catch (error) {
+//     logger.error("Failed to create payment order", error);
+//     throw error;
+//   }
+// }
+
+
+// //verifyPaymenet
+
+// static async verifyPayment(data){
+//   try{
+
+//     const { razorpay_payment_id, razorpay_order_id, razorpay_signature,paymentMethod,otp,orderId } = data
+
+//    if (paymentMethod === "cod") {
+//     console.log(otp)
+//     console.log(orderId)
+//   if (!orderId || !otp) {
+//     throw new ValidationError("orderId and otp are required");
+//   }
+
+//   const order = await Order.findById(orderId);
+
+//   if (!order) {
+//     throw new NotFoundError("order not found");
+//   }
+
+
+
+//   if (!order.otp || !order.otpExpiry) {
+//     throw new ValidationError("No OTP was requested for this order");
+//   }
+
+//   if (order.otpExpiry < new Date()) {
+//     throw new ValidationError("OTP has expired. Please request a new one");
+//   }
+
+//   if (order.otp !== String(otp)) {
+//     throw new ValidationError("Invalid OTP");
+//   }
+
+  
+//   order.otp = undefined;
+//   order.otpExpiry = undefined;
+//   order.paymentMethod = "cod";       
+//   await order.save();
+
+//   return true;
+// }
+
+//     const expected = crypto
+//   .createHmac("sha256", config.RazorPay.api_secret)
+//   .update(razorpay_order_id + "|" + razorpay_payment_id)
+//   .digest("hex");
+
+// if (expected !== razorpay_signature) {
+//  throw new ValidationError('payment failed')
+// }
+
+//   logger.info('payment success')
+// const payment = await razorpay.payments.fetch(razorpay_payment_id);
+
+// console.log(payment); 
+//   }catch(error){
+//     logger.error('failed to verify payment')
+//   }
+// }
+
+
+
+// //cod verify
+
+// static async codVerify(userId, orderId) {
+//   try {
+//     const user = await User.findById(userId);
+
+//     if (!user) {
+//       throw new AuthenticationError("user not found");
+//     }
+
+//     const order = await Order.findById(orderId);
+
+//     if (!order) {
+//       throw new NotFoundError("order not found");
+//     }
+
+   
+//     if (order.user.toString() !== userId.toString()) {
+//       throw new NotFoundError("order not found");
+//     }
+
+    
+
+//     const otp = Mail.generateOTP();
+//     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+//     order.otp = otp;
+//     order.otpExpiry = otpExpiry;
+
+//     await order.save();
+
+//     await Mail.sendCodConfirmationOtpEmail(
+//       user.email,
+//       otp,
+//       user.name,
+//       orderId
+//     );
+
+//     logger.info(`COD confirmation OTP sent to ${user.email}`);
+
+//     return user.email;
+//   } catch (error) {
+//     logger.error("failed to send COD otp", error);
+//     throw error;
+//   }
+// }
+
+
+
+
+
 }
 
 
-//verifyPaymenet
 
-static async verifyPayment(data){
-  try{
-
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = data
-
-    const expected = crypto
-  .createHmac("sha256", config.RazorPay.api_secret)
-  .update(razorpay_order_id + "|" + razorpay_payment_id)
-  .digest("hex");
-
-if (expected !== razorpay_signature) {
- throw new ValidationError('payment failed')
-}
-
-  logger.info('payment success')
-const payment = await razorpay.payments.fetch(razorpay_payment_id);
-
-console.log(payment); 
-  }catch(error){
-    logger.error('failed to verify payment')
-  }
-}
-
-}
 
 
 

@@ -556,6 +556,188 @@ All rights reserved.
       );
     }
   }
+
+
+
+  static async sendCodConfirmationOtpEmail(
+    email,
+    otp,
+    name,
+    orderId
+  ) {
+    try {
+
+      const emailContent = {
+
+        from:
+          config.Nodemailer.EMAIL_from ||
+          config.Nodemailer.EMAIL_user,
+
+        to: email,
+
+        subject: "Confirm Your Nexora Cash on Delivery Order",
+
+        html: `
+          <div style="
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+          ">
+
+            <h2 style="
+              color: #222;
+              margin-bottom: 10px;
+            ">
+              Confirm Your Cash on Delivery Order
+            </h2>
+
+            <p>
+              Hi ${name},
+            </p>
+
+            <p>
+              Thanks for shopping with Nexora.
+              To confirm your Cash on Delivery
+              order${orderId ? ` <strong>#${orderId}</strong>` : ""},
+              please use the OTP below:
+            </p>
+
+            <div style="
+              text-align: center;
+              margin: 30px 0;
+            ">
+
+              <span style="
+                display: inline-block;
+                background-color: #f4f6f8;
+                color: #007bff;
+                font-size: 32px;
+                font-weight: bold;
+                letter-spacing: 8px;
+                padding: 16px 32px;
+                border-radius: 6px;
+                border: 1px dashed #007bff;
+              ">
+                ${otp}
+              </span>
+
+            </div>
+
+            <p>
+              This OTP is valid for
+              <strong>10 minutes</strong>.
+            </p>
+
+            <p>
+              <strong>Do not share this OTP</strong>
+              with anyone. Nexora will never ask
+              for your OTP over a call or message.
+            </p>
+
+            <p>
+              If you didn't place this order,
+              you can safely ignore this email.
+              No order will be confirmed without
+              this OTP.
+            </p>
+
+            <hr style="
+              border: none;
+              border-top: 1px solid #eee;
+              margin: 30px 0;
+            ">
+
+            <p style="
+              color: #666;
+              font-size: 12px;
+              margin-top: 30px;
+            ">
+              © ${new Date().getFullYear()} Nexora.
+              All rights reserved.
+            </p>
+
+          </div>
+        `,
+
+        text: `
+Hi ${name},
+
+Thanks for shopping with Nexora.
+
+To confirm your Cash on Delivery order${orderId ? ` #${orderId}` : ""},
+use the OTP below:
+
+${otp}
+
+This OTP is valid for 10 minutes.
+
+Do not share this OTP with anyone. Nexora will never
+ask for your OTP over a call or message.
+
+If you didn't place this order, you can safely
+ignore this email. No order will be confirmed
+without this OTP.
+
+© ${new Date().getFullYear()} Nexora.
+All rights reserved.
+        `,
+      };
+
+      const transporter = this.getTransporter();
+
+      if (transporter) {
+
+        await transporter.sendMail(emailContent);
+
+        logger.info(
+          `COD confirmation OTP email sent to ${email}`
+        );
+
+      } else {
+
+        logger.info(
+          `[EMAIL SERVICE] COD confirmation OTP email would be sent to ${email}`,
+          {
+            subject: emailContent.subject,
+          }
+        );
+
+        console.log(
+          "\n=== COD CONFIRMATION OTP EMAIL (Development Mode) ==="
+        );
+
+        console.log(`To: ${email}`);
+        console.log(
+          `Subject: ${emailContent.subject}`
+        );
+        console.log(`OTP: ${otp}`);
+
+        console.log(
+          "======================================================\n"
+        );
+      }
+
+      return true;
+
+    } catch (error) {
+
+      logger.error(
+        "Error sending COD confirmation OTP email:",
+        error
+      );
+
+      throw new Error(
+        "Failed to send COD confirmation OTP email"
+      );
+    }
+  }
+
+
+
+
+
 }
 
 module.exports = Mail;

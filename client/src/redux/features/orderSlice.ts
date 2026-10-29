@@ -90,14 +90,14 @@ export const getOrderSummary = createAsyncThunk(
 );
 
 //orderVerification
-export const orderVerification = createAsyncThunk(
+export const GenerateOrder = createAsyncThunk(
   "order/orderVerification",
   async (
     data: { addressId: string; couponId?: string },
     { rejectWithValue }
   ) => {
     try {
-      const response = await orderApi.orderVerification(
+      const response = await orderApi.GenerateOrder(
         data.addressId,
         data.couponId
       );
@@ -157,6 +157,9 @@ export const verifyPayment = createAsyncThunk(
       razorpay_payment_id: string;
       razorpay_order_id: string;
       razorpay_signature: string;
+      paymentMethod:string;
+      otp:string;
+      orderId:string
     },
     { rejectWithValue }
   ) => {
@@ -173,6 +176,26 @@ export const verifyPayment = createAsyncThunk(
       return rejectWithValue(
         "Payment verification failed. Please contact support."
       );
+    }
+  }
+);
+
+
+//sendcodotp
+export const sendCodOtp = createAsyncThunk(
+  "order/sendCodOtp",
+  async (orderId: string, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.sendCodOtp(orderId);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to send OTP. Please try again."
+        );
+      }
+      return rejectWithValue("Failed to send OTP. Please try again.");
     }
   }
 );
@@ -216,10 +239,10 @@ const orderSlice = createSlice({
 
         //order verification
 
-        .addCase(orderVerification.pending,(state)=>{
+        .addCase(GenerateOrder.pending,(state)=>{
             state.loading = true
         })
-        .addCase(orderVerification.fulfilled,(state,action)=>{
+        .addCase(GenerateOrder.fulfilled,(state,action)=>{
             state.loading = false
             state.coupon = action.payload.summary.coupon
             state.discount = action.payload.summary.discount
@@ -227,9 +250,10 @@ const orderSlice = createSlice({
             state.finalAmount = action.payload.summary.finalAmount
             state.address = action.payload.address
             state.reservationId = action.payload.reservationId
+            state.orderId = action.payload.orderId
           
         })
-        .addCase(orderVerification.rejected,(state,action)=>{
+        .addCase(GenerateOrder.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })
@@ -264,6 +288,20 @@ const orderSlice = createSlice({
            
         })
         .addCase(verifyPayment.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+
+        //sendcodotp
+        .addCase(sendCodOtp.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(sendCodOtp.fulfilled,(state,action)=>{
+            state.loading = false
+           
+        })
+        .addCase(sendCodOtp.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

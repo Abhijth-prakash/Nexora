@@ -126,11 +126,12 @@ export type orderSummaryResponse = {
 };
 
 
-export type orderVerificationResponse = {
+export type GenerateOrderResponse = {
   reservationId: string;
   expiresAt: string;
   address: BaseAddress;
   summary: orderSummaryResponse;
+  orderId:string
 };
 
 export type PaymentOrderResponse = {
@@ -138,5 +139,5 @@ export type PaymentOrderResponse = {
   amount: number;
   currency: string;
   keyId: string;
-  orderId:string
+  orderId:string;
 };

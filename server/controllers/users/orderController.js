@@ -38,21 +38,29 @@ static orderSummary = BaseController.asyncHandler(async (req, res) => {
 });
 
 //orderVerification
-static orderVerification = BaseController.asyncHandler(
+static GenerateOrder = BaseController.asyncHandler(
   async (req, res) => {
-    const result = await OrderService.orderVerification(
-      req.userId,
+
+      const user = req.userId
+
+    const result = await OrderService.GenerateOrder(
+      user,
       req.body
     );
 
+     BaseController.logAction(
+           `Checkout verified: stock reserved and order ${result.orderId} created for user ${user}`
+        );
+  
     return this.sendSuccessResponse(
       res,
-      "Checkout verified and stock reserved successfully",
+      `checkout verified , stock reserved, order created orderId=${result.orderId} for user ${result.user}  `,
       {
         reservationId: result.reservationId,
         expiresAt: result.expiresAt,
         address: result.address,
         summary: result.summary,
+        orderId:result.orderId
       },
       200
     );
@@ -91,11 +99,36 @@ static verifyPayment = BaseController.asyncHandler(
       null,
       201
     )
-
-
-
   }
 )
+
+
+
+//cod verify otp
+static codVerify = BaseController.asyncHandler(
+  async (req, res) => {
+
+    const userId = req.userId;
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return this.sendErrorResponse(res, "orderId is required", 400);
+    }
+
+    const email = await OrderService.codVerify(userId, orderId);
+
+    BaseController.logAction(
+      `COD otp has been sent to ${email}`
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "OTP has been sent successfully",
+      null,
+      200
+    );
+  }
+);
 
 }
 

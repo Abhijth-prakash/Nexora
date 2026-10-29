@@ -57,11 +57,9 @@ const orderSchema = new mongoose.Schema(
     },
 
     paymentMethod: {
-      type: String,
-      enum: ["razorpay", "cod"],
-      required: true,
-    },
-
+  type: String,
+  enum: ["razorpay", "cod"],
+},
     razorpayOrderId: {
       type: String,
       default: null,
@@ -71,6 +69,16 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    otp: {
+      type: String,
+      default: null,
+    },
+
+    otpExpiry: {
+      type: Date,
+      default: null,
+    },
+
   },
   {
     timestamps: true,

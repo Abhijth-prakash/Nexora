@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse, orderVerificationResponse, PaymentOrderResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  PaymentOrderResponse, productResponse, profileResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -200,13 +200,13 @@ export const orderApi = {
   return response.data;
 },
 //orderVerification
-orderVerification: async (
+GenerateOrder: async (
   addressId: string,
   couponId?: string
-): Promise<ApiResponse<orderVerificationResponse>> => {
+): Promise<ApiResponse<GenerateOrderResponse>> => {
   const response = await ClientApi.post<
-    ApiResponse<orderVerificationResponse>
-  >("/users/order/orderVerification", {
+    ApiResponse<GenerateOrderResponse>
+  >("/users/order/GenerateOrder", {
     addressId,
     couponId,
   });
@@ -229,6 +229,9 @@ verifyPayment: async (payload: {
   razorpay_payment_id: string;
   razorpay_order_id: string;
   razorpay_signature: string;
+  paymentMethod:string;
+  otp:string
+  orderId:string
 }): Promise<ApiResponse<unknown>> => {
   const response = await ClientApi.post<ApiResponse<unknown>>(
     "/users/order/verifypayment", 
@@ -236,6 +239,14 @@ verifyPayment: async (payload: {
   );
   return response.data;
 },
+
+sendCodOtp: async (orderId: string): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.post<ApiResponse<null>>(
+    "/users/order/cod/sendOtp",
+    { orderId }
+  );
+  return response.data;
+}
 
 };
 

@@ -8,11 +8,12 @@ router.use(authenticate)
 
 router.post("/order/stockvalidation", OrderController.StockValidation);
 router.get("/order/orderSummary", OrderController.orderSummary);
-router.post("/order/orderVerification", OrderController.orderVerification);
+router.post("/order/GenerateOrder", OrderController.GenerateOrder);
 
 //payment
 router.post('/order/payment',OrderController.PaymentController)
 router.post('/order/verifypayment',OrderController.verifyPayment)
+router.post('/order/cod/sendOtp',OrderController.codVerify)
 
 
 module.exports = router
