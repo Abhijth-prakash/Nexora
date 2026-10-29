@@ -67,14 +67,33 @@ static PaymentController = BaseController.asyncHandler(
 
     return this.sendSuccessResponse(
       res,
-      {
-        orderId: result.id,
+      `paymentOrder succesfully created ${result.OrderId}`  ,
+      { 
+        razorpayOrderId:result.razorpayOrderId,
+        orderId: result.OrderId,
         amount: result.amount,
         currency: result.currency,
         keyId: config.RazorPay.api_key,
       },
       201
     )
+  }
+)
+
+//verify payment
+static verifyPayment = BaseController.asyncHandler(
+  async (req,res)=>{
+    const result = await OrderService.verifyPayment(req.body)
+
+     return this.sendSuccessResponse(
+      res,
+      `payment verified successfully`  ,
+      null,
+      201
+    )
+
+
+
   }
 )
 

@@ -225,6 +225,17 @@ createPaymentOrder: async (
 
   return response.data;
 },
+verifyPayment: async (payload: {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}): Promise<ApiResponse<unknown>> => {
+  const response = await ClientApi.post<ApiResponse<unknown>>(
+    "/users/order/verifypayment", 
+    payload
+  );
+  return response.data;
+},
 
 };
 

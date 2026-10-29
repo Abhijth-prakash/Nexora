@@ -28,10 +28,7 @@ const Checkout = () => {
 
   const { cartItems } = useAppSelector((state) => state.cartData);
   const { address } = useAppSelector((state) => state.addressData);
-  const { razorpayOrderId, keyId, amount, currency } = useAppSelector(
-  (state) => state.orderData
-);
-
+  const {razorpayOrderId,orderId,keyId,amount,currency} = useAppSelector(state=> state.orderData)
   const [selectedAddress, setSelectedAddress] = useState("");
 
   const addresses: BaseAddress[] = Array.isArray(address)
@@ -80,12 +77,14 @@ const handlePlaceOrder = async () => {
         couponId,
       })
     ).unwrap();
+
 const paymentOrder = await dispatch(
   createPaymentOrder({
     reservationId: result.reservationId,
     addressId: selectedAddress,
   })
 ).unwrap();
+
 
     navigate("/users/payment", {
       state: {
@@ -96,7 +95,8 @@ const paymentOrder = await dispatch(
          razorpayOrderId,
          keyId,
          amount,
-         currency
+         currency,
+         orderId
       },
     });
   } catch (error) {

@@ -10,6 +10,7 @@ const StockReservation = require("../models/StockReservation");
 const razorpay = require("../config/razorpay");
 const Order = require("../models/Order");
 const config = require('../config/config')
+const crypto = require("crypto");
 
 class OrderService{
 
@@ -504,11 +505,37 @@ static async PaymentOrder(data) {
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       keyId: config.RazorPay.api_key,
-      applicationOrderId: newOrder._id,
+      OrderId: newOrder._id,
     };
   } catch (error) {
     logger.error("Failed to create payment order", error);
     throw error;
+  }
+}
+
+
+//verifyPaymenet
+
+static async verifyPayment(data){
+  try{
+
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = data
+
+    const expected = crypto
+  .createHmac("sha256", config.RazorPay.api_secret)
+  .update(razorpay_order_id + "|" + razorpay_payment_id)
+  .digest("hex");
+
+if (expected !== razorpay_signature) {
+ throw new ValidationError('payment failed')
+}
+
+  logger.info('payment success')
+const payment = await razorpay.payments.fetch(razorpay_payment_id);
+
+console.log(payment); 
+  }catch(error){
+    logger.error('failed to verify payment')
   }
 }
 

@@ -23,6 +23,7 @@ export type orderType = {
   amount: number
   currency: string|null
   keyId: string|null
+  orderId:string|null
 };
 
 
@@ -38,7 +39,8 @@ const initialState:orderType = {
     razorpayOrderId:null,
     amount: 0,
     currency: null,
-  keyId: null
+  keyId: null,
+  orderId:null
 }
 
 
@@ -147,6 +149,36 @@ export const createPaymentOrder = createAsyncThunk(
   }
 );
 
+//verifypayment
+export const verifyPayment = createAsyncThunk(
+  "order/verifyPayment",
+  async (
+    payload: {
+      razorpay_payment_id: string;
+      razorpay_order_id: string;
+      razorpay_signature: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.verifyPayment(payload);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Payment verification failed. Please contact support."
+        );
+      }
+      return rejectWithValue(
+        "Payment verification failed. Please contact support."
+      );
+    }
+  }
+);
+
+
+
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,
@@ -195,6 +227,7 @@ const orderSlice = createSlice({
             state.finalAmount = action.payload.summary.finalAmount
             state.address = action.payload.address
             state.reservationId = action.payload.reservationId
+          
         })
         .addCase(orderVerification.rejected,(state,action)=>{
             state.loading = false
@@ -212,9 +245,25 @@ const orderSlice = createSlice({
             state.keyId = action.payload.keyId
             state.amount = action.payload.amount
             state.currency = action.payload.currency
+            state.orderId = action.payload.orderId
+            console.log(action.payload,"from thunk")
            
         })
         .addCase(createPaymentOrder.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+
+        //verifypayment
+        .addCase(verifyPayment.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(verifyPayment.fulfilled,(state,action)=>{
+            state.loading = false
+           
+        })
+        .addCase(verifyPayment.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

@@ -12,6 +12,7 @@ router.post("/order/orderVerification", OrderController.orderVerification);
 
 //payment
 router.post('/order/payment',OrderController.PaymentController)
+router.post('/order/verifypayment',OrderController.verifyPayment)
 
 
 module.exports = router
