@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch } from "../redux/hooks";
-import { verifyPayment } from "../redux/features/orderSlice";
-
+import { sendCodOtp, verifyCodOtp } from "../redux/features/orderSlice";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
 
@@ -12,43 +13,39 @@ const getErrorMessage = (err: unknown, fallback: string) =>
 export type Props = {
     orderId:string
     email:string
+    onClose:()=> void
 }
 
-const CodOtpModal = ({orderId}:Props) => {
+const CodOtpModal = ({orderId,onClose}:Props) => {
 
 
 
 const dispatch = useAppDispatch()
-
+const navigate = useNavigate()
 
   const isOpen = true;
   const email = "test@example.com";
-  const onClose = () => console.log("close clicked");
-
-
-  const onVerify = async (otp: string) => {
-    try{
-         await dispatch(
-              verifyPayment({
-                razorpay_payment_id: "",
-                razorpay_order_id: "",
-                razorpay_signature: "",
-                paymentMethod:"cod",
-                otp:otp,
-                orderId:orderId
-              })
-            ).unwrap();
-        
-    }catch(error){
-
-    }
-  };
 
 
 
-  const onResend = async () => {
-    console.log("resend otp");
-  };
+  //i will write the logic
+const onVerify = async (otp: string) => {
+  try {
+    await dispatch(
+      verifyCodOtp({
+        otp,
+        orderId
+      })
+    ).unwrap();
+    toast.success("COD OTP verified successfully");
+    onClose()
+    navigate('/users/payment/sucess')
+  } catch (error) {
+    toast.error(String(error));
+  }
+};
+
+
 
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
@@ -66,6 +63,8 @@ const dispatch = useAppDispatch()
     setError("");
     setTimeout(() => inputsRef.current[0]?.focus(), 50);
   }, [isOpen]);
+
+
 
   // resend countdown
   useEffect(() => {
@@ -134,7 +133,7 @@ const dispatch = useAppDispatch()
     try {
       setResending(true);
       setError("");
-      await onResend();
+     await dispatch(sendCodOtp(orderId)).unwrap() 
       setDigits(Array(OTP_LENGTH).fill(""));
       setSecondsLeft(RESEND_SECONDS);
       inputsRef.current[0]?.focus();
@@ -151,13 +150,7 @@ const dispatch = useAppDispatch()
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute right-4 top-4 text-xl text-gray-400 hover:text-gray-600"
-        >
-          ×
-        </button>
+
 
         <h2 className="text-xl font-semibold text-gray-900">
           Confirm your order

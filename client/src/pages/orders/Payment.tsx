@@ -7,17 +7,7 @@ import { toast } from "react-toastify";
 import OrderSuccess from "../../components/OrderSuccess";
 
 
-//states coming from checkout
-interface PaymentLocationState {
-  reservationId: string;
-  expiresAt: string;
-  finalAmount: number;
-  razorpayOrderId: string;
-  orderId: string;
-  keyId: string;
-  amount: number;
-  currency: string;
-}
+
 
 interface RazorpaySuccessResponse {
   razorpay_payment_id: string;
@@ -80,7 +70,9 @@ const Payment = () => {
 
   const {amount,razorpayOrderId,currency,keyId ,orderId}= useAppSelector(state=> state.orderData)
   const [success,setSuccess] = useState(false)
+  const [codLoading, setCodLoading] = useState(false)
 
+  
 
 
   
@@ -89,7 +81,6 @@ const Payment = () => {
 
 
   //razor pay page open function
-
 const handleRazorpay = async () => {
   try {
     if (!orderId) {
@@ -97,7 +88,6 @@ const handleRazorpay = async () => {
       return;
     }
 
-    // Wait until the backend returns Razorpay order details
     const paymentData = await dispatch(
       createRazorpayment(orderId)
     ).unwrap();
@@ -172,15 +162,27 @@ const handleRazorpay = async () => {
   
 
 
-  const handleCod = async ()=>{
-    if(orderId){
-      console.log(orderId)
-      await dispatch(sendCodOtp(orderId)).unwrap()
-      setCod(true)
-    }
-   
-  }
+const handleCod = async () => {
+  if (!orderId || codLoading) return
 
+  setCodLoading(true)
+  try {
+    await dispatch(sendCodOtp(orderId)).unwrap()
+    setCod(true)
+  } catch (err) {
+    console.error(err)
+    
+  } finally {
+    setCodLoading(false)
+  }
+}
+
+//closing cod otp
+
+const onCLose = ()=>{
+  setCod(false)
+}
+  
 
   return (
     <div className="min-h-[80vh] bg-gray-50 px-4 py-10 sm:px-6">
@@ -196,13 +198,14 @@ const handleRazorpay = async () => {
   {success && <OrderSuccess></OrderSuccess>}
 
 
-    {cod&& orderId&&  <CodOtpModal orderId={orderId} email=""></CodOtpModal>}
-      <button
-        onClick={handleCod}
-        className="rounded bg-black px-6 py-3 text-white"
-      >
-        cod
-      </button>
+    {cod&& orderId&&  <CodOtpModal orderId={orderId} onClose={onCLose} email=""></CodOtpModal>}
+     <button
+  onClick={handleCod}
+  disabled={codLoading}
+  className="rounded bg-black px-6 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {codLoading ? "Sending OTP..." : "cod"}
+</button>
     </div>
   );
 };

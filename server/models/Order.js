@@ -78,6 +78,15 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    otpAttempts: {
+  type: Number,
+  default: 0
+},
+
+otpVerified: {
+  type: Boolean,
+  default: false
+},
 
   },
   {

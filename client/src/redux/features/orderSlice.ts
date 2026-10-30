@@ -202,6 +202,36 @@ export const sendCodOtp = createAsyncThunk(
 );
 
 
+//otp veirfy
+export const verifyCodOtp = createAsyncThunk(
+  "order/verifyCodOtp",
+  async (
+    payload: { orderId: string; otp: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.verifyCodOtp(
+        payload.orderId,
+        payload.otp
+      );
+
+      return response.data;
+
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to verify OTP. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to verify OTP. Please try again."
+      );
+    }
+  }
+);
+
 
 const orderSlice = createSlice({
     name:'orderSLice',
@@ -285,7 +315,7 @@ const orderSlice = createSlice({
         .addCase(verifyPayment.fulfilled,(state,action)=>{
             state.loading = false
             state.orderDetails = action.payload
-            console.log(state.orderDetails)
+            
            
         })
         .addCase(verifyPayment.rejected,(state,action)=>{
@@ -303,6 +333,21 @@ const orderSlice = createSlice({
            
         })
         .addCase(sendCodOtp.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+
+        //verify otp
+        .addCase(verifyCodOtp.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(verifyCodOtp.fulfilled,(state,action)=>{
+            state.loading = false
+            state.orderDetails = action.payload
+           
+        })
+        .addCase(verifyCodOtp.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

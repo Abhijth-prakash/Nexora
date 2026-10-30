@@ -116,17 +116,14 @@ BaseController.logAction(
 
 
 //cod verify otp
-static codVerify = BaseController.asyncHandler(
+static SendCodOtp = BaseController.asyncHandler(
   async (req, res) => {
 
     const userId = req.userId;
     const { orderId } = req.body;
 
-    if (!orderId) {
-      return this.sendErrorResponse(res, "orderId is required", 400);
-    }
 
-    const email = await OrderService.codVerify(userId, orderId);
+    const email = await PaymentService.SendCodOtp(userId, orderId);
 
     BaseController.logAction(
       `COD otp has been sent to ${email}`
@@ -136,6 +133,30 @@ static codVerify = BaseController.asyncHandler(
       res,
       "OTP has been sent successfully",
       null,
+      200
+    );
+  }
+);
+
+//verifycodOtp
+static verifyCodOtp = BaseController.asyncHandler(
+  async (req, res) => {
+    const userId = req.userId;
+    const { orderId } = req.body;
+
+    const verifiedOrder = await PaymentService.verifyCodOtp(
+      userId,
+      req.body
+    );
+
+    BaseController.logAction(
+      `COD OTP verified successfully | Order ID: ${orderId}`
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "COD OTP verified successfully",
+      verifiedOrder,
       200
     );
   }

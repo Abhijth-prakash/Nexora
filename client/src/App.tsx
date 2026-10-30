@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound"
 import MainLayout from "./components/layouts/MainLayout"
 import Checkout from "./pages/orders/Checkout"
 import Payment from "./pages/orders/Payment"
+import OrderSuccess from "./components/OrderSuccess"
 
 
 function App() {
@@ -58,6 +59,9 @@ function App() {
           {/* order */}
           <Route path="/users/Checkout" element={<Checkout />} />
           <Route path="/users/payment" element={<Payment />} />
+          <Route path="/users/payment/sucess" element={<OrderSuccess />} />
+
+
 
           {/* 404 catch-all */}
           <Route path="*" element={<NotFound />} />

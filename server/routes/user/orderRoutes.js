@@ -13,7 +13,8 @@ router.post("/order/GenerateOrder", OrderController.GenerateOrder);
 //payment
 router.post('/order/payment/razorpay',OrderController.razorPaymentController)
 router.post('/order/razorpay/verifypayment',OrderController.verifyPayment)
-router.post('/order/cod/sendOtp',OrderController.codVerify)
+router.post('/order/cod/sendOtp',OrderController.SendCodOtp)
+router.post('/order/cod/veirfyOtp',OrderController.verifyCodOtp)
 
 
 module.exports = router

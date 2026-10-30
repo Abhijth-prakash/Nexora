@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -246,6 +246,18 @@ sendCodOtp: async (orderId: string): Promise<ApiResponse<null>> => {
     "/users/order/cod/sendOtp",
     { orderId }
   );
+  return response.data;
+},
+
+verifyCodOtp: async (
+  orderId: string,
+  otp: string
+): Promise<ApiResponse<codOtpVeirfyResponse>> => {
+  const response = await ClientApi.post<ApiResponse<codOtpVeirfyResponse>>(
+    "/users/order/cod/veirfyOtp",
+    { orderId, otp }
+  );
+
   return response.data;
 }
 
