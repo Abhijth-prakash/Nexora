@@ -9,6 +9,7 @@ router.use(authenticate)
 router.post("/order/stockvalidation", OrderController.StockValidation);
 router.get("/order/orderSummary", OrderController.orderSummary);
 router.post("/order/GenerateOrder", OrderController.GenerateOrder);
+router.get("/order", OrderController.getOrders);
 
 //payment
 router.post('/order/payment/razorpay',OrderController.razorPaymentController)

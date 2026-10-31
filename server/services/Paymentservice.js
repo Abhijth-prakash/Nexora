@@ -259,6 +259,7 @@ static async verifyCodOtp(userId, data) {
           otpExpiry: null,
           otpVerified: true,
           paymentMethod: "cod",
+          paymentStatus:"cod"
         },
       },
       {

@@ -163,6 +163,29 @@ static verifyCodOtp = BaseController.asyncHandler(
   }
 );
 
+
+//verifycodOtp
+static getOrders = BaseController.asyncHandler(
+  async (req, res) => {
+    const userId = req.userId;
+
+    const orders = await OrderService.getOrders(
+      userId,
+    );
+
+    BaseController.logAction(
+      `fetched orders for user ${userId}`
+    );
+
+    return this.sendSuccessResponse(
+      res,
+     `fetched orders for user ${userId}`,
+      orders,
+      200
+    );
+  }
+);
+
 }
 
 

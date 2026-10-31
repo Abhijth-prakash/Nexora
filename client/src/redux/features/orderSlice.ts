@@ -25,6 +25,7 @@ export type orderType = {
   keyId: string|null
   orderId:string|null
   orderDetails:Baseorder|null
+  orders:Baseorder[]
 };
 
 
@@ -42,7 +43,8 @@ const initialState:orderType = {
     currency: null,
   keyId: null,
   orderId:null,
-  orderDetails:null
+  orderDetails:null,
+  orders:[]
 }
 
 
@@ -233,6 +235,31 @@ export const verifyCodOtp = createAsyncThunk(
 );
 
 
+//getorders
+
+export const getOrders = createAsyncThunk(
+  "order/getOrders",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.getOrders();
+
+      return response.data;
+
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to fetch orders. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to fetch orders. Please try again."
+      );
+    }
+  }
+);
+
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,
@@ -349,6 +376,21 @@ const orderSlice = createSlice({
            
         })
         .addCase(verifyCodOtp.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+
+        //get orders
+        .addCase(getOrders.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(getOrders.fulfilled,(state,action)=>{
+            state.loading = false
+            state.orders = action.payload
+           
+        })
+        .addCase(getOrders.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

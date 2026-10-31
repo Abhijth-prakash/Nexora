@@ -21,6 +21,8 @@ import MainLayout from "./components/layouts/MainLayout"
 import Checkout from "./pages/orders/Checkout"
 import Payment from "./pages/orders/Payment"
 import OrderSuccess from "./components/OrderSuccess"
+import Orders from "./pages/orders/Orders"
+import Order from "./pages/orders/Order"
 
 
 function App() {
@@ -60,6 +62,8 @@ function App() {
           <Route path="/users/Checkout" element={<Checkout />} />
           <Route path="/users/payment" element={<Payment />} />
           <Route path="/users/payment/sucess" element={<OrderSuccess />} />
+          <Route path="/users/orders" element={<Orders />} />
+          <Route path="/users/orders/:orderId" element={<Order />} />
 
 
 

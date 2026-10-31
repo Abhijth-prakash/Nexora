@@ -462,6 +462,29 @@ static async expireReservation(reservationId) {
 }
 
 
+
+//getorder
+static async getOrders(user) {
+  try {
+    const orders = await Order.find({
+      user,
+      paymentStatus: { $ne: "pending" },
+    })
+      .populate("items.product")
+      .populate("address")
+      .populate("coupon")
+      .sort({ createdAt: -1 });
+
+    return orders;
+  } catch (error) {
+    logger.error("Failed to fetch user orders", {
+      user,
+      error: error.message,
+    });
+    throw error;
+  }
+}
+
 }
 
 
