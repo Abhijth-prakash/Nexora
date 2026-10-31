@@ -164,7 +164,7 @@ static verifyCodOtp = BaseController.asyncHandler(
 );
 
 
-//verifycodOtp
+//getorders
 static getOrders = BaseController.asyncHandler(
   async (req, res) => {
     const userId = req.userId;
@@ -180,6 +180,27 @@ static getOrders = BaseController.asyncHandler(
     return this.sendSuccessResponse(
       res,
      `fetched orders for user ${userId}`,
+      orders,
+      200
+    );
+  }
+);
+
+
+//getOrders for admin
+static getOrdersAdmin = BaseController.asyncHandler(
+  async (req, res) => {
+
+    const orders = await OrderService.getOrdersAdmin(
+    );
+
+    BaseController.logAction(
+      `fetched orders for admin `
+    );
+
+    return this.sendSuccessResponse(
+      res,
+     `fetched orders for admin `,
       orders,
       200
     );

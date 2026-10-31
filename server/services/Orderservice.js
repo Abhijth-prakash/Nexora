@@ -485,6 +485,27 @@ static async getOrders(user) {
   }
 }
 
+
+//getorderFOr admin
+static async getOrdersAdmin() {
+  try {
+    const orders = await Order.find({
+      paymentStatus: { $ne: "pending" },
+    })
+      .populate("items.product")
+      .populate("address")
+      .populate("coupon")
+      .sort({ createdAt: -1 });
+
+    return orders;
+  } catch (error) {
+    logger.error("Failed to fetch admin orders", {
+      error: error.message,
+    });
+    throw error;
+  }
+}
+
 }
 
 

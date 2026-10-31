@@ -14,6 +14,8 @@ import PublicRoute from "./components/PublicRoute"
 import ProductDetails from "./pages/products/ProductDetails"
 import Coupon from "./pages/coupon/Coupon"
 import CouponDetails from "./pages/coupon/CouponDetails"
+import Orders from "./pages/order/Orders"
+import Order from "./pages/order/Order"
 
 
 
@@ -44,6 +46,10 @@ function App() {
 
       <Route path="/admin/coupon" element={<Coupon></Coupon>}></Route>
       <Route path="/admin/coupon/:id" element={<CouponDetails></CouponDetails>}></Route>
+
+
+      <Route path="/admin/orders" element={<Orders></Orders>}></Route>
+      <Route path="/admin/orders/:id" element={<Order></Order>}></Route>
 
 
 

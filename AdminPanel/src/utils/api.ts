@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, CouponFormData, Email, LoginData,  Resetpassdata } from "./validation";
-import type { activeToggleresponse, AddCategoryResponse, addCouponResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,GetCouponsResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
+import type { activeToggleresponse, AddCategoryResponse, addCouponResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,GetCouponsResponse,getOrderResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
 import type { BaseCoupon } from "./BaseType";
 
 
@@ -193,6 +193,18 @@ getCouponById: async (
 ): Promise<ApiResponse<BaseCoupon>> => {
   const response = await ClientApi.get<ApiResponse<BaseCoupon>>(
     `/admin/coupon/${id}`
+  );
+
+  return response.data;
+},
+
+}
+
+export const orderApi = {
+
+  getOrders: async (): Promise<ApiResponse<getOrderResponse>> => {
+  const response = await ClientApi.get<ApiResponse<getOrderResponse>>(
+    `/admin/orders`
   );
 
   return response.data;

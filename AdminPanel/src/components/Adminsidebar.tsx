@@ -140,39 +140,69 @@ const AdminSidebar = () => {
             <span>Products</span>
           </Link>
 
-          {/* coupons */}
-       
+          {/* ORDERS */}
+          <Link
+            to="/admin/orders"
+            className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 6h18"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 10a4 4 0 01-8 0"
+                />
+              </svg>
+            </div>
 
-<Link
-  to="/admin/coupon"
-  className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
->
-  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
-    <svg
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3 8a2 2 0 002-2h14a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H5a2 2 0 00-2-2v-2a2 2 0 000-4V8z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeDasharray="2 2"
-        d="M13 7v10"
-      />
-    </svg>
-  </div>
+            <span>Orders</span>
+          </Link>
 
-  <span>Coupon</span>
-</Link>
+          {/* COUPONS */}
+          <Link
+            to="/admin/coupon"
+            className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 8a2 2 0 002-2h14a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H5a2 2 0 00-2-2v-2a2 2 0 000-4V8z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeDasharray="2 2"
+                  d="M13 7v10"
+                />
+              </svg>
+            </div>
 
-
+            <span>Coupon</span>
+          </Link>
 
           {/* CATEGORIES */}
           <Link

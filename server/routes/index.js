@@ -13,11 +13,12 @@ const adminUserRoutes = require('./admin/adminUser')
 const category = require('./admin/Category')
 const products = require('./admin/Products')
 const coupons = require('./admin/Coupons')
+const orders = require('./admin/Orders')
 
 const test = require('./admin/Test')
 
-const setupRoutes = (app) => {
 
+const setupRoutes = (app) => {
   
   //user
   app.use("/api/auth", authRoutes);
@@ -36,6 +37,7 @@ const setupRoutes = (app) => {
   app.use("/api/admin",category)
   app.use("/api/admin",products)
   app.use("/api/admin",coupons)
+  app.use("/api/admin",orders)
   
  
 };

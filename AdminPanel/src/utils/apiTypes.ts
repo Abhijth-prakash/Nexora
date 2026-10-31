@@ -1,4 +1,4 @@
-import type { BaseAdmin, Basecategory, BaseUser,BaseSubcategory, BaseProduct,BaseCoupon } from "./BaseType"
+import type { BaseAdmin, Basecategory, BaseUser,BaseSubcategory, BaseProduct,BaseCoupon, Baseorder } from "./BaseType"
 
 
 export type ApiResponse<T> = {
@@ -94,3 +94,4 @@ export type GetCouponsResponse = {
 
 export type activeToggleresponse = null
 
+export type getOrderResponse = Baseorder[]
