@@ -256,6 +256,25 @@ static async mergeGuestCart(userId, items) {
   }
 }
 
+//delete cart
+static async deleteCart(user){
+  try{
+
+    const cart = await Cart.findOne({ user: user });
+    if (!cart) throw new NotFoundError("Cart not found");
+
+    await Cart.findByIdAndDelete(cart._id)
+
+    logger.info('cart deleted succesfully')
+
+    return true
+
+  }catch(error){
+    logger.error('failed to delete cart')
+    throw error
+  }
+}
+
 }
 
 module.exports = CartService;

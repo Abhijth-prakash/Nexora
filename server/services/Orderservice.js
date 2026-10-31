@@ -347,6 +347,8 @@ static async GenerateOrder(user, data) {
             totalAmount: summary.finalAmount,
             coupon: summary.coupon?._id || null,
             paymentStatus: "pending",
+            subtotal:summary.subtotal,
+            discountAmount:summary.discount
           },
         ],
         { session }
@@ -437,7 +439,7 @@ static async expireReservation(reservationId) {
         }
       }
 
-      expired = reservation; // CHANGED
+      expired = reservation; 
     });
 
   

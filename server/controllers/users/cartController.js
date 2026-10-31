@@ -29,6 +29,8 @@ class CartController extends BaseController {
     const user = req.userId
     const cart = await CartService.getCart(req.userId,);
 
+    BaseController.logAction(`cart fetched for user ${user}`)
+
     return this.sendSuccessResponse(
       res,
       `cart successfully fetched for user ${user}`,
@@ -64,6 +66,24 @@ static mergeGuestCart = BaseController.asyncHandler(
       res,
       "Guest cart merged successfully",
         skippedItems,
+      200
+    );
+  }
+);
+
+
+//deleteCart
+static DeleteCart = BaseController.asyncHandler(
+  async (req, res) => {
+   const userId = req.userId
+    
+    const result  =
+      await CartService.deleteCart(req.userId);
+
+    return this.sendSuccessResponse(
+      res,
+      " cart deleted successfully",
+        null,
       200
     );
   }

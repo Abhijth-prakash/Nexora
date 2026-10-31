@@ -5,7 +5,10 @@ const config = require('../config/config')
 const razorpay = require("../config/razorpay");
 const crypto = require("crypto");
 const User = require('../models/User')
-const Mail = require('../utils/mail')
+const Mail = require('../utils/mail');
+const StockReservation = require("../models/StockReservation");
+const CartService = require("./cartService");
+const {CouponRedemption}= require('../models/Coupon')
 
 
 class PaymentService{
@@ -61,7 +64,7 @@ static async razorpayService(orderId) {
 
 //verifyPaymenet
 
-static async verifyPayment(data) {
+static async verifyPayment(user, data) {
   try {
     const {
       razorpay_payment_id,
@@ -70,7 +73,10 @@ static async verifyPayment(data) {
       orderId,
     } = data;
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findOne({
+      _id: orderId,
+      user,
+    });
 
     if (!order) {
       throw new NotFoundError("Order not found");
@@ -80,7 +86,7 @@ static async verifyPayment(data) {
       throw new ValidationError("Razorpay order ID mismatch");
     }
 
-    
+    // Verify Razorpay signature
     const expected = crypto
       .createHmac("sha256", config.RazorPay.api_secret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -96,12 +102,32 @@ static async verifyPayment(data) {
       throw new ValidationError("Payment signature verification failed");
     }
 
-   
+    // Helper: create redemption only once
+    const createCouponRedemption = async () => {
+      if (!order.coupon) return;
+
+      await CouponRedemption.updateOne(
+        { order: order._id },
+        {
+          $setOnInsert: {
+            coupon: order.coupon,
+            user: order.user,
+            order: order._id,
+            discountAmount: order.discountAmount || 0,
+            redeemedAt: new Date(),
+          },
+        },
+        { upsert: true }
+      );
+    };
+
+    // Handle repeated verification requests
     if (order.paymentStatus === "paid") {
-      return true
+      await createCouponRedemption();
+      return order;
     }
 
-   
+    // Verify actual payment status with Razorpay
     const payment = await razorpay.payments.fetch(razorpay_payment_id);
 
     if (
@@ -111,15 +137,29 @@ static async verifyPayment(data) {
       throw new ValidationError("Payment has not been captured");
     }
 
- 
+    // Update order payment status
     order.paymentStatus = "paid";
-order.orderDate = new Date();
-await order.save();
+    order.orderDate = new Date();
 
-  
-    logger.info(`Payment verified successfully: ${razorpay_payment_id}`);
+    await order.save();
 
-    return order
+    // Delete stock reservation
+    await StockReservation.findOneAndDelete({
+      user,
+      orderId: order._id,
+    });
+
+    // Clear cart
+    await CartService.deleteCart(user);
+
+    
+    await createCouponRedemption();
+
+    logger.info(
+      `Payment verified successfully: ${razorpay_payment_id}`
+    );
+
+    return order;
 
   } catch (error) {
     logger.error("Failed to verify payment", error);
@@ -210,7 +250,6 @@ static async verifyCodOtp(userId, data) {
       throw new ValidationError("Maximum OTP attempts exceeded");
     }
 
-    // 3. Atomic successful verification
     const verifiedOrder = await Order.findOneAndUpdate(
       {
         _id: orderId,
@@ -236,10 +275,40 @@ static async verifyCodOtp(userId, data) {
 
     if (verifiedOrder) {
       logger.info(`COD OTP verified | Order ID: ${orderId}`);
+
+      // Delete stock reservation
+      await StockReservation.findOneAndDelete({
+        user: userId,
+        orderId: verifiedOrder._id,
+      });
+
+      // Clear cart
+      await CartService.deleteCart(userId);
+
+      // Coupon redemption
+      if (verifiedOrder.coupon) {
+        await CouponRedemption.updateOne(
+          {
+            order: verifiedOrder._id,
+          },
+          {
+            $setOnInsert: {
+              coupon: verifiedOrder.coupon,
+              user: verifiedOrder.user,
+              order: verifiedOrder._id,
+              discountAmount: verifiedOrder.discountAmount || 0,
+              redeemedAt: new Date(),
+            },
+          },
+          {
+            upsert: true,
+          }
+        );
+      }
+
       return verifiedOrder;
     }
 
-    // 4. Atomic incorrect OTP attempt
     const updatedOrder = await Order.findOneAndUpdate(
       {
         _id: orderId,
@@ -268,7 +337,6 @@ static async verifyCodOtp(userId, data) {
       );
     }
 
-    // 5. Another request may have changed the OTP state
     const latestOrder = await Order.findOne({
       _id: orderId,
       user: userId,

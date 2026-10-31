@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from "react-toastify"
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
 import { getProductbyID } from '../../redux/features/productSlice'
-import { addToCart, setGuestItems } from '../../redux/features/cartSlice'
+import { addToCart, getCart, setGuestItems } from '../../redux/features/cartSlice'
 import type { BaseProduct } from '../../utils/baseTypes'
 import { addToGuestCart } from '../../utils/guestCart'
 
@@ -124,7 +124,6 @@ const Product = () => {
 const cartHandle = async () => {
   if (!canBuy) return
 
-  
   if (!logged) {
     const items = addToGuestCart({
       productId: product._id,
@@ -140,6 +139,9 @@ const cartHandle = async () => {
 
     dispatch(setGuestItems(items))
     setQuantiy(1)
+
+    const result = await dispatch(getCart()).unwrap()
+
     toast.success('Added to bag')
 
     return
@@ -155,6 +157,8 @@ const cartHandle = async () => {
         quantity,
       })
     ).unwrap()
+
+    await dispatch(getCart()).unwrap()
 
     setQuantiy(1)
     toast.success('Added to bag')

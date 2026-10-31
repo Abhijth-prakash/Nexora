@@ -3,6 +3,7 @@ const logger = require("../utils/logger");
 const { Coupon,CouponRedemption } = require("../models/Coupon");
 const { NotFoundError, ConflictError,ValidationError } = require("../utils/errors");
 const {Category} = require("../models/Category");
+const mongoose = require('mongoose')
 
 class CouponService {
     // add coupon
@@ -254,23 +255,39 @@ class CouponService {
 
     //get coupons for user
 
-static async getCouponsForUser() {
-    try {
-        const coupons = await Coupon.find({
-            isActive: true,
-            startDate: { $lte: new Date() },
-            expiryDate: { $gt: new Date() },
-        });
+static async getCouponsForUser(user) {
+  try {
+    const now = new Date();
 
-        logger.info("Coupons fetched for user");
+    const coupons = await Coupon.find({
+      isActive: true,
+      startDate: { $lte: now },
+      expiryDate: { $gt: now },
+      $or: [
+        { usageLimit: null },
+        { $expr: { $lt: ["$usedCount", "$usageLimit"] } },
+      ],
+    });
 
-        return coupons;
-    } catch (error) {
-        logger.error("Failed to get coupons for user", error);
-        throw error;
-    }
+    const redemptions = await CouponRedemption.aggregate([
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(user),
+          coupon: { $in: coupons.map(c => c._id) },
+        },
+      },
+      { $group: { _id: "$coupon", count: { $sum: 1 } } },
+    ]);
+
+    const counts = new Map(redemptions.map(r => [String(r._id), r.count]));
+
+    logger.info("Coupons fetched for user");
+    return coupons.filter(c => (counts.get(String(c._id)) ?? 0) < c.perUserLimit);
+  } catch (error) {
+    logger.error("Failed to get coupons for user", error);
+    throw error;
+  }
 }
-
 //validateCoupon
 
 static async validateCoupon(user, data) {

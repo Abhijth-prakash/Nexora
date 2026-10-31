@@ -118,6 +118,25 @@ export const mergeGuestCart = createAsyncThunk(
   }
 );
 
+//deleteCart
+export const deleteCart = createAsyncThunk(
+  "users/cart/deleteCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await CartApi.deleteCart();
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to delete cart. Please try again."
+        );
+      }
+
+      return rejectWithValue("Failed to delete cart. Please try again.");
+    }
+  }
+);
 
 
 
@@ -216,6 +235,24 @@ export const CartSlice = createSlice({
         
       })
       .addCase(getCart.rejected, (state, action) => {
+        state.loading = false
+        state.errors = action.payload as string
+      })
+
+
+      //delete cart
+      .addCase(deleteCart.pending, (state) => {
+        state.loading = true
+        state.errors = null
+      })
+      .addCase(deleteCart.fulfilled, (state, action) => {
+        state.loading = false
+        state.cartItems = []
+        state.subtotal = 0
+        state.totalItems = 0
+        
+      })
+      .addCase(deleteCart.rejected, (state, action) => {
         state.loading = false
         state.errors = action.payload as string
       })

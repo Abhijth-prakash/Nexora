@@ -5,6 +5,7 @@ import { createRazorpayment, sendCodOtp, verifyPayment } from "../../redux/featu
 import CodOtpModal from "../../components/CodOtpModal";
 import { toast } from "react-toastify";
 import OrderSuccess from "../../components/OrderSuccess";
+import { getCart } from "../../redux/features/cartSlice";
 
 
 
@@ -127,6 +128,7 @@ const handleRazorpay = async () => {
           ).unwrap();
 
           setSuccess(true);
+          dispatch(getCart())
         } catch (error) {
           console.error("Payment verification failed:", error);
           toast.error("Payment verification failed");

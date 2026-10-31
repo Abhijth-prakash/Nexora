@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -9,6 +8,7 @@ import {
   setGuestItems,
   getCoupons,
   validateCoupon,
+  deleteCart,
 } from "../../redux/features/cartSlice";
 import { UserProfile } from "../../redux/features/userSlice";
 import {
@@ -20,7 +20,7 @@ import { validateCart } from "../../redux/features/orderSlice";
 
 const Cart = () => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const {
     cartItems,
@@ -28,26 +28,32 @@ const Cart = () => {
     totalItems,
     guestItems,
     coupons,
-    coupon,
     finalAmount,
     discount,
-    loading,
     errors,
   } = useAppSelector((state) => state.cartData);
 
   const { logged, isStale } = useAppSelector(
     (state) => state.userData
   );
-  const {ordererrors} = useAppSelector((state)=> state.orderData)
+
+  const { ordererrors } = useAppSelector(
+    (state) => state.orderData
+  );
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [clearingCart, setClearingCart] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
+
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(
     null
   );
+
   const [applyingCouponId, setApplyingCouponId] = useState<string | null>(
     null
   );
 
+  // Fetch cart and coupons
   useEffect(() => {
     if (isStale) {
       dispatch(UserProfile());
@@ -60,10 +66,7 @@ const Cart = () => {
     }
   }, [dispatch, logged, isStale]);
 
-
-
-
- 
+  // Convert guest cart items into BaseCartItem format
   const guestRows: BaseCartItem[] = guestItems.map((g) => ({
     _id: g.itemId,
     productId: g.productId,
@@ -79,7 +82,7 @@ const Cart = () => {
     available: true,
   }));
 
-  // One list used by the whole page.
+  // Common cart items
   const items = logged ? cartItems : guestRows;
 
   const shownTotalItems = logged
@@ -93,7 +96,7 @@ const Cart = () => {
         0
       );
 
-  // Handle coupon responses that contain either an array or a wrapped array.
+  // Available coupons
   const availableCoupons: any[] = Array.isArray(coupons)
     ? coupons
     : (coupons as any)?.coupons ??
@@ -106,19 +109,14 @@ const Cart = () => {
 
   const isCouponApplied = Boolean(appliedCouponId && appliedCoupon);
 
+  // Price formatter
   const formatPrice = (amount: number) =>
     `₹${Number(amount ?? 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
 
-
-
-
-
-
-
-  // Validate and apply coupon.
+  // Apply coupon
   const couponValidation = async (selectedCoupon: any) => {
     if (!logged) {
       toast.info("Please log in to apply a coupon.");
@@ -134,7 +132,6 @@ const Cart = () => {
       return;
     }
 
-    // Extract unique category IDs from cart items.
     const categoryIds = [
       ...new Set(
         items
@@ -168,7 +165,6 @@ const Cart = () => {
     setApplyingCouponId(couponId);
 
     try {
-     
       await dispatch(
         validateCoupon({
           couponID: couponId,
@@ -179,7 +175,9 @@ const Cart = () => {
 
       setAppliedCouponId(couponId);
 
-      toast.success(`Coupon ${selectedCoupon.code} applied successfully!`);
+      toast.success(
+        `Coupon ${selectedCoupon.code} applied successfully!`
+      );
     } catch (error) {
       toast.error(
         typeof error === "string"
@@ -191,33 +189,36 @@ const Cart = () => {
     }
   };
 
-
-
-
-  // Cancel the applied coupon.
+  // Remove coupon
   const cancelCoupon = () => {
     setAppliedCouponId(null);
     toast.info("Coupon removed.");
   };
 
-  // Update quantity.
-  const changeQuantity = async (itemId: string, quantity: number) => {
-    if (updatingId) return;
+  // Update quantity
+  const changeQuantity = async (
+    itemId: string,
+    quantity: number
+  ) => {
+    if (updatingId || clearingCart) return;
 
-    // Guest: update localStorage, then Redux.
+    // Guest cart
     if (!logged) {
       if (quantity < 1) {
         dispatch(setGuestItems(removeFromGuestCart(itemId)));
       } else {
         dispatch(setGuestItems(updateGuestQuantity(itemId, quantity)));
       }
+
       return;
     }
 
     setUpdatingId(itemId);
 
     try {
-      await dispatch(updateCartItem({ itemId, quantity })).unwrap();
+      await dispatch(
+        updateCartItem({ itemId, quantity })
+      ).unwrap();
     } catch (err) {
       toast.error(
         typeof err === "string" ? err : "Could not update cart"
@@ -227,48 +228,76 @@ const Cart = () => {
     }
   };
 
+  // Clear entire cart
+  const handleClearCart = async () => {
+    if (clearingCart || items.length === 0 || updatingId) return;
 
-  const displayedDiscount = isCouponApplied ? Number(discount ?? 0) : 0;
+    setClearingCart(true);
+
+    try {
+      if (logged) {
+        await dispatch(deleteCart()).unwrap();
+      } else {
+        dispatch(setGuestItems([]));
+      }
+
+      setAppliedCouponId(null);
+      setShowClearModal(false);
+
+      toast.success("Cart cleared successfully!");
+    } catch (error) {
+      toast.error(
+        typeof error === "string"
+          ? error
+          : "Failed to clear cart. Please try again."
+      );
+    } finally {
+      setClearingCart(false);
+    }
+  };
+
+  // Discount calculations
+  const displayedDiscount = isCouponApplied
+    ? Number(discount ?? 0)
+    : 0;
 
   const displayedFinalAmount = isCouponApplied
     ? Number(finalAmount ?? shownSubtotal)
     : Number(shownSubtotal ?? 0);
 
+  // Checkout handler
+  const checkoutHanlde = async () => {
+    try {
+      await dispatch(validateCart()).unwrap();
 
-
-//checkout handle
-const checkoutHanlde = async () => {
-  try {
-    await dispatch(validateCart()).unwrap();
-
-    navigate("/users/Checkout", {
-      state: appliedCouponId
-        ? { couponId: appliedCouponId }
-        : null,
-    });
-  } catch (error) {
-   toast.error(
-  typeof error === "string"
-    ? error
-    : ordererrors || "Cart validation failed. Please try again.",
-  {
-    position: "top-center",
-    style: {
-      fontSize: "18px",
-      maxWidth: "500px",
-      padding: "20px 24px",
-      minHeight: "80px",
-    },
-  }
-);
-  }
-};
-
-
+      navigate("/users/Checkout", {
+        state: appliedCouponId
+          ? { couponId: appliedCouponId }
+          : null,
+      });
+    } catch (error) {
+      toast.error(
+        typeof error === "string"
+          ? error
+          : ordererrors || "Cart validation failed. Please try again.",
+        {
+          position: "top-center",
+          style: {
+            fontSize: "18px",
+            maxWidth: "500px",
+            padding: "20px 24px",
+            minHeight: "80px",
+          },
+        }
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+
+        {/* Page Header */}
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-widest text-red-700">
             Nexora / Shopping Cart
@@ -306,17 +335,57 @@ const checkoutHanlde = async () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
+
+            {/* Cart Items */}
             <section className="space-y-4 lg:col-span-2">
+
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">
                   Cart Items
                 </h2>
 
-                <span className="rounded-full bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700">
-                  {shownTotalItems} items
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700">
+                    {shownTotalItems} items
+                  </span>
+
+                  {/* Clear Cart Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowClearModal(true)}
+                    disabled={clearingCart || !!updatingId}
+                    className="
+                      group inline-flex items-center gap-2
+                      rounded-xl border border-red-100
+                      bg-white px-4 py-2.5
+                      text-sm font-semibold text-red-600
+                      shadow-sm transition-all duration-200
+                      hover:border-red-200 hover:bg-red-50
+                      hover:shadow-md active:scale-95
+                      disabled:cursor-not-allowed disabled:opacity-50
+                    "
+                  >
+                    <svg
+                      className="h-4 w-4 transition-transform group-hover:scale-110"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="m19 6-1 14H6L5 6" />
+                      <path d="M10 11v5M14 11v5" />
+                    </svg>
+
+                    Clear Cart
+                  </button>
+                </div>
               </div>
 
+              {/* Individual Cart Items */}
               {items.map((item) => {
                 const isUpdating = updatingId === item._id;
 
@@ -400,9 +469,12 @@ const checkoutHanlde = async () => {
                                   ? "Remove item"
                                   : "Decrease quantity"
                               }
-                              disabled={!!updatingId}
+                              disabled={!!updatingId || clearingCart}
                               onClick={() =>
-                                changeQuantity(item._id, item.quantity - 1)
+                                changeQuantity(
+                                  item._id,
+                                  item.quantity - 1
+                                )
                               }
                               className="flex h-9 w-9 items-center justify-center text-lg font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
                             >
@@ -416,9 +488,12 @@ const checkoutHanlde = async () => {
                             <button
                               type="button"
                               aria-label="Increase quantity"
-                              disabled={plusDisabled}
+                              disabled={plusDisabled || clearingCart}
                               onClick={() =>
-                                changeQuantity(item._id, item.quantity + 1)
+                                changeQuantity(
+                                  item._id,
+                                  item.quantity + 1
+                                )
                               }
                               className="flex h-9 w-9 items-center justify-center text-lg font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
                             >
@@ -451,6 +526,7 @@ const checkoutHanlde = async () => {
               })}
             </section>
 
+            {/* Order Summary */}
             <aside className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
               <h2 className="text-xl font-semibold text-gray-900">
                 Order Summary
@@ -472,7 +548,7 @@ const checkoutHanlde = async () => {
                 </div>
               </div>
 
-              {/* Available coupons */}
+              {/* Available Coupons */}
               <div className="mt-6 border-b border-gray-200 pb-5">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-lg font-semibold text-gray-900">
@@ -503,7 +579,7 @@ const checkoutHanlde = async () => {
                           <path d="M2 7h20v5H2z" />
                           <path d="M12 22V7" />
                           <path d="M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5C10 6 12 7 12 7Z" />
-                          <path d="M12 7h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z" />
+                          <path d="M12 7h4.5A2.5 2.5 0 1 0 14 4.5C10 6 12 7 12 7Z" />
                         </svg>
                       </div>
 
@@ -618,7 +694,7 @@ const checkoutHanlde = async () => {
                 )}
               </div>
 
-              {/* Price breakdown */}
+              {/* Price Breakdown */}
               <div className="mt-5 space-y-4">
                 <div className="flex items-center justify-between gap-4 text-sm">
                   <span className="text-gray-500">Subtotal</span>
@@ -673,9 +749,10 @@ const checkoutHanlde = async () => {
                 </p>
               )}
 
+              {/* Checkout */}
               <button
                 type="button"
-                disabled={!shownTotalItems}
+                disabled={!shownTotalItems || clearingCart}
                 onClick={checkoutHanlde}
                 className="mt-6 w-full rounded-xl bg-red-700 px-5 py-3.5 font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-gray-300"
               >
@@ -697,6 +774,79 @@ const checkoutHanlde = async () => {
             </aside>
           </div>
         )}
+
+        {/* Clear Cart Confirmation Modal */}
+        {showClearModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+            onClick={() => {
+              if (!clearingCart) setShowClearModal(false);
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="clear-cart-title"
+              onClick={(event) => event.stopPropagation()}
+              className="w-full max-w-md animate-in fade-in zoom-in-95 rounded-3xl bg-white p-7 shadow-2xl duration-200"
+            >
+              {/* Warning icon */}
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.7}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"
+                  />
+                </svg>
+              </div>
+
+              {/* Modal content */}
+              <div className="mt-5 text-center">
+                <h2
+                  id="clear-cart-title"
+                  className="text-2xl font-bold tracking-tight text-gray-900"
+                >
+                  Clear your cart?
+                </h2>
+
+                <p className="mt-3 text-sm leading-6 text-gray-500">
+                  Are you sure you want to remove all {shownTotalItems} items
+                  from your cart? This action cannot be undone.
+                </p>
+              </div>
+
+              {/* Modal actions */}
+              <div className="mt-8 flex gap-3">
+                <button
+                  type="button"
+                  disabled={clearingCart}
+                  onClick={() => setShowClearModal(false)}
+                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={clearingCart}
+                  onClick={handleClearCart}
+                  className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {clearingCart ? "Clearing..." : "Yes, Clear Cart"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

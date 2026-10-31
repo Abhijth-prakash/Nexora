@@ -134,7 +134,7 @@ const CouponRedemption = mongoose.model(
   "CouponRedemption",
   couponRedemptionSchema
 );
-
+couponRedemptionSchema.index({ order: 1 }, { unique: true });
 
 module.exports = {Coupon,CouponRedemption}
 

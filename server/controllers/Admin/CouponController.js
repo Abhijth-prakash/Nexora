@@ -112,7 +112,8 @@ static getByid = BaseController.asyncHandler(async (req, res) => {
 
 //getCoupnsForuser
 static getCouponsForUser = BaseController.asyncHandler(async (req, res) => {
-  const result = await CouponService.getCouponsForUser();
+  const user = req.userId
+  const result = await CouponService.getCouponsForUser(user);
 
   BaseController.sendSuccessResponse(
     res,

@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
@@ -9,33 +8,46 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-  items: [
-  {
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
-    },
-    variantId: {
-      type: mongoose.Schema.Types.ObjectId,
-      default: null,
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-    price: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-  },
-],
+    items: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        variantId: {
+          type: mongoose.Schema.Types.ObjectId,
+          default: null,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        price: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+      },
+    ],
+
     address: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Address",
       required: true,
+    },
+
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     totalAmount: {
@@ -57,9 +69,10 @@ const orderSchema = new mongoose.Schema(
     },
 
     paymentMethod: {
-  type: String,
-  enum: ["razorpay", "cod"],
-},
+      type: String,
+      enum: ["razorpay", "cod"],
+    },
+
     razorpayOrderId: {
       type: String,
       default: null,
@@ -69,6 +82,7 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+
     otp: {
       type: String,
       default: null,
@@ -78,16 +92,16 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
     otpAttempts: {
-  type: Number,
-  default: 0
-},
+      type: Number,
+      default: 0,
+    },
 
-otpVerified: {
-  type: Boolean,
-  default: false
-},
-
+    otpVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

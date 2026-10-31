@@ -156,6 +156,13 @@ export const CartApi = {
     );
     return response.data;
   },
+  deleteCart: async (): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.delete<ApiResponse<null>>(
+    "/users/cart"
+  );
+
+  return response.data;
+},
 
  
   getCoupons: async (): Promise<ApiResponse<CouponResponse>> => {
