@@ -127,7 +127,7 @@ const handleRazorpay = async () => {
             })
           ).unwrap();
 
-          setSuccess(true);
+          navigate('/users/payment/sucess')
           dispatch(getCart())
         } catch (error) {
           console.error("Payment verification failed:", error);

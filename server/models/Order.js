@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
@@ -108,7 +109,17 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
+// Index
 orderSchema.index({ createdAt: 1 });
+
+// Get populated order
+orderSchema.statics.getCart = function (filter = {}) {
+  return this.find(filter)
+    .populate("user")
+    .populate("items.product")
+    .populate("address")
+    .populate("coupon");
+};
 
 const Order = mongoose.model("Order", orderSchema);
 

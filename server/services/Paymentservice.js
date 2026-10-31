@@ -64,17 +64,16 @@ static async razorpayService(orderId) {
 
 //verifyPaymenet
 
+
 static async verifyPayment(user, data) {
   try {
     const {
-      razorpay_payment_id,
       razorpay_order_id,
-      razorpay_signature,
-      orderId,
+      razorpay_payment_id,
     } = data;
 
     const order = await Order.findOne({
-      _id: orderId,
+      razorpayOrderId: razorpay_order_id,
       user,
     });
 
@@ -82,39 +81,21 @@ static async verifyPayment(user, data) {
       throw new NotFoundError("Order not found");
     }
 
-    if (order.razorpayOrderId !== razorpay_order_id) {
-      throw new ValidationError("Razorpay order ID mismatch");
-    }
-
-    // Verify Razorpay signature
-    const expected = crypto
-      .createHmac("sha256", config.RazorPay.api_secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-
-    if (
-      expected.length !== razorpay_signature.length ||
-      !crypto.timingSafeEqual(
-        Buffer.from(expected, "hex"),
-        Buffer.from(razorpay_signature, "hex")
-      )
-    ) {
-      throw new ValidationError("Payment signature verification failed");
-    }
-
-    // Helper: create redemption only once
+    // Create coupon redemption
     const createCouponRedemption = async () => {
       if (!order.coupon) return;
 
       await CouponRedemption.updateOne(
-        { order: order._id },
+        {
+          coupon: order.coupon,
+          user,
+          order: order._id,
+        },
         {
           $setOnInsert: {
             coupon: order.coupon,
-            user: order.user,
+            user,
             order: order._id,
-            discountAmount: order.discountAmount || 0,
-            redeemedAt: new Date(),
           },
         },
         { upsert: true }
@@ -124,17 +105,25 @@ static async verifyPayment(user, data) {
     // Handle repeated verification requests
     if (order.paymentStatus === "paid") {
       await createCouponRedemption();
-      return order;
+
+      return await Order.getCart({
+        _id: order._id,
+        user,
+      });
     }
 
     // Verify actual payment status with Razorpay
-    const payment = await razorpay.payments.fetch(razorpay_payment_id);
+    const payment = await razorpay.payments.fetch(
+      razorpay_payment_id
+    );
 
     if (
       payment.order_id !== razorpay_order_id ||
       payment.status !== "captured"
     ) {
-      throw new ValidationError("Payment has not been captured");
+      throw new ValidationError(
+        "Payment has not been captured"
+      );
     }
 
     // Update order payment status
@@ -152,20 +141,25 @@ static async verifyPayment(user, data) {
     // Clear cart
     await CartService.deleteCart(user);
 
-    
+    // Create coupon redemption
     await createCouponRedemption();
 
     logger.info(
       `Payment verified successfully: ${razorpay_payment_id}`
     );
 
-    return order;
+    // Return populated order
+    return await Order.getCart({
+      _id: order._id,
+      user,
+    });
 
   } catch (error) {
     logger.error("Failed to verify payment", error);
     throw error;
   }
 }
+
 
 
 
@@ -306,9 +300,14 @@ static async verifyCodOtp(userId, data) {
         );
       }
 
-      return verifiedOrder;
+      // Return populated order
+      return await Order.getCart({
+        _id: verifiedOrder._id,
+        user: userId,
+      });
     }
 
+    // 3. Increment attempts for incorrect OTP
     const updatedOrder = await Order.findOneAndUpdate(
       {
         _id: orderId,
@@ -337,6 +336,7 @@ static async verifyCodOtp(userId, data) {
       );
     }
 
+    // 4. Recheck OTP state
     const latestOrder = await Order.findOne({
       _id: orderId,
       user: userId,
@@ -371,6 +371,7 @@ static async verifyCodOtp(userId, data) {
     throw error;
   }
 }
+
 
 }
 

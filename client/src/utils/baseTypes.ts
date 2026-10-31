@@ -109,30 +109,39 @@ export type BaseCoupon = {
   isActive: boolean;
 };
 
+
 export type Baseorder = {
   _id: string;
-  user: string;
+
+  user: string | BaseUser;
+
   items: {
-    product:
-      | string
-      | {
-          _id: string;
-          name?: string;
-          images?: string[];
-        };
-    variantId: string | null;
+    product: string | BaseProduct;
+    variantId: string | BaseVarient | null;
     quantity: number;
     price: number;
   }[];
-  address: string;
+
+  address: string | BaseAddress;
+
+  subtotal: number;
+  discountAmount: number;
   totalAmount: number;
-  coupon: string | null;
+
+  coupon: string | BaseCoupon | null;
+
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentMethod?: "razorpay" | "cod";
+
   razorpayOrderId: string | null;
+
   orderDate: string;
+
   otp: string | null;
   otpExpiry: string | null;
+  otpAttempts: number;
+  otpVerified: boolean;
+
   createdAt: string;
   updatedAt: string;
   __v: number;

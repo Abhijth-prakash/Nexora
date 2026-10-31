@@ -315,6 +315,7 @@ const orderSlice = createSlice({
         .addCase(verifyPayment.fulfilled,(state,action)=>{
             state.loading = false
             state.orderDetails = action.payload
+            console.log(state.orderDetails)
             
            
         })
