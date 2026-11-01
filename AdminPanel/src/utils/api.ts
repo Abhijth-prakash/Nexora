@@ -216,6 +216,16 @@ export const orderApi = {
   );
   return response.data;
 },
+updateOrderStatus: async (
+  id: string,
+  status: string
+): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.patch<ApiResponse<null>>(
+    `/admin/orders/${id}/status`,
+    { status }
+  );
+  return response.data;
+},
 }
 
 

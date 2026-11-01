@@ -267,9 +267,18 @@ verifyCodOtp: async (
 
   return response.data;
 },
-getOrders: async (): Promise<ApiResponse<getOrderResponse>> => {
+getOrders: async (
+  page: number = 1,
+  search: string = ""
+): Promise<ApiResponse<getOrderResponse>> => {
   const response = await ClientApi.get<ApiResponse<getOrderResponse>>(
-    "/users/order"
+    "/users/order",
+    {
+      params: {
+        page,
+        search,
+      },
+    }
   );
 
   return response.data;

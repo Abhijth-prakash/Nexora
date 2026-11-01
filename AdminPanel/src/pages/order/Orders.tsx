@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getOrders, setPage } from "../../redux/features/orderSlice";
+import {
+  getOrders,
+  setPage,
+  updateOrderStatus,
+} from "../../redux/features/orderSlice";
+ // using react-toastify? -> import { toast } from "react-toastify";
 import AdminSidebar from "../../components/Adminsidebar";
 import type { Baseorder } from "../../utils/BaseType";
 import {
@@ -11,23 +16,34 @@ import {
   ChevronRight,
   RefreshCw,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 const PAGE_LIMIT = 5; // keep in sync with the limit used in the slice / backend
 
-type OrderWithStatus = Baseorder & { orderStatus?: string; status?: string };
+const ORDER_STATUSES = [
+  "confirmed",
+  "shipped",
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+];
 
-const ORDER_STATUSES = ["pending", "processing", "completed", "cancelled"];
-const PAYMENT_STATUSES = ["paid", "pending", "failed", "refunded", "cod"];
+// "pending" is left out: the backend hides orders with a pending payment
+const PAYMENT_STATUSES = ["paid", "failed", "refunded", "cod"];
 
-const getOrderStatus = (order: Baseorder) => {
-  const o = order as OrderWithStatus;
-  return (o.orderStatus || o.status || "pending").toLowerCase();
+const statusLabel: Record<string, string> = {
+  confirmed: "Confirmed",
+  shipped: "Shipped",
+  out_for_delivery: "Out for delivery",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
 };
 
 const statusText: Record<string, string> = {
-  pending: "text-amber-600",
-  processing: "text-[#ff5a1f]",
-  completed: "text-emerald-600",
+  confirmed: "text-amber-600",
+  shipped: "text-blue-600",
+  out_for_delivery: "text-[#ff5a1f]",
+  delivered: "text-emerald-600",
   cancelled: "text-red-500",
 };
 
@@ -57,6 +73,7 @@ const Orders = () => {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [payment, setPayment] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   // Fetch from the backend whenever page / search / filters change (debounced)
   useEffect(() => {
@@ -101,9 +118,25 @@ const Orders = () => {
   const getCustomerName = (user: Baseorder["user"]) =>
     typeof user === "string" ? "Customer" : user.name;
 
-  // TODO: wire this to your own thunk (update order status)
-  const handleStatusChange = (orderId: string, newStatus: string) => {
-    console.log("update status", orderId, newStatus);
+  // send the new status to the backend, wait for it, toast, then refresh
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    setUpdatingId(orderId);
+
+    try {
+      await dispatch(
+        updateOrderStatus({ id: orderId, status: newStatus })
+      ).unwrap();
+
+      toast.success(`Order marked as ${statusLabel[newStatus]}`);
+
+      dispatch(getOrders({ page, search, status, payment }));
+    } catch (err) {
+      toast.error(
+        typeof err === "string" ? err : "Failed to update order status"
+      );
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const totalPages = pages ?? 1;
@@ -121,9 +154,9 @@ const Orders = () => {
 
   const statCards = [
     { label: "Total Orders", value: stats?.total ?? 0 },
-    { label: "Pending", value: stats?.pending ?? 0 },
-    { label: "Processing", value: stats?.processing ?? 0 },
-    { label: "Completed", value: stats?.completed ?? 0 },
+    { label: "Confirmed", value: stats?.confirmed ?? 0 },
+    { label: "Shipped", value: stats?.shipped ?? 0 },
+    { label: "Delivered", value: stats?.delivered ?? 0 },
   ];
 
   const selectBase =
@@ -184,7 +217,7 @@ const Orders = () => {
               <option value="">All Status</option>
               {ORDER_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {capitalize(s)}
+                  {statusLabel[s]}
                 </option>
               ))}
             </select>
@@ -274,7 +307,10 @@ const Orders = () => {
                   <tbody>
                     {list.map((order) => {
                       const badge = paymentBadge(order.paymentStatus);
-                      const orderStatus = getOrderStatus(order);
+                      const orderStatus = order.orderStatus || "confirmed";
+                      const locked =
+                        orderStatus === "delivered" ||
+                        orderStatus === "cancelled";
 
                       return (
                         <tr
@@ -310,19 +346,20 @@ const Orders = () => {
                           </td>
 
                           <td className="px-3 py-5">
-                            <div className="relative w-32">
+                            <div className="relative w-40">
                               <select
                                 value={orderStatus}
+                                disabled={locked || updatingId === order._id}
                                 onChange={(e) =>
                                   handleStatusChange(order._id, e.target.value)
                                 }
-                                className={`h-10 w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white pl-3 pr-8 text-xs font-medium outline-none transition focus:border-[#ff5a1f] ${
+                                className={`h-10 w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white pl-3 pr-8 text-xs font-medium outline-none transition focus:border-[#ff5a1f] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-70 ${
                                   statusText[orderStatus] || "text-gray-600"
                                 }`}
                               >
                                 {ORDER_STATUSES.map((s) => (
                                   <option key={s} value={s}>
-                                    {capitalize(s)}
+                                    {statusLabel[s]}
                                   </option>
                                 ))}
                               </select>

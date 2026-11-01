@@ -101,8 +101,8 @@ export type getOrderResponse = {
   totalOrders: number;
   stats: {
     total: number;
-    pending: number;
-    processing: number;
-    completed: number;
+    confirmed: number;
+    shipped: number;
+    delivered: number;
   };
 };

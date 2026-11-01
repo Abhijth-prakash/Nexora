@@ -103,6 +103,18 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    orderStatus: {
+  type: String,
+  enum: ["confirmed", "shipped", "out_for_delivery", "delivered", "cancelled"],
+  default: "confirmed",
+},
+
+trackingDates: {
+  confirmed: { type: Date, default: null },
+  shipped: { type: Date, default: null },
+  outForDelivery: { type: Date, default: null },
+  delivered: { type: Date, default: null },
+},
   },
   {
     timestamps: true,

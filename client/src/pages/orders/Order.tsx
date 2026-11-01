@@ -17,6 +17,42 @@ import {
   Truck,
 } from "lucide-react";
 
+// the 4 main tracking stages, in order
+const TRACK_STEPS = [
+  {
+    key: "confirmed",
+    status: "confirmed",
+    label: "Order Confirmed",
+    note: "Your order has been placed.",
+  },
+  {
+    key: "shipped",
+    status: "shipped",
+    label: "Shipped",
+    note: "Your item has been shipped.",
+  },
+  {
+    key: "outForDelivery",
+    status: "out_for_delivery",
+    label: "Out For Delivery",
+    note: "Your item is out for delivery.",
+  },
+  {
+    key: "delivered",
+    status: "delivered",
+    label: "Delivered",
+    note: "Your item has been delivered.",
+  },
+] as const;
+
+const formatTrackDate = (date: string) =>
+  new Date(date).toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "2-digit",
+  });
+
 const Order = () => {
   const dispatch = useAppDispatch();
 
@@ -28,7 +64,7 @@ const Order = () => {
 
   useEffect(() => {
     if (!orders || orders.length === 0) {
-      dispatch(getOrders());
+      dispatch(getOrders({page:1,search:""}));
     }
   }, [dispatch, orders]);
 
@@ -47,6 +83,13 @@ const Order = () => {
 
   const getStatus = (status: string) => {
     switch (status) {
+      case "cod":
+        return {
+          label: "Cash on delivery",
+          icon: <CreditCard size={16} />,
+          style: "bg-amber-50 text-amber-700 border-amber-200",
+        };
+
       case "paid":
         return {
           label: "Paid",
@@ -105,7 +148,7 @@ const Order = () => {
         <p className="text-red-500">{ordererrors}</p>
 
         <button
-          onClick={() => dispatch(getOrders())}
+          onClick={() => dispatch(getOrders({page:1,search:""}))}
           className="px-5 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
         >
           Try again
@@ -140,6 +183,31 @@ const Order = () => {
   }
 
   const status = getStatus(order.paymentStatus);
+
+  // ---- tracking ----
+  const isCancelled = order.orderStatus === "cancelled";
+
+  // date for each stage (confirmed falls back to the order date)
+  const trackDates: Record<(typeof TRACK_STEPS)[number]["key"], string | null> = {
+    confirmed:
+      order.trackingDates?.confirmed || order.orderDate || order.createdAt,
+    shipped: order.trackingDates?.shipped ?? null,
+    outForDelivery: order.trackingDates?.outForDelivery ?? null,
+    delivered: order.trackingDates?.delivered ?? null,
+  };
+
+  // index of the last stage the order has reached
+  let reachedIndex = TRACK_STEPS.findIndex(
+    (s) => s.status === order.orderStatus
+  );
+  if (isCancelled) {
+    // cancelled: stop at the last stage that has a date
+    reachedIndex = TRACK_STEPS.reduce(
+      (last, s, i) => (trackDates[s.key] ? i : last),
+      0
+    );
+  }
+  if (reachedIndex < 0) reachedIndex = 0;
 
   return (
     <div className="min-h-screen w-full bg-gray-50 px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
@@ -280,6 +348,118 @@ const Order = () => {
                   );
                 })}
               </div>
+            </section>
+
+            {/* Order tracking */}
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-7">
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                    <Truck className="text-orange-500" size={20} />
+                  </div>
+
+                  <div>
+                    <h2 className="font-semibold text-gray-900">
+                      Order tracking
+                    </h2>
+
+                    <p className="text-xs text-gray-500">
+                      Follow your order's journey
+                    </p>
+                  </div>
+                </div>
+
+                <span
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    isCancelled
+                      ? "bg-red-50 text-red-600"
+                      : order.orderStatus === "delivered"
+                      ? "bg-green-50 text-green-700"
+                      : "bg-orange-50 text-orange-600"
+                  }`}
+                >
+                  {isCancelled
+                    ? "Cancelled"
+                    : TRACK_STEPS[reachedIndex].label}
+                </span>
+              </div>
+
+              <ol>
+                {TRACK_STEPS.map((step, i) => {
+                  const done = i <= reachedIndex;
+                  const date = trackDates[step.key];
+                  const isLast = i === TRACK_STEPS.length - 1 && !isCancelled;
+                  const lineDone = i < reachedIndex;
+
+                  return (
+                    <li
+                      key={step.key}
+                      className="relative flex gap-4 pb-8 last:pb-0"
+                    >
+                      {/* connector line */}
+                      {!isLast && (
+                        <span
+                          className={`absolute left-[7px] top-4 h-full w-0.5 ${
+                            lineDone ? "bg-green-500" : "bg-gray-200"
+                          }`}
+                        />
+                      )}
+
+                      {/* dot */}
+                      <span
+                        className={`relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
+                          done
+                            ? "border-green-500 bg-green-500"
+                            : "border-gray-300 bg-white"
+                        }`}
+                      />
+
+                      <div className="min-w-0">
+                        <p
+                          className={`text-sm sm:text-base font-semibold ${
+                            done ? "text-gray-900" : "text-gray-400"
+                          }`}
+                        >
+                          {step.label}
+                          {done && date && (
+                            <span className="ml-2 text-xs sm:text-sm font-normal text-gray-400">
+                              {formatTrackDate(date)}
+                            </span>
+                          )}
+                        </p>
+
+                        <p
+                          className={`text-xs sm:text-sm mt-1 ${
+                            done ? "text-gray-500" : "text-gray-300"
+                          }`}
+                        >
+                          {done ? step.note : "Waiting"}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+
+                {/* cancelled */}
+                {isCancelled && (
+                  <li className="relative flex gap-4">
+                    <span className="relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full border-2 border-red-500 bg-red-500" />
+
+                    <div className="min-w-0">
+                      <p className="text-sm sm:text-base font-semibold text-red-600">
+                        Cancelled
+                        <span className="ml-2 text-xs sm:text-sm font-normal text-gray-400">
+                          {formatTrackDate(order.updatedAt)}
+                        </span>
+                      </p>
+
+                      <p className="text-xs sm:text-sm mt-1 text-gray-500">
+                        This order was cancelled.
+                      </p>
+                    </div>
+                  </li>
+                )}
+              </ol>
             </section>
 
             {/* Delivery address */}

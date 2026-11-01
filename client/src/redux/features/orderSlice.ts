@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
+import type { PayloadAction } from "@reduxjs/toolkit"
 import { orderApi } from "../../utils/api"
 import axios from "axios"
 import type { BaseAddress, Baseorder } from "../../utils/baseTypes";
@@ -26,6 +27,9 @@ export type orderType = {
   orderId:string|null
   orderDetails:Baseorder|null
   orders:Baseorder[]
+  page:number
+  pages:number|null
+  totalOrders:number
 };
 
 
@@ -44,7 +48,10 @@ const initialState:orderType = {
   keyId: null,
   orderId:null,
   orderDetails:null,
-  orders:[]
+  orders:[],
+  page:1,
+  pages:null,
+  totalOrders:0
 }
 
 
@@ -239,9 +246,13 @@ export const verifyCodOtp = createAsyncThunk(
 
 export const getOrders = createAsyncThunk(
   "order/getOrders",
-  async (_, { rejectWithValue }) => {
+  
+  async (
+    { page = 1, search = "" }: { page?: number; search?: string } = {},
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await orderApi.getOrders();
+      const response = await orderApi.getOrders(page, search);
 
       return response.data;
 
@@ -263,7 +274,11 @@ export const getOrders = createAsyncThunk(
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,
-    reducers:{},
+    reducers:{
+        setPage: (state, action: PayloadAction<number>) => {
+            state.page = action.payload
+        }
+    },
     extraReducers: (build)=>{
         build
 
@@ -387,8 +402,12 @@ const orderSlice = createSlice({
         })
         .addCase(getOrders.fulfilled,(state,action)=>{
             state.loading = false
-            state.orders = action.payload
-           
+            state.orders = action.payload.orders
+            state.page = action.payload.currentPage
+            state.pages = action.payload.totalPages
+            state.totalOrders = action.payload.totalOrders
+            console.log(action.payload)
+
         })
         .addCase(getOrders.rejected,(state,action)=>{
             state.loading = false
@@ -398,3 +417,5 @@ const orderSlice = createSlice({
 })
 
 export default orderSlice.reducer
+
+export const { setPage } = orderSlice.actions

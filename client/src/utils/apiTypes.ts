@@ -145,4 +145,10 @@ export type RazorpaymentResponse = {
 export type verifyPaymentResponse = Baseorder
 export type codOtpVeirfyResponse = Baseorder
 
-export type getOrderResponse = Baseorder[]
+export type getOrderResponse = {
+  orders: Baseorder[];
+  currentPage: number;
+  totalPages: number;
+  totalOrders: number;
+  limit: number;
+};

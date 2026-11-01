@@ -13,9 +13,9 @@ export type OrderQuery = {
 
 export type OrderStats = {
     total: number
-    pending: number
-    processing: number
-    completed: number
+    confirmed: number
+    shipped: number
+    delivered: number
 }
 
 export type OrderState = {
@@ -36,7 +36,7 @@ const initialState: OrderState = {
     page: 1,
     pages: null,
     totalOrders: 0,
-    stats: { total: 0, pending: 0, processing: 0, completed: 0 },
+    stats: { total: 0, confirmed: 0, shipped: 0, delivered: 0 },
     lastQuery: null
 }
 
@@ -63,6 +63,34 @@ export const getOrders = createAsyncThunk(
 
       return rejectWithValue(
         "Failed to get orders. Please try again."
+      )
+    }
+  }
+)
+
+
+// ================= UPDATE ORDER STATUS =================
+
+export const updateOrderStatus = createAsyncThunk(
+  "admin/updateOrderStatus",
+
+  async ({id,status}:{id:string,status:string}, { rejectWithValue }) => {
+    try {
+
+      const response = await orderApi.updateOrderStatus(id,status)
+      return response.data
+
+    } catch (error) {
+
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to update order status. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to update order status. Please try again."
       )
     }
   }

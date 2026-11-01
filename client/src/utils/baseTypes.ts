@@ -109,7 +109,6 @@ export type BaseCoupon = {
   isActive: boolean;
 };
 
-
 export type Baseorder = {
   _id: string;
 
@@ -130,7 +129,21 @@ export type Baseorder = {
 
   coupon: string | BaseCoupon | null;
 
-  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  orderStatus:
+    | "confirmed"
+    | "shipped"
+    | "out_for_delivery"
+    | "delivered"
+    | "cancelled";
+
+  trackingDates: {
+    confirmed: string | null;
+    shipped: string | null;
+    outForDelivery: string | null;
+    delivered: string | null;
+  };
+
+  paymentStatus: "pending" | "paid" | "failed" | "refunded" | "cod";
   paymentMethod?: "razorpay" | "cod";
 
   razorpayOrderId: string | null;
@@ -146,4 +159,3 @@ export type Baseorder = {
   updatedAt: string;
   __v: number;
 };
-

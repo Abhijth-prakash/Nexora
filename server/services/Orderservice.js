@@ -462,20 +462,53 @@ static async expireReservation(reservationId) {
 }
 
 
-
 //getorder
-static async getOrders(user) {
+static async getOrders(user, page = 1, search = "") {
   try {
-    const orders = await Order.find({
+    const limit = 10;
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const skip = (currentPage - 1) * limit;
+
+    const query = {
       user,
       paymentStatus: { $ne: "pending" },
-    })
-      .populate("items.product")
-      .populate("address")
-      .populate("coupon")
-      .sort({ createdAt: -1 });
+    };
 
-    return orders;
+    // Search by order ID (partial match, e.g. the last 8 chars shown in the UI)
+    const term = String(search).trim().replace(/^#/, "");
+
+    if (term) {
+      // escape regex special characters so user input can't break the query
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      query.$expr = {
+        $regexMatch: {
+          input: { $toString: "$_id" },
+          regex: escaped,
+          options: "i",
+        },
+      };
+    }
+
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(query)
+        .populate("items.product")
+        .populate("address")
+        .populate("coupon")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      Order.countDocuments(query),
+    ]);
+
+    return {
+      orders,
+      currentPage,
+      totalPages: Math.ceil(totalOrders / limit),
+      totalOrders,
+      limit,
+    };
   } catch (error) {
     logger.error("Failed to fetch user orders", {
       user,
@@ -489,17 +522,19 @@ static async getOrders(user) {
 //getorderFOr admin
 static async getOrdersAdmin({ page, limit, search, status, payment }) {
   try {
-    // same base filter as before
     const query = { paymentStatus: { $ne: "pending" } };
 
     if (payment) query.paymentStatus = payment;
     if (status) query.orderStatus = status;
 
     if (search) {
+      // escape special characters so typing "(" or "+" doesn't break the regex
+      const safe = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
       const users = await User.find({
         $or: [
-          { name: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
+          { name: { $regex: safe, $options: "i" } },
+          { email: { $regex: safe, $options: "i" } },
         ],
       }).select("_id");
 
@@ -509,7 +544,7 @@ static async getOrdersAdmin({ page, limit, search, status, payment }) {
           $expr: {
             $regexMatch: {
               input: { $toString: "$_id" },
-              regex: search,
+              regex: safe,
               options: "i",
             },
           },
@@ -531,21 +566,57 @@ static async getOrdersAdmin({ page, limit, search, status, payment }) {
     // stat cards (all orders, ignoring search / filters)
     const base = { paymentStatus: { $ne: "pending" } };
     const total = await Order.countDocuments(base);
-    const pending = await Order.countDocuments({ ...base, orderStatus: "pending" });
-    const processing = await Order.countDocuments({ ...base, orderStatus: "processing" });
-    const completed = await Order.countDocuments({ ...base, orderStatus: "completed" });
+    const confirmed = await Order.countDocuments({ ...base, orderStatus: "confirmed" });
+    const shipped = await Order.countDocuments({ ...base, orderStatus: "shipped" });
+    const delivered = await Order.countDocuments({ ...base, orderStatus: "delivered" });
 
     return {
       orders,
       currentPage: page,
       totalPages: Math.max(Math.ceil(totalOrders / limit), 1),
       totalOrders,
-      stats: { total, pending, processing, completed },
+      stats: { total, confirmed, shipped, delivered },
     };
   } catch (error) {
     logger.error("Failed to fetch admin orders", {
       error: error.message,
     });
+    throw error;
+  }
+}
+
+//update order STatus
+static async updateOrderStatus(orderId, status) {
+  try {
+    const dateKey = {
+      confirmed: "confirmed",
+      shipped: "shipped",
+      out_for_delivery: "outForDelivery",
+      delivered: "delivered",
+    };
+
+    if (!Object.keys(dateKey).includes(status) && status !== "cancelled") {
+      throw new Error("Invalid order status");
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) throw new Error("Order not found");
+
+    if (order.orderStatus === "delivered" || order.orderStatus === "cancelled") {
+      throw new Error(`Order is already ${order.orderStatus}`);
+    }
+
+    order.orderStatus = status;
+    if (dateKey[status]) {
+      order.trackingDates[dateKey[status]] = new Date(); // stamp today's date
+    }
+
+    await order.save();
+
+
+    return null;
+  } catch (error) {
+    logger.error("Failed to update order status", { error: error.message });
     throw error;
   }
 }

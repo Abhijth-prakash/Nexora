@@ -6,6 +6,7 @@ const OrderController = require('../../controllers/users/orderController')
 router.use(authenticateAdmin)
 
 router.get('/orders',OrderController.getOrdersAdmin)
+router.patch("/orders/:id/status",OrderController.updateOrderStatus);
 
 
 
