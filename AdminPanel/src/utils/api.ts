@@ -202,14 +202,20 @@ getCouponById: async (
 
 export const orderApi = {
 
-  getOrders: async (): Promise<ApiResponse<getOrderResponse>> => {
+  getOrders: async (
+  page: number,
+  search: string,
+  status: string,
+  payment: string
+): Promise<ApiResponse<getOrderResponse>> => {
   const response = await ClientApi.get<ApiResponse<getOrderResponse>>(
-    `/admin/orders`
+    `/admin/orders`,
+    {
+      params: { page, limit: 5, search, status, payment },
+    }
   );
-
   return response.data;
 },
-
 }
 
 

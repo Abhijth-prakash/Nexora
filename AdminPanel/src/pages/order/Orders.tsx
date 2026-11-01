@@ -1,355 +1,396 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getOrders } from "../../redux/features/orderSlice";
+import { getOrders, setPage } from "../../redux/features/orderSlice";
 import AdminSidebar from "../../components/Adminsidebar";
 import type { Baseorder } from "../../utils/BaseType";
 import {
-  Package,
-  CalendarDays,
-  ShoppingBag,
-  CreditCard,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  ArrowUpRight,
-  PackageCheck,
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   RefreshCw,
-  User,
-  MapPin,
 } from "lucide-react";
+
+const PAGE_LIMIT = 5; // keep in sync with the limit used in the slice / backend
+
+type OrderWithStatus = Baseorder & { orderStatus?: string; status?: string };
+
+const ORDER_STATUSES = ["pending", "processing", "completed", "cancelled"];
+const PAYMENT_STATUSES = ["paid", "pending", "failed", "refunded", "cod"];
+
+const getOrderStatus = (order: Baseorder) => {
+  const o = order as OrderWithStatus;
+  return (o.orderStatus || o.status || "pending").toLowerCase();
+};
+
+const statusText: Record<string, string> = {
+  pending: "text-amber-600",
+  processing: "text-[#ff5a1f]",
+  completed: "text-emerald-600",
+  cancelled: "text-red-500",
+};
+
+const paymentBadge = (paymentStatus: string) => {
+  switch (paymentStatus) {
+    case "paid":
+      return { label: "Paid", cls: "bg-emerald-50 text-emerald-600" };
+    case "cod":
+      return { label: "COD", cls: "bg-amber-50 text-amber-600" };
+    case "failed":
+      return { label: "Failed", cls: "bg-red-50 text-red-600" };
+    case "refunded":
+      return { label: "Refunded", cls: "bg-blue-50 text-blue-600" };
+    default:
+      return { label: "Pending", cls: "bg-gray-100 text-gray-600" };
+  }
+};
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const Orders = () => {
   const dispatch = useAppDispatch();
 
-  const { orders, loading, error } = useAppSelector(
-    (state) => state.orderData
-  );
+  const { orders, loading, error, page, pages, totalOrders, stats, lastQuery } =
+    useAppSelector((state) => state.orderData);
 
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [payment, setPayment] = useState("");
+
+  // Fetch from the backend whenever page / search / filters change (debounced)
   useEffect(() => {
-    dispatch(getOrders());
-  }, [dispatch]);
+    const sameQuery =
+      lastQuery?.page === page &&
+      lastQuery?.search === search &&
+      lastQuery?.status === status &&
+      lastQuery?.payment === payment;
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-IN", {
+    if (sameQuery) return;
+
+    const timer = setTimeout(() => {
+      dispatch(getOrders({ page, search, status, payment }));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [dispatch, page, search, status, payment, lastQuery]);
+
+  // Any change to search / filters goes back to page 1
+  const onSearchChange = (value: string) => {
+    setSearch(value);
+    dispatch(setPage(1));
+  };
+
+  const onStatusChange = (value: string) => {
+    setStatus(value);
+    dispatch(setPage(1));
+  };
+
+  const onPaymentChange = (value: string) => {
+    setPayment(value);
+    dispatch(setPage(1));
+  };
+
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
-  };
 
   const getCustomerName = (user: Baseorder["user"]) =>
     typeof user === "string" ? "Customer" : user.name;
 
-  const getCustomerEmail = (user: Baseorder["user"]) =>
-    typeof user === "string" ? "" : user.email;
-
-  const getLocation = (address: Baseorder["address"]) =>
-    typeof address === "string" ? "" : `${address.city}, ${address.state}`;
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "paid":
-        return {
-          label: "Paid",
-          className: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-          icon: <CheckCircle2 size={14} />,
-        };
-
-      case "pending":
-        return {
-          label: "Pending",
-          className: "bg-amber-50 text-amber-700 ring-amber-100",
-          icon: <Clock size={14} />,
-        };
-
-      case "failed":
-        return {
-          label: "Failed",
-          className: "bg-red-50 text-red-700 ring-red-100",
-          icon: <XCircle size={14} />,
-        };
-
-      case "refunded":
-        return {
-          label: "Refunded",
-          className: "bg-blue-50 text-blue-700 ring-blue-100",
-          icon: <RefreshCw size={14} />,
-        };
-
-      default:
-        return {
-          label: status,
-          className: "bg-gray-50 text-gray-600 ring-gray-200",
-          icon: <Package size={14} />,
-        };
-    }
+  // TODO: wire this to your own thunk (update order status)
+  const handleStatusChange = (orderId: string, newStatus: string) => {
+    console.log("update status", orderId, newStatus);
   };
 
+  const totalPages = pages ?? 1;
+  const list = orders || [];
+  const from = totalOrders === 0 ? 0 : (page - 1) * PAGE_LIMIT + 1;
+  const to = Math.min(page * PAGE_LIMIT, totalOrders);
+
+  const pageNumbers = useMemo(() => {
+    const nums: number[] = [];
+    const first = Math.max(1, Math.min(page - 1, totalPages - 2));
+    const last = Math.min(totalPages, first + 2);
+    for (let i = first; i <= last; i++) nums.push(i);
+    return nums;
+  }, [page, totalPages]);
+
+  const statCards = [
+    { label: "Total Orders", value: stats?.total ?? 0 },
+    { label: "Pending", value: stats?.pending ?? 0 },
+    { label: "Processing", value: stats?.processing ?? 0 },
+    { label: "Completed", value: stats?.completed ?? 0 },
+  ];
+
+  const selectBase =
+    "h-12 w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-white pl-4 pr-10 text-sm font-semibold text-gray-900 outline-none transition focus:border-[#ff5a1f]";
+
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8]">
-      <AdminSidebar></AdminSidebar>
+    <div className="flex min-h-screen bg-white">
+      <AdminSidebar />
 
-      <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 lg:px-12">
-        <div className="w-full max-w-none">
+      <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 lg:px-10">
+        {/* HEADER */}
+        <div className="mb-7">
+          <h1 className="text-3xl font-extrabold tracking-tight text-black">
+            Order Management
+          </h1>
+          <p className="mt-1.5 text-sm text-[#8a7568]">
+            View, track and manage all customer orders.
+          </p>
+        </div>
 
-          {/* PAGE HEADER */}
-          <div className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <div className="mb-3 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a1f]" />
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                  Admin / Orders
-                </p>
-              </div>
-
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                All Orders<span className="text-[#ff5a1f]">.</span>
-              </h1>
-
-              <p className="mt-2 text-sm text-gray-500">
-                Every order placed in your store, newest activity in one place.
+        {/* STAT CARDS */}
+        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {statCards.map((card) => (
+            <div
+              key={card.label}
+              className="rounded-2xl border border-gray-200 bg-white px-5 py-4"
+            >
+              <p className="text-xs text-[#8a7568]">{card.label}</p>
+              <p className="mt-1 text-3xl font-extrabold tracking-tight text-black">
+                {card.value.toLocaleString("en-IN")}
               </p>
             </div>
+          ))}
+        </div>
 
-            <div className="flex w-fit items-center gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1eb] text-[#ff5a1f]">
-                <ShoppingBag size={19} />
-              </div>
-
-              <div>
-                <p className="text-xl font-bold leading-none text-gray-900">
-                  {orders?.length || 0}
-                </p>
-
-                <p className="mt-1 text-[11px] font-medium text-gray-400">
-                  Total orders
-                </p>
-              </div>
-            </div>
+        {/* FILTER BAR */}
+        <div className="mb-6 grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-white p-4 md:grid-cols-[2fr_1fr_1fr]">
+          <div className="relative">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search order ID or customer..."
+              className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#ff5a1f]"
+            />
           </div>
 
-          {/* LOADING */}
+          <div className="relative">
+            <select
+              value={status}
+              onChange={(e) => onStatusChange(e.target.value)}
+              className={selectBase}
+            >
+              <option value="">All Status</option>
+              {ORDER_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {capitalize(s)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={15}
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+          </div>
+
+          <div className="relative">
+            <select
+              value={payment}
+              onChange={(e) => onPaymentChange(e.target.value)}
+              className={selectBase}
+            >
+              <option value="">All Payment</option>
+              {PAYMENT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s === "cod" ? "COD" : capitalize(s)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={15}
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+          </div>
+        </div>
+
+        {/* TABLE CARD */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-lg font-extrabold text-black">All Orders</h2>
+            <p className="text-xs text-[#8a7568]">
+              {totalOrders.toLocaleString("en-IN")} orders
+            </p>
+          </div>
+
           {loading && (
-            <div className="rounded-3xl border border-gray-100 bg-white px-6 py-24 text-center shadow-sm">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff1eb]">
-                <Package
-                  size={25}
-                  className="animate-pulse text-[#ff5a1f]"
-                />
-              </div>
-
-              <p className="mt-5 text-sm font-semibold text-gray-800">
-                Loading orders
-              </p>
-
-              <p className="mt-1 text-xs text-gray-400">
-                Please wait a moment...
-              </p>
+            <div className="flex flex-col items-center justify-center gap-3 py-20">
+              <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-orange-100 border-t-[#ff5a1f]" />
+              <p className="text-sm text-gray-400">Loading orders...</p>
             </div>
           )}
 
-          {/* ERROR */}
           {!loading && error && (
-            <div className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
-                <XCircle size={25} />
-              </div>
-
-              <h2 className="mt-5 text-lg font-bold text-gray-900">
+            <div className="py-16 text-center">
+              <p className="text-sm font-semibold text-gray-800">
                 Couldn't load orders
-              </h2>
-
-              <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
-                {error}
               </p>
-
+              <p className="mt-1 text-xs text-gray-400">{error}</p>
               <button
-                onClick={() => dispatch(getOrders())}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ff5a1f]"
+                onClick={() =>
+                  dispatch(getOrders({ page, search, status, payment }))
+                }
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#ff5a1f]"
               >
-                <RefreshCw size={15} />
+                <RefreshCw size={14} />
                 Try again
               </button>
             </div>
           )}
 
-          {/* EMPTY STATE */}
-          {!loading && !error && (!orders || orders.length === 0) && (
-            <div className="rounded-3xl border border-gray-100 bg-white px-6 py-24 text-center shadow-sm">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#fff1eb]">
-                <ShoppingBag size={34} className="text-[#ff5a1f]" />
+          {!loading && !error && list.length === 0 && (
+            <div className="py-20 text-center text-sm text-gray-400">
+              No orders found.
+            </div>
+          )}
+
+          {!loading && !error && list.length > 0 && (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[860px] text-left">
+                  <thead>
+                    <tr className="bg-[#f6f4f2] text-[11px] font-bold uppercase tracking-wider text-[#8a7568]">
+                      <th className="rounded-l-lg px-5 py-3.5">Order ID</th>
+                      <th className="px-3 py-3.5">Customer</th>
+                      <th className="px-3 py-3.5">Date</th>
+                      <th className="px-3 py-3.5">Items</th>
+                      <th className="px-3 py-3.5">Total</th>
+                      <th className="px-3 py-3.5">Payment</th>
+                      <th className="px-3 py-3.5">Status</th>
+                      <th className="rounded-r-lg px-3 py-3.5">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {list.map((order) => {
+                      const badge = paymentBadge(order.paymentStatus);
+                      const orderStatus = getOrderStatus(order);
+
+                      return (
+                        <tr
+                          key={order._id}
+                          className="border-b border-gray-100 text-sm text-gray-800 last:border-0"
+                        >
+                          <td className="px-5 py-5 text-xs font-extrabold text-black">
+                            #{order._id.slice(-8).toUpperCase()}
+                          </td>
+
+                          <td className="px-3 py-5 text-xs">
+                            {getCustomerName(order.user)}
+                          </td>
+
+                          <td className="px-3 py-5 text-xs text-[#8a7568]">
+                            {formatDate(order.orderDate || order.createdAt)}
+                          </td>
+
+                          <td className="px-3 py-5 text-xs">
+                            {order.items.length}
+                          </td>
+
+                          <td className="px-3 py-5 text-xs font-extrabold text-black">
+                            ₹{order.totalAmount.toLocaleString("en-IN")}
+                          </td>
+
+                          <td className="px-3 py-5">
+                            <span
+                              className={`inline-block rounded-full px-3 py-1 text-[11px] font-semibold ${badge.cls}`}
+                            >
+                              {badge.label}
+                            </span>
+                          </td>
+
+                          <td className="px-3 py-5">
+                            <div className="relative w-32">
+                              <select
+                                value={orderStatus}
+                                onChange={(e) =>
+                                  handleStatusChange(order._id, e.target.value)
+                                }
+                                className={`h-10 w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white pl-3 pr-8 text-xs font-medium outline-none transition focus:border-[#ff5a1f] ${
+                                  statusText[orderStatus] || "text-gray-600"
+                                }`}
+                              >
+                                {ORDER_STATUSES.map((s) => (
+                                  <option key={s} value={s}>
+                                    {capitalize(s)}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown
+                                size={13}
+                                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                              />
+                            </div>
+                          </td>
+
+                          <td className="px-3 py-5">
+                            <Link
+                              to={`/admin/orders/${order._id}`}
+                              className="text-xs font-bold text-[#ff5a1f] transition hover:underline"
+                            >
+                              View
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
-              <h2 className="mt-6 text-xl font-bold text-gray-900">
-                No orders yet
-              </h2>
+              {/* PAGINATION */}
+              <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
+                <p className="text-[11px] text-[#8a7568]">
+                  Showing {from}–{to} of {totalOrders.toLocaleString("en-IN")}{" "}
+                  orders
+                </p>
 
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-400">
-                Orders will appear here as soon as customers check out.
-              </p>
-
-              <p className="mt-6 inline-flex items-center gap-2 text-xs font-semibold text-[#ff5a1f]">
-                <PackageCheck size={16} />
-                Waiting for the first order.
-              </p>
-            </div>
-          )}
-
-          {/* ORDERS LIST */}
-          {!loading && !error && orders && orders.length > 0 && (
-            <div className="space-y-5">
-              {orders.map((order) => {
-                const status = getStatusStyle(order.paymentStatus);
-                const email = getCustomerEmail(order.user);
-                const location = getLocation(order.address);
-
-                return (
-                  <Link
-                    key={order._id}
-                    to={`/admin/orders/${order._id}`}
-                    className="group block w-full overflow-hidden rounded-2xl border border-gray-200 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#ffb18f] hover:shadow-[0_12px_35px_rgba(0,0,0,0.06)]"
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => dispatch(setPage(page - 1))}
+                    disabled={page === 1 || loading}
+                    className="flex h-9 items-center gap-1 rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-700 transition hover:border-[#ff5a1f] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <div className="p-5 sm:p-7 lg:p-8">
+                    <ChevronLeft size={14} />
+                    Prev
+                  </button>
 
-                      {/* ORDER HEADER */}
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="flex items-center gap-3.5">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fff5f0] text-[#ff5a1f] transition-colors group-hover:bg-[#ff5a1f] group-hover:text-white">
-                            <Package size={22} />
-                          </div>
+                  {pageNumbers.map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => dispatch(setPage(n))}
+                      disabled={loading}
+                      className={`h-9 w-9 rounded-lg text-xs font-bold transition ${
+                        n === page
+                          ? "bg-[#ff6b47] text-white"
+                          : "border border-gray-200 text-gray-700 hover:border-[#ff5a1f]"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
 
-                          <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
-                              Order reference
-                            </p>
-
-                            <h3 className="mt-1 text-sm font-bold tracking-wide text-gray-900">
-                              #{order._id.slice(-8).toUpperCase()}
-                            </h3>
-                          </div>
-                        </div>
-
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold ring-1 ring-inset ${status.className}`}
-                        >
-                          {status.icon}
-                          {status.label}
-                        </span>
-                      </div>
-
-                      {/* ORDER INFORMATION */}
-                      <div className="my-6 grid grid-cols-2 gap-5 border-y border-gray-100 py-5 lg:grid-cols-4">
-
-                        {/* CUSTOMER */}
-                        <div className="col-span-2 min-w-0 lg:col-span-1">
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <User size={14} />
-                            <span className="text-[10px] font-semibold uppercase tracking-wider">
-                              Customer
-                            </span>
-                          </div>
-
-                          <p className="mt-2 truncate text-sm font-semibold text-gray-800">
-                            {getCustomerName(order.user)}
-                          </p>
-
-                          {email && (
-                            <p className="mt-0.5 truncate text-xs text-gray-400">
-                              {email}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* DATE */}
-                        <div>
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <CalendarDays size={14} />
-                            <span className="text-[10px] font-semibold uppercase tracking-wider">
-                              Order date
-                            </span>
-                          </div>
-
-                          <p className="mt-2 text-sm font-semibold text-gray-800">
-                            {formatDate(order.orderDate || order.createdAt)}
-                          </p>
-                        </div>
-
-                        {/* ITEMS */}
-                        <div>
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <ShoppingBag size={14} />
-                            <span className="text-[10px] font-semibold uppercase tracking-wider">
-                              Items
-                            </span>
-                          </div>
-
-                          <p className="mt-2 text-sm font-semibold text-gray-800">
-                            {order.items.length}{" "}
-                            {order.items.length === 1 ? "Item" : "Items"}
-                          </p>
-                        </div>
-
-                        {/* PAYMENT */}
-                        <div>
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <CreditCard size={14} />
-                            <span className="text-[10px] font-semibold uppercase tracking-wider">
-                              Payment
-                            </span>
-                          </div>
-
-                          <p className="mt-2 text-sm font-semibold capitalize text-gray-800">
-                            {order.paymentMethod || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* FOOTER */}
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
-                          <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
-                              Total amount
-                            </p>
-
-                            <p className="mt-1 text-xl font-bold tracking-tight text-gray-900">
-                              ₹{order.totalAmount.toLocaleString("en-IN")}
-                            </p>
-                          </div>
-
-                          {location && (
-                            <p className="flex items-center gap-1.5 pb-1 text-xs text-gray-400">
-                              <MapPin size={13} />
-                              {location}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600 transition-all group-hover:bg-[#fff1eb] group-hover:text-[#ff5a1f]">
-                          View details
-
-                          <ArrowUpRight
-                            size={15}
-                            className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* BOTTOM ACCENT */}
-                    <div className="h-[3px] w-0 bg-[#ff5a1f] transition-all duration-300 group-hover:w-full" />
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-
-          {/* FOOTER NOTE */}
-          {!loading && !error && orders && orders.length > 0 && (
-            <p className="mt-7 text-center text-[11px] text-gray-400">
-              Showing the complete order history.
-            </p>
+                  <button
+                    onClick={() => dispatch(setPage(page + 1))}
+                    disabled={pages === null || page === pages || loading}
+                    className="flex h-9 items-center gap-1 rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-700 transition hover:border-[#ff5a1f] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </main>

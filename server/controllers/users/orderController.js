@@ -191,8 +191,19 @@ static getOrders = BaseController.asyncHandler(
 static getOrdersAdmin = BaseController.asyncHandler(
   async (req, res) => {
 
-    const orders = await OrderService.getOrdersAdmin(
-    );
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 5, 50);
+    const search = (req.query.search || "").trim();
+    const status = (req.query.status || "").trim();
+    const payment = (req.query.payment || "").trim();
+
+    const orders = await OrderService.getOrdersAdmin({
+      page,
+      limit,
+      search,
+      status,
+      payment,
+    });
 
     BaseController.logAction(
       `fetched orders for admin `
@@ -200,7 +211,7 @@ static getOrdersAdmin = BaseController.asyncHandler(
 
     return this.sendSuccessResponse(
       res,
-     `fetched orders for admin `,
+      `fetched orders for admin `,
       orders,
       200
     );

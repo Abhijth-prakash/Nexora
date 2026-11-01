@@ -1,71 +1,118 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { orderApi } from "../../utils/api";
 import type { Baseorder } from "../../utils/BaseType";
-import type { getOrderResponse } from "../../utils/apiTypes";
 
+export type OrderQuery = {
+    page: number
+    search: string
+    status: string
+    payment: string
+}
+
+export type OrderStats = {
+    total: number
+    pending: number
+    processing: number
+    completed: number
+}
 
 export type OrderState = {
-    orders:Baseorder[]
-    loading:boolean
-    error:string | null
+    orders: Baseorder[]
+    loading: boolean
+    error: string | null
+    page: number
+    pages: number | null
+    totalOrders: number
+    stats: OrderStats
+    lastQuery: OrderQuery | null
 }
 
-const initialState:OrderState = {
-    orders:[],
-    loading:false,
-    error:null
+const initialState: OrderState = {
+    orders: [],
+    loading: false,
+    error: null,
+    page: 1,
+    pages: null,
+    totalOrders: 0,
+    stats: { total: 0, pending: 0, processing: 0, completed: 0 },
+    lastQuery: null
 }
 
-//get orders
-export const getOrders = createAsyncThunk<getOrderResponse, void, { rejectValue: string }>(
-    'admin/getorders',
-    async (_,{rejectWithValue})=>{
-        try{
-            const response = await orderApi.getOrders()
-            return response.data
 
-        }catch(error){
+// ================= GET ORDERS =================
 
-            if (axios.isAxiosError(error)) {
-                return rejectWithValue(
-                    error.response?.data?.error?.message ||
-                    "Failed to get orders. Please try again."
-                )
-            }
+export const getOrders = createAsyncThunk(
+  "admin/getorders",
 
-            return rejectWithValue(
-                "Failed to get orders. Please try again."
-            )
+  async ({page,search,status,payment}:{page:number,search:string,status:string,payment:string}, { rejectWithValue }) => {
+    try {
 
-        }
+      const response = await orderApi.getOrders(page,search,status,payment)
+      return response.data
+
+    } catch (error) {
+
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+          "Failed to get orders. Please try again."
+        )
+      }
+
+      return rejectWithValue(
+        "Failed to get orders. Please try again."
+      )
     }
+  }
 )
 
 
+// ================= SLICE =================
+
 const orderSlice = createSlice({
-    name:"adminorderslice",
+
+    name: "adminorderslice",
+
     initialState,
-    reducers:{},
-    extraReducers:(build)=>{
+
+    reducers: {
+
+        setPage: (state, action: PayloadAction<number>) => {
+            state.page = action.payload
+        }
+
+    },
+
+    extraReducers: (build) => {
+
         build
 
         //get orders
-        .addCase(getOrders.pending,(state)=>{
+        .addCase(getOrders.pending, (state) => {
             state.loading = true
             state.error = null
         })
-        .addCase(getOrders.fulfilled,(state,action)=>{
-            state.loading = false
-            state.orders = action.payload
 
-        })
-        .addCase(getOrders.rejected,(state,action)=>{
+        .addCase(getOrders.fulfilled, (state, action) => {
             state.loading = false
-            state.error = action.payload as string
+            state.orders = action.payload.orders
+            state.page = action.payload.currentPage
+            state.pages = action.payload.totalPages
+            state.totalOrders = action.payload.totalOrders
+            state.stats = action.payload.stats
+            state.lastQuery = action.meta.arg
+        })
+
+        .addCase(getOrders.rejected, (state, action) => {
+            state.loading = false
+            state.error = (action.payload as string) || "Failed to get orders"
         })
     }
 })
 
 
 export default orderSlice.reducer
+
+export const { setPage } = orderSlice.actions

@@ -487,17 +487,61 @@ static async getOrders(user) {
 
 
 //getorderFOr admin
-static async getOrdersAdmin() {
+static async getOrdersAdmin({ page, limit, search, status, payment }) {
   try {
-    const orders = await Order.find({
-      paymentStatus: { $ne: "pending" },
-    })
+    // same base filter as before
+    const query = { paymentStatus: { $ne: "pending" } };
+
+    if (payment) query.paymentStatus = payment;
+    if (status) query.orderStatus = status;
+
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      }).select("_id");
+
+      query.$or = [
+        { user: { $in: users.map((u) => u._id) } },
+        {
+          $expr: {
+            $regexMatch: {
+              input: { $toString: "$_id" },
+              regex: search,
+              options: "i",
+            },
+          },
+        },
+      ];
+    }
+
+    const orders = await Order.find(query)
       .populate("items.product")
       .populate("address")
       .populate("coupon")
-      .sort({ createdAt: -1 });
+      .populate("user")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
-    return orders;
+    const totalOrders = await Order.countDocuments(query);
+
+    // stat cards (all orders, ignoring search / filters)
+    const base = { paymentStatus: { $ne: "pending" } };
+    const total = await Order.countDocuments(base);
+    const pending = await Order.countDocuments({ ...base, orderStatus: "pending" });
+    const processing = await Order.countDocuments({ ...base, orderStatus: "processing" });
+    const completed = await Order.countDocuments({ ...base, orderStatus: "completed" });
+
+    return {
+      orders,
+      currentPage: page,
+      totalPages: Math.max(Math.ceil(totalOrders / limit), 1),
+      totalOrders,
+      stats: { total, pending, processing, completed },
+    };
   } catch (error) {
     logger.error("Failed to fetch admin orders", {
       error: error.message,

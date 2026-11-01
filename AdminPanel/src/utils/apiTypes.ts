@@ -94,4 +94,15 @@ export type GetCouponsResponse = {
 
 export type activeToggleresponse = null
 
-export type getOrderResponse = Baseorder[]
+export type getOrderResponse = {
+  orders: Baseorder[];
+  currentPage: number;
+  totalPages: number;
+  totalOrders: number;
+  stats: {
+    total: number;
+    pending: number;
+    processing: number;
+    completed: number;
+  };
+};

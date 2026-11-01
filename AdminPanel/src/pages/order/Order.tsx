@@ -96,7 +96,8 @@ const Order = () => {
   // fetch only if the list isn't in the store yet (e.g. page refreshed)
   useEffect(() => {
     if (!orders || orders.length === 0) {
-      dispatch(getOrders());
+      
+      dispatch(getOrders({page:1,search:"",status:"",payment:""}));
     }
   }, [dispatch]);
 
@@ -128,7 +129,7 @@ const Order = () => {
           </h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">{error}</p>
           <button
-            onClick={() => dispatch(getOrders())}
+            onClick={() => dispatch(getOrders({page:1,search:"",status:"",payment:""}))}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ff5a1f]"
           >
             <RefreshCw size={15} />
