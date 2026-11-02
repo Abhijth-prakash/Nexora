@@ -15,7 +15,7 @@ import EditProfile from "./pages/Profile/EditProfile"
 import Product from "./pages/Products/Product"
 import ProductList from "./pages/Products/ProductList"
 import Cart from "./pages/cart/Cart"
-import ProtectedRoutes from "./components/ProtectedRoutes"
+import {ProtectedRoutes,PaymentRoutes} from "./components/ProtectedRoutes"
 import NotFound from "./pages/NotFound"
 import MainLayout from "./components/layouts/MainLayout"
 import Checkout from "./pages/orders/Checkout"
@@ -60,12 +60,14 @@ function App() {
 
           {/* order */}
           <Route path="/users/Checkout" element={<Checkout />} />
-          <Route path="/users/payment" element={<Payment />} />
-          <Route path="/users/payment/sucess" element={<OrderSuccess />} />
           <Route path="/users/orders" element={<Orders />} />
           <Route path="/users/orders/:orderId" element={<Order />} />
 
-
+           {/* payment */}
+           <Route element={<ProtectedRoutes />}>
+          <Route path="/users/payment" element={<Payment />} />
+          <Route path="/users/payment/sucess" element={<OrderSuccess />} />
+          </Route>
 
           {/* 404 catch-all */}
           <Route path="*" element={<NotFound />} />

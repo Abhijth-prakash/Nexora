@@ -314,6 +314,7 @@ const orderSlice = createSlice({
 
         .addCase(GenerateOrder.pending,(state)=>{
             state.loading = true
+            state.orderId = null
         })
         .addCase(GenerateOrder.fulfilled,(state,action)=>{
             state.loading = false

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -70,7 +69,9 @@ const handlePlaceOrder = async () => {
       return;
     }
 
-    const result = await dispatch(
+    // .unwrap() throws if GenerateOrder is rejected, so we only reach
+    // the navigate below when the order was created successfully
+    await dispatch(
       GenerateOrder({
         addressId: selectedAddress,
         couponId,

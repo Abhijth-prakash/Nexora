@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAppSelector } from "../redux/hooks";
 
-const ProtectedRoutes = () => {
+export const ProtectedRoutes = () => {
   const { logged } = useAppSelector(
     (state) => state.userData
   );
@@ -13,4 +13,17 @@ const ProtectedRoutes = () => {
   return <Outlet />;
 };
 
-export default ProtectedRoutes;
+
+
+
+export const PaymentRoutes = ()=>{
+  const {orderId}= useAppSelector(state=> state.orderData)
+
+
+  if(!orderId){
+    console.log('replcae')
+    return <Navigate to="/" replace />;
+  }
+  return <Outlet />;
+}
+

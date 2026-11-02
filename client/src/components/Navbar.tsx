@@ -1,4 +1,12 @@
-import { Search, User, ShoppingBag, LogOut, LogIn, ChevronRight } from "lucide-react"
+import {
+  Search,
+  User,
+  ShoppingBag,
+  LogOut,
+  LogIn,
+  ChevronRight,
+  Package,
+} from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { useEffect } from "react"
@@ -21,7 +29,15 @@ const Navbar = () => {
     }
   }, [logged])
 
+  // The dropdown opens on group-hover AND group-focus-within. After clicking a
+  // menu link the link keeps focus (the navbar never unmounts on route change),
+  // so the menu stays open. Blurring releases focus so it can close again.
+  const closeMenu = () => {
+    (document.activeElement as HTMLElement | null)?.blur()
+  }
+
   const handleLogout = async () => {
+    closeMenu()
       try{
         await dispatch(logout()).unwrap()
         navigate('/auth/login')
@@ -164,12 +180,30 @@ const Navbar = () => {
                         <Link
                           to="/myprofile"
                           role="menuitem"
+                          onClick={closeMenu}
                           className="group/item flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#fff4ef] hover:text-[#ff5a1f]"
                         >
                           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f4f4f4] text-[#4a4a4a] transition-colors group-hover/item:bg-white group-hover/item:text-[#ff5a1f]">
                             <User size={16} strokeWidth={1.75} />
                           </span>
                           <span className="flex-1">My Profile</span>
+                          <ChevronRight
+                            size={16}
+                            strokeWidth={1.75}
+                            className="-translate-x-1 text-[#ff5a1f] opacity-0 transition-all group-hover/item:translate-x-0 group-hover/item:opacity-100"
+                          />
+                        </Link>
+
+                        <Link
+                          to="/users/orders"
+                          role="menuitem"
+                          onClick={closeMenu}
+                          className="group/item flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#fff4ef] hover:text-[#ff5a1f]"
+                        >
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f4f4f4] text-[#4a4a4a] transition-colors group-hover/item:bg-white group-hover/item:text-[#ff5a1f]">
+                            <Package size={16} strokeWidth={1.75} />
+                          </span>
+                          <span className="flex-1">My Orders</span>
                           <ChevronRight
                             size={16}
                             strokeWidth={1.75}
