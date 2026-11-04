@@ -284,6 +284,18 @@ getOrders: async (
   return response.data;
 },
 
+cancelOrder: async (
+  orderId: string,
+  cancelReason: string
+): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.patch<ApiResponse<null>>(
+    `/users/order/${orderId}/cancel`,
+    { cancelReason }
+  );
+
+  return response.data;
+},
+
 };
 
 

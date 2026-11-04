@@ -21,7 +21,6 @@ export const PaymentRoutes = ()=>{
 
 
   if(!orderId){
-    console.log('het replace this ')
     return <Navigate to="/" replace />;
   }
   return <Outlet />;

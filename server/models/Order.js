@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
@@ -65,7 +64,7 @@ const orderSchema = new mongoose.Schema(
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded","cod"],
+      enum: ["pending", "paid", "failed", "refunded", "cod"],
       default: "pending",
     },
 
@@ -103,25 +102,48 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    orderStatus: {
-  type: String,
-  enum: ["confirmed", "shipped", "out_for_delivery", "delivered", "cancelled"],
-  default: "confirmed",
-},
 
-trackingDates: {
-  confirmed: { type: Date, default: null },
-  shipped: { type: Date, default: null },
-  outForDelivery: { type: Date, default: null },
-  delivered: { type: Date, default: null },
-},
+    orderStatus: {
+      type: String,
+      enum: [
+        "confirmed",
+        "shipped",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ],
+      default: "confirmed",
+    },
+
+    // Reason for cancellation (set when orderStatus becomes "cancelled")
+    cancelReason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: null,
+    },
+
+    // Who cancelled the order: the customer, an admin, or the system (e.g. payment timeout)
+    cancelledBy: {
+      type: String,
+      enum: ["user", "admin", "system", null],
+      default: null,
+    },
+
+    trackingDates: {
+      confirmed: { type: Date, default: null },
+      shipped: { type: Date, default: null },
+      outForDelivery: { type: Date, default: null },
+      delivered: { type: Date, default: null },
+      cancelled: { type: Date, default: null },
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Index
+// Indexes
 orderSchema.index({ createdAt: 1 });
 
 // Get populated order

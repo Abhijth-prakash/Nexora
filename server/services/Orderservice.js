@@ -384,11 +384,11 @@ static async GenerateOrder(user, data) {
 //delete expired
 static async expireReservation(reservationId) {
   const session = await mongoose.startSession();
-  let expired = null; // CHANGED: holds the expired reservation for logging
+  let expired = null;
 
   try {
     await session.withTransaction(async () => {
-      expired = null; // reset in case the transaction is retried
+      expired = null;
 
       const reservation = await StockReservation.findOne({
         _id: reservationId,
@@ -398,7 +398,6 @@ static async expireReservation(reservationId) {
 
       if (!reservation) return;
 
-   
       const deleted = await StockReservation.deleteOne({
         _id: reservationId,
         status: "reserved",
@@ -407,54 +406,58 @@ static async expireReservation(reservationId) {
 
       if (deleted.deletedCount !== 1) return;
 
-      // Restore the reserved stock.
+      // Restore the reserved stock
       for (const item of reservation.items) {
-        let result;
-
-        if (item.variantId) {
-          result = await Product.updateOne(
-            {
-              _id: item.product,
-              "variants._id": item.variantId,
-            },
-            {
-              $inc: {
-                "variants.$.stock": item.quantity,
-              },
-            },
-            { session }
-          );
-        } else {
-          result = await Product.updateOne(
-            { _id: item.product },
-            { $inc: { stock: item.quantity } },
-            { session }
-          );
-        }
+        const result = item.variantId
+          ? await Product.updateOne(
+              { _id: item.product, "variants._id": item.variantId },
+              { $inc: { "variants.$.stock": item.quantity } },
+              { session }
+            )
+          : await Product.updateOne(
+              { _id: item.product },
+              { $inc: { stock: item.quantity } },
+              { session }
+            );
 
         if (result.modifiedCount !== 1) {
-          throw new Error(
-            `Failed to restore stock for product ${item.product}`
-          );
+          throw new Error(`Failed to restore stock for product ${item.product}`);
         }
       }
 
-      expired = reservation; 
+      // Cancel the unpaid order linked to this reservation
+      if (reservation.orderId) {
+        await Order.updateOne(
+          {
+            _id: reservation.orderId,
+            paymentStatus: "pending",
+            orderStatus: { $ne: "cancelled" },
+          },
+          {
+            $set: {
+              orderStatus: "cancelled",
+              cancelReason: "Payment not completed in time",
+              cancelledBy: "system",
+              "trackingDates.cancelled": new Date(),
+            },
+          },
+          { session }
+        );
+      }
+
+      expired = reservation;
     });
 
-  
     if (expired) {
-      logger.info("Reservation expired and stock restored", {
+      logger.info("Reservation expired, stock restored and order cancelled", {
         reservationId: expired._id,
+        orderId: expired.orderId,
         user: expired.user,
         items: expired.items,
       });
     }
   } catch (error) {
-    logger.error("Failed to expire stock reservation", {
-      reservationId,
-      error,
-    });
+    logger.error("Failed to expire stock reservation", { reservationId, error });
     throw error;
   } finally {
     await session.endSession();
@@ -618,6 +621,88 @@ static async updateOrderStatus(orderId, status) {
   } catch (error) {
     logger.error("Failed to update order status", { error: error.message });
     throw error;
+  }
+}
+
+
+//cancel order 
+static async cancelOrder(user, data) {
+  const session = await mongoose.startSession();
+  try {
+    const { orderId, cancelReason } = data;
+
+    if (!mongoose.isValidObjectId(orderId)) {
+      throw new ValidationError("Invalid order");
+    }
+    if (!cancelReason || !cancelReason.trim()) {
+      throw new ValidationError("Cancel reason is required");
+    }
+
+    let cancelledOrder;
+
+    await session.withTransaction(async () => {
+      const order = await Order.findById(orderId).session(session);
+      if (!order) throw new NotFoundError("Order not found");
+
+      // Order must belong to the user
+      const userId = user._id || user;
+      if (order.user.toString() !== userId.toString()) {
+        throw new ForbiddenError("You are not allowed to cancel this order");
+      }
+
+      if (order.orderStatus === "cancelled") {
+        throw new ConflictError("Order is already cancelled");
+      }
+      if (["out_for_delivery", "delivered"].includes(order.orderStatus)) {
+        throw new ConflictError(
+          `Order cannot be cancelled once it is ${order.orderStatus}`
+        );
+      }
+
+      // Atomically claim the reservation. Returns null if the stock was
+      // already given back (expired/deleted), so stock is never restored twice.
+      const reservation = await StockReservation.findOneAndUpdate(
+        { orderId: order._id, status: { $in: ["reserved", "confirmed"] } },
+        { $set: { status: "released" } },
+        { session, new: true }
+      );
+
+      if (reservation) {
+        const stockOps = order.items.map((item) =>
+          item.variantId
+            ? {
+                updateOne: {
+                  filter: { _id: item.product },
+                  update: { $inc: { "variants.$[v].stock": item.quantity } },
+                  arrayFilters: [{ "v._id": item.variantId }],
+                },
+              }
+            : {
+                updateOne: {
+                  filter: { _id: item.product },
+                  update: { $inc: { stock: item.quantity } },
+                },
+              }
+        );
+
+        await Product.bulkWrite(stockOps, { session });
+      }
+
+      order.orderStatus = "cancelled";
+      order.cancelReason = cancelReason.trim();
+      order.cancelledBy = "user";
+      order.trackingDates.cancelled = new Date();
+      await order.save({ session });
+
+      cancelledOrder = order;
+    });
+
+    return cancelledOrder;
+  } catch (error) {
+    logger.error("failed to cancel order", { error });
+    throw error;
+  } finally {
+    await session.endSession();
   }
 }
 

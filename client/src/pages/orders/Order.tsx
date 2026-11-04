@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getOrders } from "../../redux/features/orderSlice";
+import { getOrders, cancelOrder } from "../../redux/features/orderSlice";
 import { useParams, Link } from "react-router-dom";
 import {
   Package,
@@ -61,6 +61,12 @@ const Order = () => {
   );
 
   const { orderId } = useParams<{ orderId: string }>();
+
+  // ---- cancel order state ----
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   useEffect(() => {
     if (!orders || orders.length === 0) {
@@ -127,6 +133,54 @@ const Order = () => {
     }
   };
 
+  // ---- cancel handlers ----
+  const openCancelModal = () => {
+    setCancelReason("");
+    setCancelError("");
+    setShowCancelModal(true);
+  };
+
+  const closeCancelModal = () => {
+    if (cancelling) return; // don't close while the request is running
+    setShowCancelModal(false);
+    setCancelReason("");
+    setCancelError("");
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+
+    const reason = cancelReason.trim();
+    if (!reason) {
+      setCancelError("Please enter a reason for cancelling.");
+      return;
+    }
+
+    try {
+      setCancelling(true);
+      setCancelError("");
+
+      // wait until the cancel request finishes
+      await dispatch(
+        cancelOrder({ orderId: order._id, cancelReason: reason })
+      ).unwrap();
+
+      // then fetch the latest orders
+      await dispatch(getOrders({ page: 1, search: "" })).unwrap();
+
+      setShowCancelModal(false);
+      setCancelReason("");
+    } catch (err) {
+      setCancelError(
+        typeof err === "string"
+          ? err
+          : "Failed to cancel order. Please try again."
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   // Loading state
   if (loading && (!orders || orders.length === 0)) {
     return (
@@ -187,6 +241,11 @@ const Order = () => {
   // ---- tracking ----
   const isCancelled = order.orderStatus === "cancelled";
 
+  // cancel button is hidden once the order is out for delivery, delivered or cancelled
+  const canCancel = !["out_for_delivery", "delivered", "cancelled"].includes(
+    order.orderStatus
+  );
+
   // date for each stage (confirmed falls back to the order date)
   const trackDates: Record<(typeof TRACK_STEPS)[number]["key"], string | null> = {
     confirmed:
@@ -239,12 +298,26 @@ const Order = () => {
             </p>
           </div>
 
-          <span
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold w-fit ${status.style}`}
-          >
-            {status.icon}
-            {status.label}
-          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold w-fit ${status.style}`}
+            >
+              {status.icon}
+              {status.label}
+            </span>
+
+            {/* Cancel button (hidden when out for delivery / delivered / cancelled) */}
+            {canCancel && (
+              <button
+                type="button"
+                onClick={openCancelModal}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-white text-red-600 text-sm font-semibold hover:bg-red-50 transition"
+              >
+                <XCircle size={16} />
+                Cancel order
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Full-width layout */}
@@ -646,6 +719,89 @@ const Order = () => {
           </div>
         </div>
       </div>
+
+      {/* Cancel order modal */}
+      {showCancelModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          onClick={closeCancelModal}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                <XCircle className="text-red-500" size={20} />
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900">
+                  Cancel this order?
+                </h3>
+
+                <p className="text-xs text-gray-500">
+                  Order #{order._id.slice(-8).toUpperCase()}
+                </p>
+              </div>
+            </div>
+
+            <label
+              htmlFor="cancelReason"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Reason for cancellation
+            </label>
+
+            <textarea
+              id="cancelReason"
+              rows={4}
+              maxLength={500}
+              value={cancelReason}
+              onChange={(e) => {
+                setCancelReason(e.target.value);
+                if (cancelError) setCancelError("");
+              }}
+              disabled={cancelling}
+              placeholder="Tell us why you want to cancel this order"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-gray-50 resize-none"
+            />
+
+            <div className="flex justify-between mt-1">
+              <p className="text-xs text-red-500 min-h-[1rem]">
+                {cancelError}
+              </p>
+
+              <p className="text-xs text-gray-400">
+                {cancelReason.length}/500
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                type="button"
+                onClick={closeCancelModal}
+                disabled={cancelling}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Keep order
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancelOrder}
+                disabled={cancelling || !cancelReason.trim()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cancelling && (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                )}
+                {cancelling ? "Cancelling..." : "Confirm cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

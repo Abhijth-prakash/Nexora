@@ -235,6 +235,24 @@ static updateOrderStatus = BaseController.asyncHandler(
   }
 );
 
+
+//cancel order
+static cancelOrder = BaseController.asyncHandler(
+  async (req, res) => {
+    const { id } = req.params;
+    const { cancelReason } = req.body;
+    const user = req.userId;
+
+    const order = await OrderService.cancelOrder(user, {
+      orderId: id,
+      cancelReason,
+    });
+
+    BaseController.logAction(`cancelled order ${id}`);
+
+    return this.sendSuccessResponse(res, "order cancelled successfully", null, 200);
+  }
+);
 }
 
 

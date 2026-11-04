@@ -22,6 +22,11 @@ import {
   Hash,
 } from "lucide-react";
 
+type AdminOrder = Baseorder & {
+  cancelReason?: string | null;
+  cancelledBy?: "user" | "admin" | "system" | null;
+};
+
 type OrderItem = Baseorder["items"][number];
 
 const formatPrice = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -143,7 +148,7 @@ const Order = () => {
     }
   }, [dispatch]);
 
-  const order = orders?.find((o) => o._id === id);
+  const order = orders?.find((o) => o._id === id) as AdminOrder | undefined;
 
   const renderBody = () => {
     if (loading && !order) {
@@ -437,16 +442,52 @@ const Order = () => {
                 {isCancelled && (
                   <li className="relative flex gap-4">
                     <span className="relative z-10 mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 border-red-500 bg-red-500" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-red-600">
-                        Cancelled
-                        <span className="ml-2 text-xs font-normal text-gray-400">
-                          {formatTrackDate(order.updatedAt)}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-red-600">
+                          Order cancelled
+                        </p>
+                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600 ring-1 ring-inset ring-red-100">
+                          Cancelled
                         </span>
-                      </p>
+                      </div>
+
                       <p className="mt-1 text-xs text-gray-500">
-                        This order was cancelled.
+                        {order.updatedAt
+                          ? `Cancelled on ${formatTrackDate(order.updatedAt)}`
+                          : "This order was cancelled."}
                       </p>
+
+                      {order.cancelledBy && (
+                        <p className="mt-1.5 text-xs text-gray-500">
+                          Cancelled by{" "}
+                          <span className="font-semibold capitalize text-gray-700">
+                            {order.cancelledBy}
+                          </span>
+                        </p>
+                      )}
+
+                      <div className="mt-4 overflow-hidden rounded-xl border border-red-200 bg-red-50/70">
+                        <div className="flex items-center gap-2 border-b border-red-100 px-4 py-3">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-red-500 shadow-sm ring-1 ring-red-100">
+                            <XCircle size={15} />
+                          </span>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-red-500">
+                              Cancellation details
+                            </p>
+                            <p className="text-xs font-semibold text-red-800">
+                              Reason for cancellation
+                            </p>
+                          </div>
+                        </div>
+                        <div className="px-4 py-3.5">
+                          <p className="whitespace-pre-wrap break-words text-sm leading-6 text-gray-700">
+                            {order.cancelReason?.trim() ||
+                              "No cancellation reason was provided."}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </li>
                 )}

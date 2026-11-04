@@ -64,7 +64,7 @@ function App() {
           <Route path="/users/orders/:orderId" element={<Order />} />
 
            {/* payment */}
-           <Route element={<ProtectedRoutes />}>
+           <Route element={<PaymentRoutes />}>
           <Route path="/users/payment" element={<Payment />} />
           <Route path="/users/payment/sucess" element={<OrderSuccess />} />
           </Route>

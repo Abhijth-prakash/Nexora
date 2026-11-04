@@ -271,6 +271,35 @@ export const getOrders = createAsyncThunk(
   }
 );
 
+
+//cancelOrder
+export const cancelOrder = createAsyncThunk(
+  "order/cancelOrder",
+
+  async (
+    { orderId, cancelReason }: { orderId: string; cancelReason: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.cancelOrder(orderId, cancelReason);
+
+      return response.data;
+
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to cancel order. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to cancel order. Please try again."
+      );
+    }
+  }
+);
+
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,

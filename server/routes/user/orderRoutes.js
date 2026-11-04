@@ -10,6 +10,7 @@ router.post("/order/stockvalidation", OrderController.StockValidation);
 router.get("/order/orderSummary", OrderController.orderSummary);
 router.post("/order/GenerateOrder", OrderController.GenerateOrder);
 router.get("/order", OrderController.getOrders);
+router.patch("/order/:id/cancel", OrderController.cancelOrder);
 
 //payment
 router.post('/order/payment/razorpay',OrderController.razorPaymentController)
