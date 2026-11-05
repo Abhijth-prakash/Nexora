@@ -226,6 +226,23 @@ updateOrderStatus: async (
   );
   return response.data;
 },
+updateReturnStatus: async (
+  returnId: string,
+  status: string,
+  adminNote?: string,
+  rejectionReason?: string
+): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.post<ApiResponse<null>>(
+    `/admin/return/${returnId}/status`,
+    {
+      status,
+      adminNote,
+      rejectionReason,
+    }
+  );
+
+  return response.data;
+},
 }
 
 

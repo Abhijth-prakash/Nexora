@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { getOrders, cancelOrder } from "../../redux/features/orderSlice";
+import {
+  getOrders,
+  cancelOrder,
+  generateReturn,
+} from "../../redux/features/orderSlice";
 import { useParams, Link } from "react-router-dom";
 import {
   Package,
@@ -15,6 +19,7 @@ import {
   Receipt,
   ShoppingBag,
   Truck,
+  RotateCcw,
 } from "lucide-react";
 
 // the 4 main tracking stages, in order
@@ -45,6 +50,18 @@ const TRACK_STEPS = [
   },
 ] as const;
 
+const RETURN_REASONS = [
+  { value: "damaged", label: "Damaged" },
+  { value: "wrong_item", label: "Wrong item" },
+  { value: "defective", label: "Defective" },
+  { value: "not_as_described", label: "Not as described" },
+  { value: "size_issue", label: "Size issue" },
+  { value: "changed_mind", label: "Changed my mind" },
+  { value: "other", label: "Other" },
+];
+
+const RETURN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 const formatTrackDate = (date: string) =>
   new Date(date).toLocaleDateString("en-IN", {
     weekday: "short",
@@ -68,9 +85,17 @@ const Order = () => {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
+  // ---- return order state ----
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnDescription, setReturnDescription] = useState("");
+  const [returning, setReturning] = useState(false);
+  const [returnError, setReturnError] = useState("");
+  const [returnSent, setReturnSent] = useState(false);
+
   useEffect(() => {
     if (!orders || orders.length === 0) {
-      dispatch(getOrders({page:1,search:""}));
+      dispatch(getOrders({ page: 1, search: "" }));
     }
   }, [dispatch, orders]);
 
@@ -181,15 +206,70 @@ const Order = () => {
     }
   };
 
+  // ---- return handlers ----
+  const openReturnModal = () => {
+    setReturnReason("");
+    setReturnDescription("");
+    setReturnError("");
+    setShowReturnModal(true);
+  };
+
+  // only called from the "Close" button, never from clicking outside
+  const closeReturnModal = () => {
+    if (returning) return; // don't close while the request is running
+    setShowReturnModal(false);
+    setReturnError("");
+  };
+
+  const handleReturnOrder = async () => {
+    if (!order) return;
+
+    const description = returnDescription.trim();
+
+    if (!returnReason) {
+      setReturnError("Please select a reason for returning.");
+      return;
+    }
+
+    if (!description) {
+      setReturnError("Please describe the issue.");
+      return;
+    }
+
+    try {
+      setReturning(true);
+      setReturnError("");
+
+      await dispatch(
+        generateReturn({
+          orderId: order._id,
+          payload: { reasonForreturning: returnReason, description },
+        })
+      ).unwrap();
+
+      setReturnSent(true);
+      setShowReturnModal(false);
+
+      // fetch the latest orders
+      await dispatch(getOrders({ page: 1, search: "" })).unwrap();
+    } catch (err) {
+      setReturnError(
+        typeof err === "string"
+          ? err
+          : "Failed to send return request. Please try again."
+      );
+    } finally {
+      setReturning(false);
+    }
+  };
+
   // Loading state
   if (loading && (!orders || orders.length === 0)) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
           <div className="w-9 h-9 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">
-            Loading order details...
-          </p>
+          <p className="text-sm text-gray-500">Loading order details...</p>
         </div>
       </div>
     );
@@ -202,7 +282,7 @@ const Order = () => {
         <p className="text-red-500">{ordererrors}</p>
 
         <button
-          onClick={() => dispatch(getOrders({page:1,search:""}))}
+          onClick={() => dispatch(getOrders({ page: 1, search: "" }))}
           className="px-5 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
         >
           Try again
@@ -217,9 +297,7 @@ const Order = () => {
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 gap-4">
         <Package size={48} className="text-gray-300" />
 
-        <h2 className="text-xl font-semibold text-gray-800">
-          Order not found
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800">Order not found</h2>
 
         <p className="text-sm text-gray-500">
           We couldn't find an order with this ID.
@@ -241,19 +319,35 @@ const Order = () => {
   // ---- tracking ----
   const isCancelled = order.orderStatus === "cancelled";
 
-  // cancel button is hidden once the order is out for delivery, delivered or cancelled
-  const canCancel = !["out_for_delivery", "delivered", "cancelled"].includes(
-    order.orderStatus
-  );
+  // cancel button is hidden once the order is out for delivery, delivered, cancelled or in return
+  const canCancel = ![
+    "out_for_delivery",
+    "delivered",
+    "cancelled",
+    "return_requested",
+    "returned",
+  ].includes(order.orderStatus);
+
+  // ---- return flags ----
+  const returnRequested =
+    returnSent || order.orderStatus === "return_requested";
+
+  const deliveredAt = order.trackingDates?.delivered;
+  const withinReturnWindow =
+    !!deliveredAt &&
+    Date.now() - new Date(deliveredAt).getTime() <= RETURN_WINDOW_MS;
+
+  const canReturn = order.orderStatus === "delivered" && withinReturnWindow;
 
   // date for each stage (confirmed falls back to the order date)
-  const trackDates: Record<(typeof TRACK_STEPS)[number]["key"], string | null> = {
-    confirmed:
-      order.trackingDates?.confirmed || order.orderDate || order.createdAt,
-    shipped: order.trackingDates?.shipped ?? null,
-    outForDelivery: order.trackingDates?.outForDelivery ?? null,
-    delivered: order.trackingDates?.delivered ?? null,
-  };
+  const trackDates: Record<(typeof TRACK_STEPS)[number]["key"], string | null> =
+    {
+      confirmed:
+        order.trackingDates?.confirmed || order.orderDate || order.createdAt,
+      shipped: order.trackingDates?.shipped ?? null,
+      outForDelivery: order.trackingDates?.outForDelivery ?? null,
+      delivered: order.trackingDates?.delivered ?? null,
+    };
 
   // index of the last stage the order has reached
   let reachedIndex = TRACK_STEPS.findIndex(
@@ -268,10 +362,14 @@ const Order = () => {
   }
   if (reachedIndex < 0) reachedIndex = 0;
 
+  // return requested / returned orders were already delivered
+  if (["return_requested", "returned"].includes(order.orderStatus)) {
+    reachedIndex = TRACK_STEPS.length - 1;
+  }
+
   return (
     <div className="min-h-screen w-full bg-gray-50 px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
       <div className="w-full max-w-none">
-
         {/* Back navigation */}
         <Link
           to="/users/orders"
@@ -284,17 +382,14 @@ const Order = () => {
         {/* Order header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <p className="text-sm text-gray-500 mb-1">
-              Order details
-            </p>
+            <p className="text-sm text-gray-500 mb-1">Order details</p>
 
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               Order #{order._id.slice(-8).toUpperCase()}
             </h1>
 
             <p className="text-sm text-gray-500 mt-2">
-              Placed on{" "}
-              {formatDate(order.orderDate || order.createdAt)}
+              Placed on {formatDate(order.orderDate || order.createdAt)}
             </p>
           </div>
 
@@ -317,15 +412,49 @@ const Order = () => {
                 Cancel order
               </button>
             )}
+
+            {/* Return button (delivered within 7 days, disabled once requested) */}
+            {(canReturn || returnRequested) && (
+              <button
+                type="button"
+                onClick={openReturnModal}
+                disabled={returnRequested}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-white text-orange-600 text-sm font-semibold hover:bg-orange-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RotateCcw size={16} />
+                {returnRequested ? "Return requested" : "Return order"}
+              </button>
+            )}
           </div>
         </div>
 
+        {/* Return request message */}
+        {returnRequested && (
+          <div className="mb-6 flex items-start gap-4 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-5 shadow-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle2 className="text-emerald-600" size={24} />
+            </div>
+
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-emerald-900">
+                Return request submitted!
+              </h3>
+              <p className="mt-1 text-sm leading-relaxed text-emerald-800">
+                Your return request has been received successfully. It is now
+                waiting for approval. We'll update you once it's reviewed.
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                <Clock size={13} />
+                Awaiting approval
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Full-width layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
-
             {/* Ordered products */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-7">
               <div className="flex items-center gap-3 mb-6">
@@ -334,9 +463,7 @@ const Order = () => {
                 </div>
 
                 <div>
-                  <h2 className="font-semibold text-gray-900">
-                    Ordered items
-                  </h2>
+                  <h2 className="font-semibold text-gray-900">Ordered items</h2>
 
                   <p className="text-xs text-gray-500">
                     {order.items.length} item(s) in this order
@@ -347,9 +474,7 @@ const Order = () => {
               <div className="divide-y divide-gray-100">
                 {order.items.map((item, index) => {
                   const product =
-                    typeof item.product === "string"
-                      ? null
-                      : item.product;
+                    typeof item.product === "string" ? null : item.product;
 
                   const productId =
                     typeof item.product === "string"
@@ -362,7 +487,6 @@ const Order = () => {
                       className="py-6 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
                     >
                       <div className="flex items-center gap-5 min-w-0">
-
                         {/* Clickable product image */}
                         <Link
                           to={productId ? `/product/${productId}` : "#"}
@@ -375,10 +499,7 @@ const Order = () => {
                               className="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
-                            <Package
-                              size={36}
-                              className="text-gray-300"
-                            />
+                            <Package size={36} className="text-gray-300" />
                           )}
                         </Link>
 
@@ -409,9 +530,7 @@ const Order = () => {
 
                       {/* Item total */}
                       <div className="sm:text-right pl-0 sm:pl-4">
-                        <p className="text-xs text-gray-400 mb-1">
-                          Item total
-                        </p>
+                        <p className="text-xs text-gray-400 mb-1">Item total</p>
 
                         <p className="font-semibold text-lg text-gray-900 whitespace-nowrap">
                           {formatPrice(item.price * item.quantity)}
@@ -453,6 +572,10 @@ const Order = () => {
                 >
                   {isCancelled
                     ? "Cancelled"
+                    : order.orderStatus === "return_requested"
+                    ? "Return requested"
+                    : order.orderStatus === "returned"
+                    ? "Returned"
                     : TRACK_STEPS[reachedIndex].label}
                 </span>
               </div>
@@ -547,9 +670,7 @@ const Order = () => {
                     Delivery address
                   </h2>
 
-                  <p className="text-xs text-gray-500">
-                    Shipping information
-                  </p>
+                  <p className="text-xs text-gray-500">Shipping information</p>
                 </div>
               </div>
 
@@ -569,9 +690,7 @@ const Order = () => {
                     {order.address.country} - {order.address.zipCode}
                   </p>
 
-                  <p className="pt-2">
-                    Phone: {order.address.phone}
-                  </p>
+                  <p className="pt-2">Phone: {order.address.phone}</p>
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">
@@ -583,22 +702,17 @@ const Order = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-
             {/* Payment details */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
               <div className="flex items-center gap-3 mb-5">
                 <CreditCard className="text-orange-500" size={20} />
 
-                <h2 className="font-semibold text-gray-900">
-                  Payment details
-                </h2>
+                <h2 className="font-semibold text-gray-900">Payment details</h2>
               </div>
 
               <div className="space-y-4 text-sm">
                 <div className="flex justify-between gap-3">
-                  <span className="text-gray-500">
-                    Payment method
-                  </span>
+                  <span className="text-gray-500">Payment method</span>
 
                   <span className="font-medium text-gray-900 capitalize">
                     {order.paymentMethod || "N/A"}
@@ -606,9 +720,7 @@ const Order = () => {
                 </div>
 
                 <div className="flex justify-between gap-3">
-                  <span className="text-gray-500">
-                    Payment status
-                  </span>
+                  <span className="text-gray-500">Payment status</span>
 
                   <span className="font-medium text-gray-900 capitalize">
                     {order.paymentStatus}
@@ -634,9 +746,7 @@ const Order = () => {
               <div className="flex items-center gap-3 mb-5">
                 <Receipt className="text-orange-500" size={20} />
 
-                <h2 className="font-semibold text-gray-900">
-                  Order summary
-                </h2>
+                <h2 className="font-semibold text-gray-900">Order summary</h2>
               </div>
 
               <div className="space-y-4 text-sm">
@@ -683,10 +793,7 @@ const Order = () => {
 
             {/* Order date */}
             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 flex items-start gap-3">
-              <CalendarDays
-                className="text-orange-500 mt-0.5"
-                size={20}
-              />
+              <CalendarDays className="text-orange-500 mt-0.5" size={20} />
 
               <div>
                 <p className="text-sm font-semibold text-gray-900">
@@ -701,10 +808,7 @@ const Order = () => {
 
             {/* Delivery information */}
             <div className="bg-white border border-gray-100 rounded-2xl p-5 flex items-start gap-3">
-              <Truck
-                className="text-orange-500 mt-0.5"
-                size={20}
-              />
+              <Truck className="text-orange-500 mt-0.5" size={20} />
 
               <div>
                 <p className="text-sm font-semibold text-gray-900">
@@ -723,12 +827,18 @@ const Order = () => {
       {/* Cancel order modal */}
       {showCancelModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          onClick={closeCancelModal}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          role="presentation"
         >
           <div
             className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6"
             onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-order-title"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
@@ -736,7 +846,10 @@ const Order = () => {
               </div>
 
               <div>
-                <h3 className="font-semibold text-gray-900">
+                <h3
+                  id="cancel-order-title"
+                  className="font-semibold text-gray-900"
+                >
                   Cancel this order?
                 </h3>
 
@@ -768,13 +881,9 @@ const Order = () => {
             />
 
             <div className="flex justify-between mt-1">
-              <p className="text-xs text-red-500 min-h-[1rem]">
-                {cancelError}
-              </p>
+              <p className="text-xs text-red-500 min-h-[1rem]">{cancelError}</p>
 
-              <p className="text-xs text-gray-400">
-                {cancelReason.length}/500
-              </p>
+              <p className="text-xs text-gray-400">{cancelReason.length}/500</p>
             </div>
 
             <div className="flex justify-end gap-3 mt-5">
@@ -797,6 +906,123 @@ const Order = () => {
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
                 {cancelling ? "Cancelling..." : "Confirm cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Return order modal (stays open when clicking outside; use the Close button) */}
+      {showReturnModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="return-order-title"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                <RotateCcw className="text-orange-500" size={20} />
+              </div>
+
+              <div>
+                <h3
+                  id="return-order-title"
+                  className="font-semibold text-gray-900"
+                >
+                  Return this order
+                </h3>
+
+                <p className="text-xs text-gray-500">
+                  Order #{order._id.slice(-8).toUpperCase()}
+                </p>
+              </div>
+            </div>
+
+            <label
+              htmlFor="returnReason"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Reason for returning
+            </label>
+
+            <select
+              id="returnReason"
+              value={returnReason}
+              onChange={(e) => {
+                setReturnReason(e.target.value);
+                if (returnError) setReturnError("");
+              }}
+              disabled={returning}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-gray-50"
+            >
+              <option value="">Select a reason</option>
+              {RETURN_REASONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+
+            <label
+              htmlFor="returnDescription"
+              className="block text-sm font-medium text-gray-700 mt-4 mb-2"
+            >
+              Description
+            </label>
+
+            <textarea
+              id="returnDescription"
+              rows={4}
+              maxLength={1000}
+              value={returnDescription}
+              onChange={(e) => {
+                setReturnDescription(e.target.value);
+                if (returnError) setReturnError("");
+              }}
+              disabled={returning}
+              placeholder="Describe the issue"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-gray-50 resize-none"
+            />
+
+            <div className="flex justify-between mt-1">
+              <p className="text-xs text-red-500 min-h-[1rem]">{returnError}</p>
+
+              <p className="text-xs text-gray-400">
+                {returnDescription.length}/1000
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                type="button"
+                onClick={closeReturnModal}
+                disabled={returning}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReturnOrder}
+                disabled={
+                  returning || !returnReason || !returnDescription.trim()
+                }
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {returning && (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                )}
+                {returning ? "Sending..." : "Submit return"}
               </button>
             </div>
           </div>

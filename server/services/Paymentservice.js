@@ -9,7 +9,7 @@ const Mail = require('../utils/mail');
 const StockReservation = require("../models/StockReservation");
 const CartService = require("./cartService");
 const {CouponRedemption}= require('../models/Coupon')
-const Refund = require('../models/Refund') 
+const Refund = require('../models/Return') 
 const mongoose = require('mongoose')
 const Wallet = require('../models/Wallet')
 
@@ -376,26 +376,7 @@ static async verifyCodOtp(userId, data) {
   }
 }
 
-static async Refund(data){
-  try{
-    const {user,orderId} = data
 
-        const order = await Order.findOne({
-      _id: orderId,
-      user: userId,
-    });
-
-    if (!order) {
-      throw new NotFoundError("Order not found");
-    }
-
-
-  }catch(error){
-    logger.error('failed to process refund')
-    throw error
-
-  }
-}
 
 //paybywallet
 static async PayByWallet(user, data) {
@@ -498,6 +479,10 @@ static async PayByWallet(user, data) {
     await session.endSession();
   }
 }
+
+
+
+
 
 
 }

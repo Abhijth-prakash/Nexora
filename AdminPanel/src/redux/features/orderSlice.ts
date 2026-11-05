@@ -97,6 +97,49 @@ export const updateOrderStatus = createAsyncThunk(
 )
 
 
+
+export const updateReturnStatus = createAsyncThunk(
+  "admin/updateReturnStatus",
+
+  async (
+    {
+      returnId,
+      status,
+      adminNote,
+      rejectionReason,
+    }: {
+      returnId: string;
+      status: string;
+      adminNote?: string;
+      rejectionReason?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.updateReturnStatus(
+        returnId,
+        status,
+        adminNote,
+        rejectionReason
+      );
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to update return status. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to update return status. Please try again."
+      );
+    }
+  }
+);
+
+
 // ================= SLICE =================
 
 const orderSlice = createSlice({

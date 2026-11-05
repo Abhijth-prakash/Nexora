@@ -1,4 +1,4 @@
-import  type { BaseUser,BaseAddress, Basecategory, BaseProduct,BaseCartItem, BaseCoupon, Baseorder, BaseWallet, WalletTransaction, WalletPagination } from "./baseTypes"
+import  type { BaseUser,BaseAddress, Basecategory, BaseProduct,BaseCartItem, BaseCoupon, Baseorder, BaseWallet, WalletTransaction, WalletPagination, BaseReturn } from "./baseTypes"
 
 export type ApiResponse<T> = {
   success: boolean
@@ -165,3 +165,5 @@ export type getWalletResponse = BaseWallet & {
   transactions: WalletTransaction[];
   pagination: WalletPagination;
 };
+
+export type GenerateReturnResponse = BaseReturn

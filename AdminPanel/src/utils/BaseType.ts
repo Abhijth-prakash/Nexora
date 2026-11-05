@@ -110,19 +110,27 @@ export type Baseorder = {
 
   coupon: string | BaseCoupon | null;
 
-  orderStatus:
-    | "confirmed"
-    | "shipped"
-    | "out_for_delivery"
-    | "delivered"
-    | "cancelled";
+ orderStatus:
+  | "confirmed"
+  | "shipped"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled"
+  | "return_requested"
+  | "returned";
+
+  return: string | BaseReturn | null;
+
 
   trackingDates: {
-    confirmed: string | null;
-    shipped: string | null;
-    outForDelivery: string | null;
-    delivered: string | null;
-  };
+  confirmed: string | null;
+  shipped: string | null;
+  outForDelivery: string | null;
+  delivered: string | null;
+  cancelled: string | null;
+  returnRequested: string | null;
+  returned: string | null;
+};
 
   paymentStatus: "pending" | "paid" | "failed" | "refunded" | "cod";
   paymentMethod?: "razorpay" | "cod";
@@ -156,3 +164,56 @@ export type BaseAddress = {
     isDefault:boolean
 
 }
+
+
+export type BaseReturn = {
+  _id: string;
+
+  order: string | Baseorder;
+  user: string | BaseUser;
+
+  reason:
+    | "damaged"
+    | "wrong_item"
+    | "defective"
+    | "not_as_described"
+    | "size_issue"
+    | "changed_mind"
+    | "other";
+
+  description: string | null;
+
+  status:
+    | "requested"
+    | "approved"
+    | "rejected"
+    | "pickup_scheduled"
+    | "picked_up"
+    | "received"
+    | "refunded"
+    | "cancelled";
+
+  adminNote: string | null;
+  rejectionReason: string | null;
+
+  refund: {
+    amount: number;
+    status: "pending" | "processing" | "completed" | "failed";
+    method: "wallet";
+    refundedAt: string | null;
+  };
+
+  trackingDates: {
+    requested: string;
+    approved: string | null;
+    rejected: string | null;
+    pickedUp: string | null;
+    received: string | null;
+    refunded: string | null;
+    cancelled: string | null;
+  };
+
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+};

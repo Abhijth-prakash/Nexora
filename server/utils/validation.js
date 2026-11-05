@@ -382,6 +382,38 @@ const couponValidation = Joi.object({
 });
 
 
+const RETURN_REASONS = [
+  "damaged",
+  "wrong_item",
+  "defective",
+  "not_as_described",
+  "size_issue",
+  "changed_mind",
+  "other",
+];
+
+const ReturnValidation = Joi.object({
+  orderId: Joi.string()
+    .trim()
+    .pattern(/^[0-9a-fA-F]{24}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "orderId must be a valid ID",
+    }),
+
+  reasonForreturning: Joi.string()
+    .valid(...RETURN_REASONS)
+    .required(),
+
+  description: Joi.string()
+    .trim()
+    .max(1000)
+    .allow("", null)
+    .optional()
+    .default(null),
+});
+
+
 
 module.exports = {
   registerValidate,
@@ -397,5 +429,6 @@ module.exports = {
   ProductValidation,
   UpdateProductValidation,
   VariantValidation,
-  couponValidation
+  couponValidation,
+  ReturnValidation
 };

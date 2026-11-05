@@ -322,6 +322,36 @@ export const payByWallet = createAsyncThunk(
   }
 );
 
+export const generateReturn = createAsyncThunk(
+  "order/generateReturn",
+
+  async (
+    {
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: { reasonForreturning: string; description?: string };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.generateReturn(orderId, payload);
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Return request failed. Please try again."
+        );
+      }
+
+      return rejectWithValue("Return request failed. Please try again.");
+    }
+  }
+);
+
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,

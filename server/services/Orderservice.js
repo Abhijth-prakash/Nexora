@@ -561,6 +561,7 @@ static async getOrdersAdmin({ page, limit, search, status, payment }) {
       .populate("address")
       .populate("coupon")
       .populate("user")
+      .populate('return')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);

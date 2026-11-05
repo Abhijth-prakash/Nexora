@@ -15,6 +15,7 @@ const category = require('./admin/Category')
 const products = require('./admin/Products')
 const coupons = require('./admin/Coupons')
 const orders = require('./admin/Orders')
+const returns = require('./admin/Return')
 
 const test = require('./admin/Test')
 
@@ -40,6 +41,7 @@ const setupRoutes = (app) => {
   app.use("/api/admin",products)
   app.use("/api/admin",coupons)
   app.use("/api/admin",orders)
+  app.use("/api/admin",returns)
   
  
 };

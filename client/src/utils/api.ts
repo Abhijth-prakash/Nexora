@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -308,6 +308,22 @@ payByWallet: async (
   return response.data;
 },
 
+generateReturn: async (
+  orderId: string,
+  payload: {
+    reasonForreturning: string;
+    description?: string;
+  }
+): Promise<ApiResponse<GenerateReturnResponse>> => {
+  const response = await ClientApi.post<
+    ApiResponse<GenerateReturnResponse>
+  >("/admin/return", {
+    orderId,
+    ...payload,
+  });
+
+  return response.data;
+},
 
 };
 

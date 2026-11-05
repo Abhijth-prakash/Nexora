@@ -70,7 +70,7 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["razorpay", "cod"],
+      enum: ["razorpay", "cod","wallet"],
     },
 
     razorpayOrderId: {
@@ -116,6 +116,8 @@ const orderSchema = new mongoose.Schema(
         "out_for_delivery",
         "delivered",
         "cancelled",
+        "return_requested",
+        "returned",
       ],
       default: "confirmed",
     },
@@ -133,12 +135,20 @@ const orderSchema = new mongoose.Schema(
       default: null,
     },
 
+    return: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Return",
+      default: null,
+    },
+
     trackingDates: {
       confirmed: { type: Date, default: null },
       shipped: { type: Date, default: null },
       outForDelivery: { type: Date, default: null },
       delivered: { type: Date, default: null },
       cancelled: { type: Date, default: null },
+      returnRequested: { type: Date, default: null },
+      returned: { type: Date, default: null },
     },
   },
   {
@@ -147,7 +157,7 @@ const orderSchema = new mongoose.Schema(
 );
 
 // Indexes
-orderSchema.index({ createdAt: 1 });
+orderSchema.index({ createdAt: -1 });
 
 // Get populated order
 orderSchema.statics.getCart = function (filter = {}) {
@@ -155,7 +165,8 @@ orderSchema.statics.getCart = function (filter = {}) {
     .populate("user")
     .populate("items.product")
     .populate("address")
-    .populate("coupon");
+    .populate("coupon")
+    .populate("return");
 };
 
 const Order = mongoose.model("Order", orderSchema);
