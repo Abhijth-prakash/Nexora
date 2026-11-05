@@ -167,3 +167,4 @@ export type getWalletResponse = BaseWallet & {
 };
 
 export type GenerateReturnResponse = BaseReturn
+export type getAllreturnResponse = BaseReturn[]

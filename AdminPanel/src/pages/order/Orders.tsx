@@ -5,7 +5,6 @@ import {
   getOrders,
   setPage,
   updateOrderStatus,
-  updateReturnStatus,
 } from "../../redux/features/orderSlice";
  // using react-toastify? -> import { toast } from "react-toastify";
 import AdminSidebar from "../../components/Adminsidebar";
@@ -75,7 +74,6 @@ const Orders = () => {
   const [status, setStatus] = useState("");
   const [payment, setPayment] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [returnUpdatingId, setReturnUpdatingId] = useState<string | null>(null);
 
   // Fetch from the backend whenever page / search / filters change (debounced)
   useEffect(() => {
@@ -138,57 +136,6 @@ const Orders = () => {
       );
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  const handleReturnStatusChange = async (
-    returnId: string,
-    newStatus: string
-  ) => {
-    if (!returnId || !newStatus) {
-      toast.error("Invalid return request");
-      return;
-    }
-
-    let rejectionReason: string | undefined;
-
-    if (newStatus === "rejected") {
-      const reason = window.prompt("Enter the rejection reason:");
-
-      if (reason === null) return;
-
-      if (!reason.trim()) {
-        toast.error("Rejection reason is required");
-        return;
-      }
-
-      rejectionReason = reason.trim();
-    }
-
-    setReturnUpdatingId(returnId);
-
-    try {
-      await dispatch(
-        updateReturnStatus({
-          returnId,
-          status: newStatus,
-          rejectionReason,
-        })
-      ).unwrap();
-
-      toast.success(
-        `Return status updated to ${newStatus.replaceAll("_", " ")}`
-      );
-
-      dispatch(getOrders({ page, search, status, payment }));
-    } catch (err) {
-      toast.error(
-        typeof err === "string"
-          ? err
-          : "Failed to update return status"
-      );
-    } finally {
-      setReturnUpdatingId(null);
     }
   };
 
@@ -364,28 +311,6 @@ const Orders = () => {
                       const locked =
                         orderStatus === "delivered" ||
                         orderStatus === "cancelled";
-                      const returnRequest = order.return;
-                      const returnId = returnRequest
-                        ? typeof returnRequest === "string"
-                          ? returnRequest
-                          : returnRequest._id
-                        : "";
-                      const currentReturnStatus =
-                        returnRequest && typeof returnRequest !== "string"
-                          ? returnRequest.status
-                          : "requested";
-                      const returnTransitions: Record<string, string[]> = {
-                        requested: ["approved", "rejected"],
-                        approved: ["pickup_scheduled", "picked_up"],
-                        pickup_scheduled: ["picked_up"],
-                        picked_up: ["received"],
-                        received: [],
-                        refunded: [],
-                        rejected: [],
-                        cancelled: [],
-                      };
-                      const nextReturnStatuses =
-                        returnTransitions[currentReturnStatus] || [];
 
                       return (
                         <tr
@@ -445,66 +370,13 @@ const Orders = () => {
                             </div>
                           </td>
 
-                          <td className="w-[340px] px-3 py-5">
-                            <div className="flex w-full items-center gap-3">
-                              <Link
-                                to={`/admin/orders/${order._id}`}
-                                className="text-xs font-bold text-[#ff5a1f] transition hover:underline"
-                              >
-                                View
-                              </Link>
-
-                              {order.return && (
-                                <div className="min-w-0 flex-1 rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50/90 via-white to-orange-50/40 p-3.5 shadow-sm">
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-orange-800">
-                                      Return request
-                                    </span>
-                                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-                                  </div>
-
-                                  <div className="mb-2.5">
-                                    <span className="inline-flex max-w-full items-center rounded-full border border-orange-200 bg-white px-2.5 py-1 text-[10px] font-bold capitalize text-orange-700 shadow-sm">
-                                      {currentReturnStatus.replaceAll("_", " ")}
-                                    </span>
-                                  </div>
-
-                                  <div className="relative">
-                                    <select
-                                      value={currentReturnStatus}
-                                      disabled={
-                                        nextReturnStatuses.length === 0 ||
-                                        returnUpdatingId === returnId
-                                      }
-                                      onChange={(e) =>
-                                        handleReturnStatusChange(
-                                          returnId,
-                                          e.target.value
-                                        )
-                                      }
-                                      className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-orange-200 bg-white pl-3 pr-9 text-xs font-bold text-gray-700 shadow-sm outline-none transition hover:border-[#ff5a1f] focus:border-[#ff5a1f] focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:shadow-none"
-                                    >
-                                      <option value={currentReturnStatus}>
-                                        {returnUpdatingId === returnId
-                                          ? "Updating..."
-                                          : nextReturnStatuses.length === 0
-                                            ? "No further actions"
-                                            : "Update return status"}
-                                      </option>
-                                      {nextReturnStatuses.map((nextStatus) => (
-                                        <option key={nextStatus} value={nextStatus}>
-                                          {nextStatus.replaceAll("_", " ")}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <ChevronDown
-                                      size={13}
-                                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                          <td className="px-3 py-5">
+                            <Link
+                              to={`/admin/orders/${order._id}`}
+                              className="text-xs font-bold text-[#ff5a1f] transition hover:underline"
+                            >
+                              View
+                            </Link>
                           </td>
                         </tr>
                       );

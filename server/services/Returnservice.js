@@ -598,6 +598,24 @@ class ReturnService {
       await session.endSession();
     }
   }
+
+
+
+  //get all returns
+ static async getAllReturns() {
+  try {
+    const returns = await Return.find()
+      .populate("user", "name email")
+      .populate("order")
+      .sort({ createdAt: -1 });
+
+    return returns;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
 }
 
 module.exports = ReturnService;

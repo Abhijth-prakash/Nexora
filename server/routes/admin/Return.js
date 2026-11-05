@@ -6,5 +6,6 @@ const ReturnController = require('../../controllers/Admin/ReturnController')
 
 router.post('/return',authenticate,ReturnController.generateReturn)
 router.post("/return/:returnId/status",authenticateAdmin,ReturnController.updateReturnStatus);
+router.get("/returns",authenticateAdmin,ReturnController.getAllReturns);
 
 module.exports = router

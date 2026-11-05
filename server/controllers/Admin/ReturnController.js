@@ -52,5 +52,21 @@ static updateReturnStatus = BaseController.asyncHandler(
     );
   }
 );
+
+
+//get all returns
+static getAllReturns = BaseController.asyncHandler(
+  async (req, res) => {
+    const returns = await ReturnService.getAllReturns();
+
+    return this.sendSuccessResponse(
+      res,
+      "Returns fetched successfully",
+      returns,
+      200
+    );
+  }
+);
+
 }
 module.exports = ReturnController

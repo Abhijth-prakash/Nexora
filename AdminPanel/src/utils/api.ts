@@ -2,7 +2,7 @@ import axios from "axios";
 import { BASE_URL } from '../config'
 import type { categoryData, CouponFormData, Email, LoginData,  Resetpassdata } from "./validation";
 import type { activeToggleresponse, AddCategoryResponse, addCouponResponse, AddProductResponse, addVarientResponse, ApiResponse,BlockUserresponse,deleteCategoryResponse,deleteSubCategoryResponse,deleteVarientResponse,Forgetpass,getallCategoryRespose,GetCategoryByidResponse,GetCategoryResponse,GetCouponsResponse,getOrderResponse,getProductbyidResponse,getProductsResponse,GetUsersResponse,hideCategoryResponse,LoginResponse, LogoutResponse, Resetpass, UnBlockUserresponse, unHideCategoryResponse, updateCategoryResponse, updateProductResponse, visibleResponse } from "./apiTypes";
-import type { BaseCoupon } from "./BaseType";
+import type { BaseCoupon, getAllreturnResponse } from "./BaseType";
 
 
 
@@ -240,6 +240,14 @@ updateReturnStatus: async (
       rejectionReason,
     }
   );
+
+  return response.data;
+},
+
+getAllReturns: async (): Promise<ApiResponse<getAllreturnResponse>> => {
+  const response = await ClientApi.get<
+    ApiResponse<getAllreturnResponse>
+  >("/admin/returns");
 
   return response.data;
 },

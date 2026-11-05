@@ -16,6 +16,8 @@ import Coupon from "./pages/coupon/Coupon"
 import CouponDetails from "./pages/coupon/CouponDetails"
 import Orders from "./pages/order/Orders"
 import Order from "./pages/order/Order"
+import OrderReturns from "./pages/order/OrderReturns"
+import RetunDetails from "./pages/order/RetunDetails"
 
 
 
@@ -50,6 +52,8 @@ function App() {
 
       <Route path="/admin/orders" element={<Orders></Orders>}></Route>
       <Route path="/admin/orders/:id" element={<Order></Order>}></Route>
+      <Route path="/admin/orders/returns" element={<OrderReturns></OrderReturns>}></Route>
+      <Route path="/admin/orders/returns/:id" element={<RetunDetails></RetunDetails>}></Route>
 
 
 

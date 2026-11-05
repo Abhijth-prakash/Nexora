@@ -217,3 +217,5 @@ export type BaseReturn = {
   updatedAt: string;
   __v: number;
 };
+
+export type getAllreturnResponse = BaseReturn[]

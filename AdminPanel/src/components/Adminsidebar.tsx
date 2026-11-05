@@ -174,6 +174,40 @@ const AdminSidebar = () => {
             <span>Orders</span>
           </Link>
 
+          {/* RETURNS */}
+          <Link
+            to="/admin/orders/returns"
+            className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 3v5h5"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 7v5l3 2"
+                />
+              </svg>
+            </div>
+
+            <span>Returns</span>
+          </Link>
+
           {/* COUPONS */}
           <Link
             to="/admin/coupon"

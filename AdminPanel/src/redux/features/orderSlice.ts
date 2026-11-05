@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { orderApi } from "../../utils/api";
-import type { Baseorder } from "../../utils/BaseType";
+import type { Baseorder, BaseReturn } from "../../utils/BaseType";
 
 export type OrderQuery = {
     page: number
@@ -27,6 +27,7 @@ export type OrderState = {
     totalOrders: number
     stats: OrderStats
     lastQuery: OrderQuery | null
+    returns:BaseReturn[]
 }
 
 const initialState: OrderState = {
@@ -37,7 +38,8 @@ const initialState: OrderState = {
     pages: null,
     totalOrders: 0,
     stats: { total: 0, confirmed: 0, shipped: 0, delivered: 0 },
-    lastQuery: null
+    lastQuery: null,
+    returns:[]
 }
 
 
@@ -140,6 +142,29 @@ export const updateReturnStatus = createAsyncThunk(
 );
 
 
+export const getAllReturns = createAsyncThunk(
+  "admin/getAllReturns",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.getAllReturns();
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to fetch returns. Please try again."
+        );
+      }
+
+      return rejectWithValue(
+        "Failed to fetch returns. Please try again."
+      );
+    }
+  }
+);
+
+
 // ================= SLICE =================
 
 const orderSlice = createSlice({
@@ -177,6 +202,23 @@ const orderSlice = createSlice({
         })
 
         .addCase(getOrders.rejected, (state, action) => {
+            state.loading = false
+            state.error = (action.payload as string) || "Failed to get orders"
+        })
+
+        //get all returns
+        .addCase(getAllReturns.pending, (state) => {
+            state.loading = true
+            state.error = null
+        })
+
+        .addCase(getAllReturns.fulfilled, (state, action) => {
+            state.loading = false
+            state.returns = action.payload
+           
+        })
+
+        .addCase(getAllReturns.rejected, (state, action) => {
             state.loading = false
             state.error = (action.payload as string) || "Failed to get orders"
         })

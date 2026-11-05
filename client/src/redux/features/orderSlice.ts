@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import type { PayloadAction } from "@reduxjs/toolkit"
 import { orderApi } from "../../utils/api"
 import axios from "axios"
-import type { BaseAddress, Baseorder } from "../../utils/baseTypes";
+import type { BaseAddress, Baseorder, BaseReturn } from "../../utils/baseTypes";
 
 
 export type orderType = {
@@ -30,6 +30,7 @@ export type orderType = {
   page:number
   pages:number|null
   totalOrders:number
+  returns:BaseReturn[]
 };
 
 
@@ -51,7 +52,8 @@ const initialState:orderType = {
   orders:[],
   page:1,
   pages:null,
-  totalOrders:0
+  totalOrders:0,
+  returns:[]
 }
 
 
