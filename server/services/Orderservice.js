@@ -499,6 +499,7 @@ static async getOrders(user, page = 1, search = "") {
         .populate("items.product")
         .populate("address")
         .populate("coupon")
+        .populate('return')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),

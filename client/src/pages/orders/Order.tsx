@@ -50,6 +50,15 @@ const TRACK_STEPS = [
   },
 ] as const;
 
+const RETURN_TRACK_STEPS = [
+  { key: "requested", label: "Return requested", note: "Your return request has been submitted." },
+  { key: "approved", label: "Return approved", note: "Your return request has been approved." },
+  { key: "pickup_scheduled", label: "Pickup scheduled", note: "Pickup is being arranged for your item." },
+  { key: "picked_up", label: "Item picked up", note: "Your returned item has been collected." },
+  { key: "received", label: "Return received", note: "Your returned item has been received and checked." },
+  { key: "refunded", label: "Refund completed", note: "Your refund has been credited to your wallet." },
+] as const;
+
 const RETURN_REASONS = [
   { value: "damaged", label: "Damaged" },
   { value: "wrong_item", label: "Wrong item" },
@@ -315,6 +324,8 @@ const Order = () => {
   }
 
   const status = getStatus(order.paymentStatus);
+  const returnRequest =
+    order.return && typeof order.return !== "string" ? order.return : null;
 
   // ---- tracking ----
   const isCancelled = order.orderStatus === "cancelled";
@@ -657,6 +668,132 @@ const Order = () => {
                 )}
               </ol>
             </section>
+
+            {/* RETURN TRACKING */}
+            {returnRequest && (
+              <section className="bg-white rounded-2xl border border-orange-100 shadow-sm p-5 sm:p-7">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                      <RotateCcw className="text-orange-500" size={20} />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-gray-900">Return tracking</h2>
+                      <p className="text-xs text-gray-500">Follow your return and refund progress</p>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                    returnRequest.status === "refunded"
+                      ? "bg-green-50 text-green-700"
+                      : returnRequest.status === "rejected" || returnRequest.status === "cancelled"
+                      ? "bg-red-50 text-red-600"
+                      : "bg-orange-50 text-orange-600"
+                  }`}>
+                    {returnRequest.status.replaceAll("_", " ")}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
+                    <p className="text-xs text-gray-500">Return reason</p>
+                    <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
+                      {returnRequest.reason.replaceAll("_", " ")}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
+                    <p className="text-xs text-gray-500">Refund amount</p>
+                    <p className="mt-1 text-sm font-semibold text-gray-900">
+                      {formatPrice(returnRequest.refund.amount)}
+                      <span className="ml-2 text-xs font-normal text-gray-500">· Wallet</span>
+                    </p>
+                  </div>
+                </div>
+
+                {returnRequest.description && (
+                  <p className="mb-5 rounded-xl bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-600">
+                    {returnRequest.description}
+                  </p>
+                )}
+
+                <ol className="ml-1">
+                  {RETURN_TRACK_STEPS.map((step, index) => {
+                    const dateKey = step.key === "pickup_scheduled"
+                      ? null
+                      : step.key === "picked_up"
+                      ? "pickedUp"
+                      : step.key;
+                    const date = dateKey
+                      ? returnRequest.trackingDates?.[dateKey as keyof typeof returnRequest.trackingDates]
+                      : null;
+                    const currentIndex = RETURN_TRACK_STEPS.findIndex(
+                      (item) => item.key === returnRequest.status
+                    );
+                    const done = index <= currentIndex || Boolean(date);
+
+                    return (
+                      <li key={step.key} className="relative flex gap-4 pb-6 last:pb-0">
+                        {index !== RETURN_TRACK_STEPS.length - 1 && (
+                          <span className={`absolute left-[7px] top-4 h-full w-0.5 ${
+                            done && index < currentIndex ? "bg-green-500" : "bg-gray-200"
+                          }`} />
+                        )}
+                        <span className={`relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
+                          done ? "border-green-500 bg-green-500" : "border-gray-300 bg-white"
+                        }`} />
+                        <div className="min-w-0">
+                          <p className={`text-sm font-semibold ${done ? "text-gray-900" : "text-gray-400"}`}>
+                            {step.label}
+                            {typeof date === "string" && date && (
+                              <span className="ml-2 text-xs font-normal text-gray-400">
+                                {formatTrackDate(date)}
+                              </span>
+                            )}
+                          </p>
+                          <p className={`mt-1 text-xs ${done ? "text-gray-500" : "text-gray-300"}`}>
+                            {done ? step.note : "Waiting"}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+
+                  {(returnRequest.status === "rejected" || returnRequest.status === "cancelled") && (
+                    <li className="flex gap-4">
+                      <span className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
+                        returnRequest.status === "rejected"
+                          ? "border-red-500 bg-red-500"
+                          : "border-gray-400 bg-gray-400"
+                      }`} />
+                      <div>
+                        <p className={`text-sm font-semibold ${
+                          returnRequest.status === "rejected" ? "text-red-600" : "text-gray-700"
+                        }`}>
+                          Return {returnRequest.status}
+                        </p>
+                        {returnRequest.rejectionReason && (
+                          <p className="mt-1 text-xs leading-5 text-gray-500">
+                            {returnRequest.rejectionReason}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  )}
+                </ol>
+
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                  <span className="text-xs font-medium text-gray-500">Refund status</span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                    returnRequest.refund.status === "completed"
+                      ? "bg-green-100 text-green-700"
+                      : returnRequest.refund.status === "failed"
+                      ? "bg-red-100 text-red-600"
+                      : "bg-amber-100 text-amber-700"
+                  }`}>
+                    {returnRequest.refund.status}
+                  </span>
+                </div>
+              </section>
+            )}
 
             {/* Delivery address */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-7">

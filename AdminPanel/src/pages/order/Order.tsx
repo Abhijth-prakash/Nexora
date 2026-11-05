@@ -619,11 +619,16 @@ const Order = () => {
                               returnRequest.status === "rejected" ? "text-red-600" : "text-gray-700"
                             }`}>
                               Return {returnRequest.status}
-                              {returnRequest.trackingDates?.[returnRequest.status] && (
-                                <span className="ml-2 text-xs font-normal text-gray-400">
-                                  {formatTrackDate(returnRequest.trackingDates[returnRequest.status])}
-                                </span>
-                              )}
+                              {(() => {
+                                const terminalDate =
+                                  returnRequest.trackingDates?.[returnRequest.status];
+
+                                return terminalDate ? (
+                                  <span className="ml-2 text-xs font-normal text-gray-400">
+                                    {formatTrackDate(terminalDate)}
+                                  </span>
+                                ) : null;
+                              })()}
                             </p>
                             {returnRequest.rejectionReason && (
                               <p className="mt-1 text-xs leading-5 text-gray-500">
