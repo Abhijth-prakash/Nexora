@@ -253,6 +253,31 @@ static cancelOrder = BaseController.asyncHandler(
     return this.sendSuccessResponse(res, "order cancelled successfully", null, 200);
   }
 );
+
+
+
+//cancel order
+static payByWallet = BaseController.asyncHandler(
+  async (req, res) => {
+    const { id } = req.params;
+    const user = req.userId;
+
+    const order = await PaymentService.PayByWallet(user, {
+      orderId: id,
+    });
+
+    BaseController.logAction(`paid order ${id} by wallet for user ${user}`);
+
+    return this.sendSuccessResponse(
+      res,
+      "order paid successfully",
+      order,
+      200
+    );
+  }
+);
+
+
 }
 
 

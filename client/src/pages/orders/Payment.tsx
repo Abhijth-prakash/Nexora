@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { createRazorpayment, sendCodOtp, verifyPayment } from "../../redux/features/orderSlice";
+import { createRazorpayment, sendCodOtp, verifyPayment, payByWallet } from "../../redux/features/orderSlice";
+import { markWalletStale } from "../../redux/features/walletSlice";
 import CodOtpModal from "../../components/CodOtpModal";
 import { toast } from "react-toastify";
 import OrderSuccess from "../../components/OrderSuccess";
 import { getCart } from "../../redux/features/cartSlice";
 
-
-
+// how long the success animation plays before moving to the success page
+const WALLET_SUCCESS_DELAY = 2500;
 
 interface RazorpaySuccessResponse {
   razorpay_payment_id: string;
@@ -29,8 +30,6 @@ interface RazorpayFailureResponse {
     };
   };
 }
-
-
 
 interface RazorpayOptions {
   key: string;
@@ -60,8 +59,6 @@ declare global {
 
 const Payment = () => {
 
-
-
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch()
@@ -72,13 +69,15 @@ const Payment = () => {
   const {amount,razorpayOrderId,currency,keyId ,orderId}= useAppSelector(state=> state.orderData)
   const [success,setSuccess] = useState(false)
   const [codLoading, setCodLoading] = useState(false)
+  const [walletStatus, setWalletStatus] = useState<"idle" | "loading" | "success">("idle")
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  
-
-
-  
-
-
+  // clear the pending redirect if the user leaves this page some other way
+  useEffect(() => {
+    return () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    };
+  }, []);
 
 
   //razor pay page open function
@@ -162,6 +161,36 @@ const handleRazorpay = async () => {
 };
 
   
+//pay with wallet
+const handleWallet = async () => {
+  if (!orderId) {
+    toast.error("Order ID is missing");
+    return;
+  }
+  if (walletStatus !== "idle") return;
+
+  setWalletStatus("loading");
+  try {
+    await dispatch(payByWallet(orderId)).unwrap();
+
+    setWalletStatus("success");
+    dispatch(markWalletStale());
+
+    // keep the success animation on screen, then move to the success page.
+    // getCart runs after navigating (same as the Razorpay flow) so a cleared
+    // cart can't redirect the user away while the animation is playing.
+    redirectTimer.current = setTimeout(() => {
+      navigate('/users/payment/sucess');
+      dispatch(getCart());
+    }, WALLET_SUCCESS_DELAY);
+  } catch (error) {
+    console.error("Wallet payment failed:", error);
+    setWalletStatus("idle");
+    toast.error(
+      typeof error === "string" ? error : "Wallet payment failed. Please try again."
+    );
+  }
+};
 
 
 const handleCod = async () => {
@@ -188,6 +217,26 @@ const onCLose = ()=>{
 
   return (
     <div className="relative flex min-h-[85vh] items-center justify-center overflow-hidden bg-[#EEF0F8] px-4 py-12 sm:px-6">
+      {/* Animations used by the wallet payment overlay */}
+      <style>{`
+        @keyframes nx-fade-in { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes nx-pop {
+          0% { transform: scale(0.6); opacity: 0 }
+          60% { transform: scale(1.08); opacity: 1 }
+          100% { transform: scale(1); opacity: 1 }
+        }
+        @keyframes nx-draw { to { stroke-dashoffset: 0 } }
+        @keyframes nx-ring {
+          0% { transform: scale(0.9); opacity: 0.6 }
+          100% { transform: scale(1.6); opacity: 0 }
+        }
+        @keyframes nx-progress { from { width: 0% } to { width: 100% } }
+        @keyframes nx-rise {
+          from { transform: translateY(8px); opacity: 0 }
+          to { transform: translateY(0); opacity: 1 }
+        }
+      `}</style>
+
       {/* Soft ambient colour behind the card */}
       <div
         aria-hidden="true"
@@ -262,7 +311,8 @@ const onCLose = ()=>{
 
             <button
               onClick={handleRazorpay}
-              className="group mt-7 flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 text-[15px] font-semibold text-[#12142B] transition hover:bg-[#F1EEFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B9B2FF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12142B] active:scale-[0.99]"
+              disabled={walletStatus !== "idle"}
+              className="group mt-7 flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 text-[15px] font-semibold text-[#12142B] transition hover:bg-[#F1EEFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B9B2FF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12142B] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span>Pay with Razorpay</span>
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#12142B] text-white transition group-hover:translate-x-0.5">
@@ -282,6 +332,41 @@ const onCLose = ()=>{
               </span>
             </button>
           </div>
+        </div>
+
+        {/* Wallet */}
+        <div className="mt-4 rounded-2xl border border-white/70 bg-white/70 p-4 shadow-[0_8px_30px_-12px_rgba(18,20,43,0.18)] backdrop-blur sm:p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#DDF5EA] text-[#14925F]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5v-9z" />
+                <path d="M16 13h2" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[15px] font-semibold text-[#12142B]">Nexora Wallet</h2>
+              <p className="mt-0.5 text-sm text-[#5C6078]">
+                Pay instantly using your wallet balance.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleWallet}
+            disabled={walletStatus !== "idle"}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#12142B]/[0.06] px-5 py-3 text-sm font-semibold text-[#12142B] transition hover:bg-[#12142B] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#12142B] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#12142B]/[0.06] disabled:hover:text-[#12142B]"
+          >
+            Pay with wallet
+          </button>
         </div>
 
         {/* Secondary: cash on delivery */}
@@ -313,7 +398,7 @@ const onCLose = ()=>{
 
           <button
             onClick={handleCod}
-            disabled={codLoading}
+            disabled={codLoading || walletStatus !== "idle"}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#12142B]/[0.06] px-5 py-3 text-sm font-semibold text-[#12142B] transition hover:bg-[#12142B] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#12142B] focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#12142B]/[0.06] disabled:hover:text-[#12142B]"
           >
             {codLoading && (
@@ -364,6 +449,113 @@ const onCLose = ()=>{
       {success && <OrderSuccess></OrderSuccess>}
 
       {cod&& orderId&&  <CodOtpModal orderId={orderId} onClose={onCLose} email=""></CodOtpModal>}
+
+      {/* Wallet payment overlay: covers the whole screen so nothing can be clicked */}
+      {walletStatus !== "idle" && (
+        <div
+          role="alertdialog"
+          aria-live="assertive"
+          aria-busy={walletStatus === "loading"}
+          className="fixed inset-0 z-[100] flex cursor-wait items-center justify-center bg-[#12142B]/85 px-4 backdrop-blur-sm"
+          style={{ animation: "nx-fade-in 200ms ease-out" }}
+        >
+          <div
+            className="w-full max-w-xs rounded-3xl bg-white p-8 text-center shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
+            style={{ animation: "nx-pop 400ms ease-out" }}
+          >
+            {walletStatus === "loading" ? (
+              <>
+                <div className="mx-auto flex h-24 w-24 items-center justify-center">
+                  <svg
+                    className="h-14 w-14 animate-spin text-[#12142B]"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-20"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    />
+                    <path
+                      className="opacity-90"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-[#12142B]">
+                  Processing payment
+                </h3>
+                <p className="mt-1 text-sm text-[#5C6078]">
+                  Please don't close or refresh this page.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
+                  {/* expanding ring */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 rounded-full bg-[#14925F]/30"
+                    style={{ animation: "nx-ring 1100ms ease-out 300ms 2 both" }}
+                  />
+                  <svg
+                    viewBox="0 0 100 100"
+                    className="relative h-24 w-24"
+                    fill="none"
+                    stroke="#14925F"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="44"
+                      strokeDasharray="277"
+                      strokeDashoffset="277"
+                      style={{ animation: "nx-draw 600ms ease-out forwards" }}
+                    />
+                    <path
+                      d="M30 52 L44 66 L71 36"
+                      strokeDasharray="60"
+                      strokeDashoffset="60"
+                      style={{ animation: "nx-draw 400ms ease-out 550ms forwards" }}
+                    />
+                  </svg>
+                </div>
+
+                <h3
+                  className="mt-4 text-lg font-semibold text-[#12142B]"
+                  style={{ animation: "nx-rise 400ms ease-out 700ms both" }}
+                >
+                  Payment successful
+                </h3>
+                <p
+                  className="mt-1 text-sm text-[#5C6078]"
+                  style={{ animation: "nx-rise 400ms ease-out 850ms both" }}
+                >
+                  Taking you to your order...
+                </p>
+
+                {/* progress bar fills over the same time as the redirect delay */}
+                <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-[#12142B]/10">
+                  <div
+                    className="h-full rounded-full bg-[#14925F]"
+                    style={{
+                      animation: `nx-progress ${WALLET_SUCCESS_DELAY}ms linear forwards`,
+                    }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

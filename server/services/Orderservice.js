@@ -13,6 +13,7 @@ const config = require('../config/config')
 const crypto = require("crypto");
 const User = require("../models/User");
 const Mail = require('../utils/mail')
+const Wallet = require('../models/Wallet')
 
 class OrderService{
 

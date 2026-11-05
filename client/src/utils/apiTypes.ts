@@ -144,6 +144,7 @@ export type RazorpaymentResponse = {
 
 export type verifyPaymentResponse = Baseorder
 export type codOtpVeirfyResponse = Baseorder
+export type payBywalletRespponse = Baseorder
 
 export type getOrderResponse = {
   orders: Baseorder[];

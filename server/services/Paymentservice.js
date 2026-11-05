@@ -10,7 +10,8 @@ const StockReservation = require("../models/StockReservation");
 const CartService = require("./cartService");
 const {CouponRedemption}= require('../models/Coupon')
 const Refund = require('../models/Refund') 
-
+const mongoose = require('mongoose')
+const Wallet = require('../models/Wallet')
 
 class PaymentService{
 
@@ -393,6 +394,108 @@ static async Refund(data){
     logger.error('failed to process refund')
     throw error
 
+  }
+}
+
+//paybywallet
+static async PayByWallet(user, data) {
+  const session = await mongoose.startSession();
+  try {
+    const { orderId } = data;
+
+    if (!mongoose.isValidObjectId(orderId)) {
+      throw new ValidationError("Invalid order");
+    }
+
+    let paidOrder;
+    let alreadyPaid = false;
+
+    await session.withTransaction(async () => {
+    
+      const order = await Order.findOneAndUpdate(
+        { _id: orderId, user, paymentStatus: "pending" },
+        {
+          paymentStatus: "paid",
+          paymentMethod: "wallet",
+          orderDate: new Date(),
+        },
+        { new: true, session }
+      );
+
+      if (!order) {
+        const existing = await Order.findOne({ _id: orderId, user }).session(session);
+        if (!existing) throw new NotFoundError("Order not found");
+
+        if (existing.paymentStatus === "paid") {
+          alreadyPaid = true; 
+          paidOrder = existing;
+          return;
+        }
+        throw new ValidationError("Order is not payable");
+      }
+
+    
+      const wallet = await Wallet.findOne({ user }).session(session);
+      if (!wallet) {
+        throw new ValidationError("Wallet not found. Add money to your wallet first");
+      }
+
+      
+      if (wallet.balance < order.totalAmount) {
+        throw new ValidationError("Insufficient wallet balance");
+      }
+
+     
+      const debited = await Wallet.findOneAndUpdate(
+        { user, balance: { $gte: order.totalAmount } },
+        {
+          $inc: { balance: -order.totalAmount },
+          $push: {
+            transactions: {
+              type: "debit",
+              reason: "order_payment",
+              amount: order.totalAmount,
+              order: order._id,
+            },
+          },
+        },
+        { new: true, session }
+      );
+
+      if (!debited) throw new ValidationError("Insufficient wallet balance");
+
+     
+      await StockReservation.findOneAndDelete(
+        { user, orderId: order._id },
+        { session }
+      );
+
+     
+      if (order.coupon) {
+        await CouponRedemption.updateOne(
+          { coupon: order.coupon, user, order: order._id },
+          { $setOnInsert: { coupon: order.coupon, user, order: order._id } },
+          { upsert: true, session }
+        );
+      }
+
+      paidOrder = order;
+    });
+
+   
+    if (!alreadyPaid) {
+      await CartService.deleteCart(user);
+    }
+
+    logger.info(`Order ${paidOrder._id} paid by wallet for user ${user}`);
+
+    // 8. Return populated order
+    return await Order.getCart({ _id: paidOrder._id, user });
+  } catch (error) {
+    logger.error("failed to pay the amount by wallet", error);
+    throw error;
+  } finally {
+    await session.endSession();
   }
 }
 

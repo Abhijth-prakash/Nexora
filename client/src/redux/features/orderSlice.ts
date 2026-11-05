@@ -300,6 +300,28 @@ export const cancelOrder = createAsyncThunk(
   }
 );
 
+
+export const payByWallet = createAsyncThunk(
+  "order/payByWallet",
+
+  async (orderId: string, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.payByWallet(orderId);
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Wallet payment failed. Please try again."
+        );
+      }
+
+      return rejectWithValue("Wallet payment failed. Please try again.");
+    }
+  }
+);
+
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,
@@ -387,7 +409,6 @@ const orderSlice = createSlice({
         .addCase(verifyPayment.fulfilled,(state,action)=>{
             state.loading = false
             state.orderDetails = action.payload
-            console.log(state.orderDetails)
             
            
         })
@@ -426,6 +447,21 @@ const orderSlice = createSlice({
         })
 
 
+        //payBywallet
+        .addCase(payByWallet.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(payByWallet.fulfilled,(state,action)=>{
+            state.loading = false
+            state.orderDetails = action.payload
+           
+        })
+        .addCase(payByWallet.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+
         //get orders
         .addCase(getOrders.pending,(state)=>{
             state.loading = true
@@ -436,7 +472,6 @@ const orderSlice = createSlice({
             state.page = action.payload.currentPage
             state.pages = action.payload.totalPages
             state.totalOrders = action.payload.totalOrders
-            console.log(action.payload)
 
         })
         .addCase(getOrders.rejected,(state,action)=>{
