@@ -23,6 +23,7 @@ import Payment from "./pages/orders/Payment"
 import OrderSuccess from "./components/OrderSuccess"
 import Orders from "./pages/orders/Orders"
 import Order from "./pages/orders/Order"
+import Wallet from "./pages/wallet/Wallet"
 
 
 function App() {
@@ -63,11 +64,19 @@ function App() {
           <Route path="/users/orders" element={<Orders />} />
           <Route path="/users/orders/:orderId" element={<Order />} />
 
+
+          {/* wallet */}
+          <Route path="/users/Wallet" element={<Wallet />} />
+
+
            {/* payment */}
            <Route element={<PaymentRoutes />}>
           <Route path="/users/payment" element={<Payment />} />
           <Route path="/users/payment/sucess" element={<OrderSuccess />} />
           </Route>
+
+
+
 
           {/* 404 catch-all */}
           <Route path="*" element={<NotFound />} />

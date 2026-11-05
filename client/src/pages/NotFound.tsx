@@ -4,13 +4,7 @@ const NotFound = () => {
   return (
     <div className="min-h-screen w-full bg-[#f7f6f5] flex flex-col">
       {/* Minimal header */}
-      <header className="bg-white border-b border-[#ececec]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center">
-          <Link to="/" className="text-2xl font-bold text-[#0a0a0a]">
-            Nexora
-          </Link>
-        </div>
-      </header>
+
 
       {/* Main content */}
       <main className="flex-1 flex items-center justify-center px-6 py-20">

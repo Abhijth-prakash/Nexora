@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, getOrderResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -184,6 +184,8 @@ export const CartApi = {
 };
 
 
+
+//orderAPi
 export const orderApi = {
   //stock validation
   stockValidation: async (): Promise<ApiResponse<null>> => {
@@ -298,6 +300,21 @@ cancelOrder: async (
 
 };
 
+
+
+//wallet api
+export const WalletAPi = {
+  getWallet: async (
+    params: GetWalletParams = {}
+  ): Promise<ApiResponse<getWalletResponse>> => {
+    const response = await ClientApi.get<ApiResponse<getWalletResponse>>(
+      `/users/wallet`,
+      { params }
+    );
+
+    return response.data;
+  },
+};
 
 
 export default ClientApi;

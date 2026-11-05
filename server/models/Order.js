@@ -78,6 +78,11 @@ const orderSchema = new mongoose.Schema(
       default: null,
     },
 
+    razorpay_payment_id: {
+      type: String,
+      default: null,
+    },
+
     orderDate: {
       type: Date,
       default: Date.now,
@@ -115,7 +120,6 @@ const orderSchema = new mongoose.Schema(
       default: "confirmed",
     },
 
-    // Reason for cancellation (set when orderStatus becomes "cancelled")
     cancelReason: {
       type: String,
       trim: true,
@@ -123,7 +127,6 @@ const orderSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Who cancelled the order: the customer, an admin, or the system (e.g. payment timeout)
     cancelledBy: {
       type: String,
       enum: ["user", "admin", "system", null],

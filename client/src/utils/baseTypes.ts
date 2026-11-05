@@ -159,3 +159,34 @@ export type Baseorder = {
   updatedAt: string;
   __v: number;
 };
+
+export type WalletUser = {
+  _id: string;
+  name: string;
+  email: string;
+};
+
+export type BaseWallet = {
+  _id: string;
+  user: WalletUser;
+  balance: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WalletTransaction = {
+  _id: string;
+  type: "credit" | "debit";
+  reason: "refund" | "order_payment";
+  amount: number;
+  order: string | null;
+  createdAt: string;
+};
+
+export type WalletPagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+};

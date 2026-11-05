@@ -232,26 +232,30 @@ const Profile = () => {
 
                 {/* Wallet */}
 
-                <div className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 7.5A2.5 2.5 0 015.5 5h13A2.5 2.5 0 0121 7.5v9a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 16.5v-9z"
-                      />
-                      <path strokeLinecap="round" d="M16 13h2" />
-                    </svg>
-                  </div>
+               
+<Link
+  to="/users/Wallet"
+  className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+>
+  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 7.5A2.5 2.5 0 015.5 5h13A2.5 2.5 0 0121 7.5v9a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 16.5v-9z"
+      />
+      <path strokeLinecap="round" d="M16 13h2" />
+    </svg>
+  </div>
 
-                  <span>My Wallet</span>
-                </div>
+  <span>My Wallet</span>
+</Link>
               </div>
 
               {/* ORDERS */}

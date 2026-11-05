@@ -6,6 +6,7 @@ const addressRoutes = require('./user/addressRoutes')
 const productRoutes = require('./user/ProductRoutes')
 const cartRoutes = require('./user/CartRoutes')
 const orderRoutes = require('./user/orderRoutes')
+const walletRoutes = require('./user/walletRoutes')
 
 //admin Routes
 const adminRoutes = require('./admin/adminRoutes')
@@ -26,6 +27,7 @@ const setupRoutes = (app) => {
   app.use('/api/users',productRoutes)
   app.use('/api/users',cartRoutes)
   app.use('/api/users',orderRoutes)
+  app.use('/api/users',walletRoutes)
 
   //test
   app.use('/api/test',test)

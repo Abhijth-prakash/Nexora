@@ -644,23 +644,24 @@ static async cancelOrder(user, data) {
       const order = await Order.findById(orderId).session(session);
       if (!order) throw new NotFoundError("Order not found");
 
-      // Order must belong to the user
+     
       const userId = user._id || user;
       if (order.user.toString() !== userId.toString()) {
-        throw new ForbiddenError("You are not allowed to cancel this order");
+        throw new AuthenticationError("You are not allowed to cancel this order");
       }
 
       if (order.orderStatus === "cancelled") {
         throw new ConflictError("Order is already cancelled");
       }
-      if (["out_for_delivery", "delivered"].includes(order.orderStatus)) {
+
+     
+      if (order.orderStatus !== "confirmed") {
         throw new ConflictError(
           `Order cannot be cancelled once it is ${order.orderStatus}`
         );
       }
 
-      // Atomically claim the reservation. Returns null if the stock was
-      // already given back (expired/deleted), so stock is never restored twice.
+      // Atomically claim the reservation so stock is never restored twice
       const reservation = await StockReservation.findOneAndUpdate(
         { orderId: order._id, status: { $in: ["reserved", "confirmed"] } },
         { $set: { status: "released" } },

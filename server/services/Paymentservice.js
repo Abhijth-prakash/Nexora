@@ -9,6 +9,7 @@ const Mail = require('../utils/mail');
 const StockReservation = require("../models/StockReservation");
 const CartService = require("./cartService");
 const {CouponRedemption}= require('../models/Coupon')
+const Refund = require('../models/Refund') 
 
 
 class PaymentService{
@@ -129,6 +130,7 @@ static async verifyPayment(user, data) {
     // Update order payment status
     order.paymentStatus = "paid";
     order.orderDate = new Date();
+    order.razorpay_payment_id = razorpay_payment_id
 
     await order.save();
 
@@ -370,6 +372,27 @@ static async verifyCodOtp(userId, data) {
   } catch (error) {
     logger.error(`COD OTP verification failed: ${error.message}`);
     throw error;
+  }
+}
+
+static async Refund(data){
+  try{
+    const {user,orderId} = data
+
+        const order = await Order.findOne({
+      _id: orderId,
+      user: userId,
+    });
+
+    if (!order) {
+      throw new NotFoundError("Order not found");
+    }
+
+
+  }catch(error){
+    logger.error('failed to process refund')
+    throw error
+
   }
 }
 
