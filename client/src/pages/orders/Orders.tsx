@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -17,6 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import ProfileSidebar from "../../components/layouts/Profilesidebar";
+
 
 const PAGE_LIMIT = 5;
 
@@ -124,359 +125,371 @@ const Orders = () => {
   }, [page, totalPages]);
 
   return (
-    <div className="min-h-screen w-full bg-[#f8f8f8] px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
-      <div className="w-full max-w-none">
+    <div className="min-h-screen bg-[#f6f6f6] text-[#111111]">
+      <div className="w-full px-3 py-4 sm:px-4 lg:px-5">
+        <div className="grid min-h-[calc(100vh-105px)] w-full grid-cols-1 gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
 
-        {/* PAGE HEADER */}
-        <div className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a1f]" />
+          {/* SIDEBAR */}
 
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                Your account / Orders
-              </p>
-            </div>
+          <ProfileSidebar />
 
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              My Orders<span className="text-[#ff5a1f]">.</span>
-            </h1>
+          {/* MAIN CONTENT */}
 
-            <p className="mt-2 text-sm text-gray-500">
-              Everything you've ordered, all in one place.
-            </p>
-          </div>
+          <main className="min-w-0 w-full rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="flex h-full min-h-[calc(100vh-105px)] flex-col p-6 sm:p-7 lg:p-9">
 
-          <div className="flex w-fit items-center gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-sm">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1eb] text-[#ff5a1f]">
-              <ShoppingBag size={19} />
-            </div>
+              {/* PAGE HEADER */}
 
-            <div>
-              <p className="text-xl font-bold leading-none text-gray-900">
-                {totalOrders.toLocaleString("en-IN")}
-              </p>
+              <div className="flex flex-col justify-between gap-5 border-b border-gray-100 pb-6 sm:flex-row sm:items-center">
+                <div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a1f]" />
 
-              <p className="mt-1 text-[11px] font-medium text-gray-400">
-                Total orders
-              </p>
-            </div>
-          </div>
-        </div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                      Your account / Orders
+                    </p>
+                  </div>
 
-    
+                  <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                    My Orders<span className="text-[#ff5a1f]">.</span>
+                  </h1>
 
-        {/* LOADING */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-gray-100 bg-white py-24 shadow-sm">
-            <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-orange-100 border-t-[#ff5a1f]" />
+                  <p className="mt-1 text-sm text-gray-400">
+                    Everything you've ordered, all in one place.
+                  </p>
+                </div>
 
-            <p className="text-sm text-gray-400">
-              Loading orders...
-            </p>
-          </div>
-        )}
+                <div className="flex w-fit items-center gap-3 rounded-2xl border border-gray-200 bg-gradient-to-r from-white to-[#fff8f5] px-5 py-3 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1eb] text-[#ff5a1f]">
+                    <ShoppingBag size={19} />
+                  </div>
 
-        {/* ERROR */}
-        {!loading && ordererrors && (
-          <div className="rounded-3xl border border-red-100 bg-white px-6 py-16 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
-              <XCircle size={25} />
-            </div>
+                  <div>
+                    <p className="text-xl font-bold leading-none text-gray-900">
+                      {totalOrders.toLocaleString("en-IN")}
+                    </p>
 
-            <h2 className="mt-5 text-lg font-bold text-gray-900">
-              Couldn't load your orders
-            </h2>
+                    <p className="mt-1 text-[11px] font-medium text-gray-400">
+                      Total orders
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
-              {ordererrors}
-            </p>
+              {/* LOADING */}
+              {loading && (
+                <div className="mt-6 flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-gray-100 bg-white py-24">
+                  <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-orange-100 border-t-[#ff5a1f]" />
 
-            <button
-              onClick={() => dispatch(getOrders({ page, search }))}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ff5a1f]"
-            >
-              <RefreshCw size={15} />
-              Try again
-            </button>
-          </div>
-        )}
+                  <p className="text-sm text-gray-400">
+                    Loading orders...
+                  </p>
+                </div>
+              )}
 
-        {/* EMPTY STATE */}
-        {!loading && !ordererrors && list.length === 0 && (
-          <div className="rounded-3xl border border-gray-100 bg-white px-6 py-24 text-center shadow-sm">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#fff1eb]">
-              <ShoppingBag size={34} className="text-[#ff5a1f]" />
-            </div>
+              {/* ERROR */}
+              {!loading && ordererrors && (
+                <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border border-red-100 bg-white px-6 py-16 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+                    <XCircle size={25} />
+                  </div>
 
-            <h2 className="mt-6 text-xl font-bold text-gray-900">
-              {search ? "No orders found" : "No orders just yet"}
-            </h2>
+                  <h2 className="mt-5 text-lg font-bold text-gray-900">
+                    Couldn't load your orders
+                  </h2>
 
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-400">
-              {search
-                ? "Try a different order ID."
-                : "Looks like you haven't made your first purchase. Your order history will appear here once you do."}
-            </p>
-          </div>
-        )}
+                  <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
+                    {ordererrors}
+                  </p>
 
-        {/* ORDERS LIST */}
-        {!loading && !ordererrors && list.length > 0 && (
-          <>
-            <div className="space-y-5">
-              {list.map((order) => {
-                const status = getStatusStyle(order.paymentStatus);
-                const isCancelled = order.orderStatus === "cancelled";
-
-                return (
-                  <Link
-                    key={order._id}
-                    to={`/users/orders/${order._id}`}
-                    className={`group block w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-all duration-300 ${
-                      isCancelled
-                        ? "border-red-300 bg-red-50/40 hover:border-red-400 hover:shadow-[0_12px_35px_rgba(220,38,38,0.10)]"
-                        : "border-gray-200 bg-white hover:-translate-y-0.5 hover:border-[#ffb18f] hover:shadow-[0_12px_35px_rgba(0,0,0,0.06)]"
-                    }`}
+                  <button
+                    onClick={() => dispatch(getOrders({ page, search }))}
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ff5a1f]"
                   >
-                    <div className="p-5 sm:p-7 lg:p-8">
+                    <RefreshCw size={15} />
+                    Try again
+                  </button>
+                </div>
+              )}
 
-                      {/* ORDER HEADER */}
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="flex items-center gap-3.5">
-                          <div
-                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                              isCancelled
-                                ? "bg-red-100 text-red-600"
-                                : "bg-[#fff5f0] text-[#ff5a1f] group-hover:bg-[#ff5a1f] group-hover:text-white"
-                            }`}
-                          >
-                            <Package size={22} />
-                          </div>
+              {/* EMPTY STATE */}
+              {!loading && !ordererrors && list.length === 0 && (
+                <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-24 text-center">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#fff1eb]">
+                    <ShoppingBag size={34} className="text-[#ff5a1f]" />
+                  </div>
 
-                          <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
-                              Order reference
-                            </p>
+                  <h2 className="mt-6 text-xl font-bold text-gray-900">
+                    {search ? "No orders found" : "No orders just yet"}
+                  </h2>
 
-                            <h3
-                              className={`mt-1 text-sm font-bold tracking-wide ${
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-400">
+                    {search
+                      ? "Try a different order ID."
+                      : "Looks like you haven't made your first purchase. Your order history will appear here once you do."}
+                  </p>
+                </div>
+              )}
+
+              {/* ORDERS LIST */}
+              {!loading && !ordererrors && list.length > 0 && (
+                <>
+                  <div className="mt-6 space-y-4">
+                    {list.map((order) => {
+                      const status = getStatusStyle(order.paymentStatus);
+                      const isCancelled = order.orderStatus === "cancelled";
+
+                      return (
+                        <Link
+                          key={order._id}
+                          to={`/users/orders/${order._id}`}
+                          className={`group block w-full overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
+                            isCancelled
+                              ? "border-red-300 bg-red-50/40 hover:border-red-400 hover:shadow-[0_12px_35px_rgba(220,38,38,0.10)]"
+                              : "border-gray-200 bg-white hover:border-[#ffb18f] hover:shadow-[0_12px_35px_rgba(0,0,0,0.06)]"
+                          }`}
+                        >
+                          <div className="p-5 sm:p-6">
+
+                            {/* ORDER HEADER */}
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div className="flex items-center gap-3.5">
+                                <div
+                                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                                    isCancelled
+                                      ? "bg-red-100 text-red-600"
+                                      : "bg-[#fff5f0] text-[#ff5a1f] group-hover:bg-[#ff5a1f] group-hover:text-white"
+                                  }`}
+                                >
+                                  <Package size={22} />
+                                </div>
+
+                                <div>
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
+                                    Order reference
+                                  </p>
+
+                                  <h3
+                                    className={`mt-1 text-sm font-bold tracking-wide ${
+                                      isCancelled
+                                        ? "text-red-800"
+                                        : "text-gray-900"
+                                    }`}
+                                  >
+                                    #{order._id.slice(-8).toUpperCase()}
+                                  </h3>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-end gap-2">
+
+                                {/* PAYMENT STATUS */}
+                                <span
+                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold ring-1 ring-inset ${status.className}`}
+                                >
+                                  {status.icon}
+                                  {status.label}
+                                </span>
+
+                                {/* ORDER STATUS */}
+                                {isCancelled && (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm">
+                                    <XCircle size={14} />
+                                    Order Cancelled
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* PRODUCT PREVIEW */}
+                            <div className="mt-5 flex items-center gap-4">
+                              <div
+                                className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border ${
+                                  isCancelled
+                                    ? "border-red-100 bg-red-50"
+                                    : "border-gray-100 bg-gray-50"
+                                }`}
+                              >
+                                {getItemImage(order.items[0]) ? (
+                                  <img
+                                    src={getItemImage(order.items[0]) as string}
+                                    alt={getItemName(order.items[0])}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <Package size={24} className="text-gray-300" />
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
+                                {order.items.slice(0, MAX_NAMES).map((item, i) => (
+                                  <p
+                                    key={i}
+                                    className="truncate text-sm font-semibold text-gray-900"
+                                  >
+                                    {getItemName(item)}
+                                  </p>
+                                ))}
+
+                                {order.items.length > MAX_NAMES && (
+                                  <p className="mt-0.5 text-xs font-medium text-gray-400">
+                                    +{order.items.length - MAX_NAMES} more
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* ORDER INFORMATION */}
+                            <div
+                              className={`my-5 grid grid-cols-2 gap-5 border-y py-5 sm:grid-cols-3 ${
                                 isCancelled
-                                  ? "text-red-800"
-                                  : "text-gray-900"
+                                  ? "border-red-100"
+                                  : "border-gray-100"
                               }`}
                             >
-                              #{order._id.slice(-8).toUpperCase()}
-                            </h3>
-                          </div>
-                        </div>
+                              {/* DATE */}
+                              <div>
+                                <div className="flex items-center gap-2 text-gray-400">
+                                  <CalendarDays size={14} />
 
-                        <div className="flex flex-wrap items-center justify-end gap-2">
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider">
+                                    Order date
+                                  </span>
+                                </div>
 
-                          {/* PAYMENT STATUS */}
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold ring-1 ring-inset ${status.className}`}
-                          >
-                            {status.icon}
-                            {status.label}
-                          </span>
+                                <p className="mt-2 text-sm font-semibold text-gray-800">
+                                  {formatDate(order.orderDate || order.createdAt)}
+                                </p>
+                              </div>
 
-                          {/* ORDER STATUS */}
-                          {isCancelled && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm">
-                              <XCircle size={14} />
-                              Order Cancelled
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                              {/* ITEMS */}
+                              <div>
+                                <div className="flex items-center gap-2 text-gray-400">
+                                  <ShoppingBag size={14} />
 
-                      {/* PRODUCT PREVIEW */}
-                      <div className="mt-6 flex items-center gap-4">
-                        <div
-                          className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border ${
-                            isCancelled
-                              ? "border-red-100 bg-red-50"
-                              : "border-gray-100 bg-gray-50"
-                          }`}
-                        >
-                          {getItemImage(order.items[0]) ? (
-                            <img
-                              src={getItemImage(order.items[0]) as string}
-                              alt={getItemName(order.items[0])}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Package size={24} className="text-gray-300" />
-                          )}
-                        </div>
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider">
+                                    Items
+                                  </span>
+                                </div>
 
-                        <div className="min-w-0">
-                          {order.items.slice(0, MAX_NAMES).map((item, i) => (
-                            <p
-                              key={i}
-                              className="truncate text-sm font-semibold text-gray-900"
-                            >
-                              {getItemName(item)}
-                            </p>
-                          ))}
+                                <p className="mt-2 text-sm font-semibold text-gray-800">
+                                  {order.items.length}{" "}
+                                  {order.items.length === 1 ? "Item" : "Items"}
+                                </p>
+                              </div>
 
-                          {order.items.length > MAX_NAMES && (
-                            <p className="mt-0.5 text-xs font-medium text-gray-400">
-                              +{order.items.length - MAX_NAMES} more
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                              {/* PAYMENT */}
+                              <div className="col-span-2 sm:col-span-1">
+                                <div className="flex items-center gap-2 text-gray-400">
+                                  <CreditCard size={14} />
 
-                      {/* ORDER INFORMATION */}
-                      <div
-                        className={`my-6 grid grid-cols-2 gap-5 border-y py-5 sm:grid-cols-3 ${
-                          isCancelled
-                            ? "border-red-100"
-                            : "border-gray-100"
-                        }`}
-                      >
-                        {/* DATE */}
-                        <div>
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <CalendarDays size={14} />
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider">
+                                    Payment
+                                  </span>
+                                </div>
 
-                            <span className="text-[10px] font-semibold uppercase tracking-wider">
-                              Order date
-                            </span>
-                          </div>
+                                <p className="mt-2 text-sm font-semibold capitalize text-gray-800">
+                                  {order.paymentMethod || "N/A"}
+                                </p>
+                              </div>
+                            </div>
 
-                          <p className="mt-2 text-sm font-semibold text-gray-800">
-                            {formatDate(order.orderDate || order.createdAt)}
-                          </p>
-                        </div>
+                            {/* FOOTER */}
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
+                                  Total amount
+                                </p>
 
-                        {/* ITEMS */}
-                        <div>
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <ShoppingBag size={14} />
+                                <p
+                                  className={`mt-1 text-xl font-bold tracking-tight ${
+                                    isCancelled
+                                      ? "text-red-700"
+                                      : "text-gray-900"
+                                  }`}
+                                >
+                                  ₹{order.totalAmount.toLocaleString("en-IN")}
+                                </p>
+                              </div>
 
-                            <span className="text-[10px] font-semibold uppercase tracking-wider">
-                              Items
-                            </span>
+                              <div
+                                className={`flex items-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
+                                  isCancelled
+                                    ? "bg-red-100 text-red-700 group-hover:bg-red-600 group-hover:text-white"
+                                    : "bg-gray-50 text-gray-600 group-hover:bg-[#fff1eb] group-hover:text-[#ff5a1f]"
+                                }`}
+                              >
+                                View details
+
+                                <ArrowUpRight
+                                  size={15}
+                                  className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                />
+                              </div>
+                            </div>
                           </div>
 
-                          <p className="mt-2 text-sm font-semibold text-gray-800">
-                            {order.items.length}{" "}
-                            {order.items.length === 1 ? "Item" : "Items"}
-                          </p>
-                        </div>
-
-                        {/* PAYMENT */}
-                        <div className="col-span-2 sm:col-span-1">
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <CreditCard size={14} />
-
-                            <span className="text-[10px] font-semibold uppercase tracking-wider">
-                              Payment
-                            </span>
-                          </div>
-
-                          <p className="mt-2 text-sm font-semibold capitalize text-gray-800">
-                            {order.paymentMethod || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* FOOTER */}
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
-                            Total amount
-                          </p>
-
-                          <p
-                            className={`mt-1 text-xl font-bold tracking-tight ${
+                          {/* BOTTOM ACCENT */}
+                          <div
+                            className={`h-1 transition-all duration-300 ${
                               isCancelled
-                                ? "text-red-700"
-                                : "text-gray-900"
+                                ? "w-full bg-red-500"
+                                : "w-0 bg-[#ff5a1f] group-hover:w-full"
                             }`}
-                          >
-                            ₹{order.totalAmount.toLocaleString("en-IN")}
-                          </p>
-                        </div>
+                          />
+                        </Link>
+                      );
+                    })}
+                  </div>
 
-                        <div
-                          className={`flex items-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
-                            isCancelled
-                              ? "bg-red-100 text-red-700 group-hover:bg-red-600 group-hover:text-white"
-                              : "bg-gray-50 text-gray-600 group-hover:bg-[#fff1eb] group-hover:text-[#ff5a1f]"
+                  {/* PAGINATION */}
+                  <div className="mt-auto flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-6 sm:flex-row">
+                    <p className="text-[11px] text-[#8a7568]">
+                      Showing {from}–{to} of {totalOrders.toLocaleString("en-IN")}{" "}
+                      orders
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => dispatch(setPage(page - 1))}
+                        disabled={page === 1 || loading}
+                        className="flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 transition hover:border-[#ff5a1f] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft size={14} />
+                        Prev
+                      </button>
+
+                      {pageNumbers.map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => dispatch(setPage(n))}
+                          disabled={loading}
+                          className={`h-9 w-9 rounded-lg text-xs font-bold transition ${
+                            n === page
+                              ? "bg-[#ff6b47] text-white"
+                              : "border border-gray-200 bg-white text-gray-700 hover:border-[#ff5a1f]"
                           }`}
                         >
-                          View details
+                          {n}
+                        </button>
+                      ))}
 
-                          <ArrowUpRight
-                            size={15}
-                            className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                          />
-                        </div>
-                      </div>
+                      <button
+                        onClick={() => dispatch(setPage(page + 1))}
+                        disabled={pages === null || page === pages || loading}
+                        className="flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 transition hover:border-[#ff5a1f] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight size={14} />
+                      </button>
                     </div>
-
-                    {/* BOTTOM ACCENT */}
-                    <div
-                      className={`h-1 transition-all duration-300 ${
-                        isCancelled
-                          ? "w-full bg-red-500"
-                          : "w-0 bg-[#ff5a1f] group-hover:w-full"
-                      }`}
-                    />
-                  </Link>
-                );
-              })}
+                  </div>
+                </>
+              )}
             </div>
-
-            {/* PAGINATION */}
-            <div className="mt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
-              <p className="text-[11px] text-[#8a7568]">
-                Showing {from}–{to} of {totalOrders.toLocaleString("en-IN")}{" "}
-                orders
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => dispatch(setPage(page - 1))}
-                  disabled={page === 1 || loading}
-                  className="flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 transition hover:border-[#ff5a1f] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronLeft size={14} />
-                  Prev
-                </button>
-
-                {pageNumbers.map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => dispatch(setPage(n))}
-                    disabled={loading}
-                    className={`h-9 w-9 rounded-lg text-xs font-bold transition ${
-                      n === page
-                        ? "bg-[#ff6b47] text-white"
-                        : "border border-gray-200 bg-white text-gray-700 hover:border-[#ff5a1f]"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => dispatch(setPage(page + 1))}
-                  disabled={pages === null || page === pages || loading}
-                  className="flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 transition hover:border-[#ff5a1f] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Next
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+          </main>
+        </div>
       </div>
     </div>
   );
