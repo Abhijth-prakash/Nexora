@@ -326,6 +326,14 @@ generateReturn: async (
 },
 
 
+getUserReturns: async (): Promise<ApiResponse<getAllreturnResponse>> => {
+  const response = await ClientApi.get<ApiResponse<getAllreturnResponse>>(
+    "/admin/return"
+  );
+
+  return response.data;
+},
+
 
 };
 

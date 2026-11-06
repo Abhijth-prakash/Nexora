@@ -59,6 +59,30 @@ static getAllReturns = BaseController.asyncHandler(
   async (req, res) => {
     const returns = await ReturnService.getAllReturns();
 
+
+     BaseController.logAction(
+      `returns fetched for  admin ${req.userId}`
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "Returns fetched successfully",
+      returns,
+      200
+    );
+  }
+);
+
+
+
+static getUserReturns = BaseController.asyncHandler(
+  async (req, res) => {
+    const returns = await ReturnService.getReturns(req.userId);
+
+    BaseController.logAction(
+      `returns fetched for user ${req.userId}`
+    );
+
     return this.sendSuccessResponse(
       res,
       "Returns fetched successfully",

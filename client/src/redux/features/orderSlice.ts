@@ -324,6 +324,8 @@ export const payByWallet = createAsyncThunk(
   }
 );
 
+
+//generate return request
 export const generateReturn = createAsyncThunk(
   "order/generateReturn",
 
@@ -353,6 +355,32 @@ export const generateReturn = createAsyncThunk(
     }
   }
 );
+
+
+
+//getUserReturns
+export const getUserReturns = createAsyncThunk(
+  "order/getUserReturns",
+
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.getUserReturns();
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to fetch returns. Please try again."
+        );
+      }
+
+      return rejectWithValue("Failed to fetch returns. Please try again.");
+    }
+  }
+);
+
+
 
 const orderSlice = createSlice({
     name:'orderSLice',
@@ -507,6 +535,19 @@ const orderSlice = createSlice({
 
         })
         .addCase(getOrders.rejected,(state,action)=>{
+            state.loading = false
+            state.ordererrors = action.payload as string
+        })
+
+        //get returns
+        .addCase(getUserReturns.pending,(state)=>{
+            state.loading = true
+        })
+        .addCase(getUserReturns.fulfilled,(state,action)=>{
+            state.loading = false
+           state.returns = action.payload
+        })
+        .addCase(getUserReturns.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
         })

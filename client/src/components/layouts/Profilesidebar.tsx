@@ -234,46 +234,53 @@ const ProfileSidebar = () => {
           </Link>
 
           {/* My Returns */}
-          <div className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 7H5m0 0l3-3M5 7a7 7 0 111.5 7.5"
-                />
-              </svg>
-            </div>
+       <Link
+  to="/users/orders/returns"
+  className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+>
+  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 7H5m0 0l3-3M5 7a7 7 0 111.5 7.5"
+      />
+    </svg>
+  </div>
 
-            <span>My Returns</span>
-          </div>
+  <span>My Returns</span>
+</Link>
 
           {/* Cancellations */}
-          <div className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 6l12 12M18 6L6 18"
-                />
-              </svg>
-            </div>
+        
+<Link
+  to="/users/orders/cancelled"
+  className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+>
+  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 6l12 12M18 6L6 18"
+      />
+    </svg>
+  </div>
 
-            <span>Cancellations</span>
-          </div>
+  <span>Cancellations</span>
+</Link>
         </div>
 
         {/* SETTINGS */}

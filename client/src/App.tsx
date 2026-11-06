@@ -24,6 +24,9 @@ import OrderSuccess from "./components/OrderSuccess"
 import Orders from "./pages/orders/Orders"
 import Order from "./pages/orders/Order"
 import Wallet from "./pages/wallet/Wallet"
+import Cancelled from "./pages/orders/Cancelled"
+import Returns from "./pages/orders/Returns"
+import ReturnDetails from "./pages/orders/ReturnDetails"
 
 
 function App() {
@@ -63,6 +66,9 @@ function App() {
           <Route path="/users/Checkout" element={<Checkout />} />
           <Route path="/users/orders" element={<Orders />} />
           <Route path="/users/orders/:orderId" element={<Order />} />
+          <Route path="/users/orders/cancelled" element={<Cancelled />} />
+          <Route path="/users/orders/returns" element={<Returns />} />
+          <Route path="/users/orders/returns/:id" element={<ReturnDetails />} />
 
 
           {/* wallet */}

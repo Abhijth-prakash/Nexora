@@ -608,9 +608,35 @@ class ReturnService {
       .populate("user", "name email")
       .populate("order")
       .sort({ createdAt: -1 });
-
+    logger.info(`returns fetched for admin`)
     return returns;
   } catch (error) {
+    logger.error('failed to get returns')
+    throw error;
+  }
+}
+
+//get orders for users
+static async getReturns(user) {
+  try {
+    const returns = await Return.find({ user })
+      .populate({
+        path: "user",
+        select: "name email phone",
+      })
+      .populate({
+        path: "order",
+        populate: {
+          path: "address",
+          model: "Address",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    logger.info(`returns fetched for user ${user}`);
+    return returns;
+  } catch (error) {
+    logger.error(`failed to get returns for user ${user}`, error);
     throw error;
   }
 }

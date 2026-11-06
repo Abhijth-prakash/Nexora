@@ -199,7 +199,6 @@ export type WalletPagination = {
   hasMore: boolean;
 };
 
-
 export type BaseReturn = {
   _id: string;
 
@@ -244,7 +243,6 @@ export type BaseReturn = {
     pickedUp: string | null;
     received: string | null;
     refunded: string | null;
-    cancelled: string | null;
   };
 
   createdAt: string;
