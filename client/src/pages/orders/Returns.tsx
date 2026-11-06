@@ -12,6 +12,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import ProfileSidebar from "../../components/layouts/Profilesidebar";
+import { UserProfile } from "../../redux/features/userSlice";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -21,9 +22,19 @@ const Returns = () => {
     (state) => state.orderData
   );
 
+    const {  isStale } = useAppSelector(
+    (state) => state.userData
+  );
+
   useEffect(() => {
     dispatch(getUserReturns());
   }, [dispatch]);
+
+   useEffect(() => {
+        if (isStale) {
+          dispatch(UserProfile());
+        }
+      }, [dispatch, isStale]);
 
   const formatDate = (date?: string | null) =>
     date

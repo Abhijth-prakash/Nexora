@@ -21,6 +21,7 @@ import {
   Truck,
   RotateCcw,
 } from "lucide-react";
+import { UserProfile } from "../../redux/features/userSlice";
 
 // the 4 main tracking stages, in order
 const TRACK_STEPS = [
@@ -86,6 +87,10 @@ const Order = () => {
     (state) => state.orderData
   );
 
+  const {  isStale } = useAppSelector(
+    (state) => state.userData
+  );
+
   const { orderId } = useParams<{ orderId: string }>();
 
   // ---- cancel order state ----
@@ -107,6 +112,14 @@ const Order = () => {
       dispatch(getOrders({ page: 1, search: "" }));
     }
   }, [dispatch, orders]);
+
+
+  useEffect(() => {
+        if (isStale) {
+          dispatch(UserProfile());
+        }
+      }, [dispatch, isStale]);
+  
 
   // Find the selected order
   const order = orders?.find((item) => item._id === orderId);

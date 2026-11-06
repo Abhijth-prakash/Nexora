@@ -23,6 +23,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import ProfileSidebar from "../../components/layouts/Profilesidebar";
+import { UserProfile } from "../../redux/features/userSlice";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -69,12 +70,23 @@ const ReturnDetails = () => {
   const { returns, loading, ordererrors } = useAppSelector(
     (state) => state.orderData
   );
+   const {  isStale } = useAppSelector(
+    (state) => state.userData
+  );
+
 
   useEffect(() => {
     if (!returns || returns.length === 0) {
       dispatch(getUserReturns());
     }
   }, [dispatch, returns]);
+
+
+      useEffect(() => {
+        if (isStale) {
+          dispatch(UserProfile());
+        }
+      }, [dispatch, isStale]);
 
   const ret: any = useMemo(
     () => (returns || []).find((r: any) => r._id === id),

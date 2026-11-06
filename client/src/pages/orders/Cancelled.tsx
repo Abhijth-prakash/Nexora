@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import ProfileSidebar from "../../components/layouts/Profilesidebar";
+import { UserProfile } from "../../redux/features/userSlice";
 
 const MAX_NAMES = 2;
 
@@ -24,6 +25,10 @@ const Cancelled = () => {
 
   const { orders, loading, ordererrors, page, pages } = useAppSelector(
     (state) => state.orderData
+  );
+
+    const {  isStale } = useAppSelector(
+    (state) => state.userData
   );
 
   const [search, setSearch] = useState("");
@@ -35,6 +40,13 @@ const Cancelled = () => {
 
     return () => clearTimeout(timer);
   }, [dispatch, page, search]);
+
+
+   useEffect(() => {
+        if (isStale) {
+          dispatch(UserProfile());
+        }
+      }, [dispatch, isStale]);
 
   const onSearchChange = (value: string) => {
     setSearch(value);

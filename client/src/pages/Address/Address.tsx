@@ -6,13 +6,24 @@ import type { BaseAddress } from "../../utils/baseTypes"
 import DeleteAddress from "./DeleteAddress"
 import type { Addressid } from "../../utils/Validation"
 import ProfileSidebar from "../../components/layouts/Profilesidebar"
+import { UserProfile } from "../../redux/features/userSlice"
 
 const Address = () => {
   const { address, error,fetched } = useAppSelector(
     (state) => state.addressData
   )
+    const {  isStale } = useAppSelector(
+    (state) => state.userData
+  );
 
+  
   const dispatch = useAppDispatch()
+
+    useEffect(() => {
+      if (isStale) {
+        dispatch(UserProfile());
+      }
+    }, [dispatch, isStale]);
 
   const [showForm, setShowForm] = useState(false)
   const [editingAddress, setEditingAddress] =

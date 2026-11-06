@@ -3,6 +3,7 @@ import { getWallet } from "../../redux/features/walletSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import type { WalletTransaction } from "../../utils/baseTypes";
 import ProfileSidebar from "../../components/layouts/Profilesidebar";
+import { UserProfile } from "../../redux/features/userSlice";
 
 
 const LIMIT = 8;
@@ -26,8 +27,12 @@ const label = (t: WalletTransaction) => {
   return t.reason === "refund" ? `Refund · Order${ref}` : `Order${ref}`;
 };
 
+
+
 const Wallet = () => {
   const dispatch = useAppDispatch();
+
+  
   const { wallet, loading, error, isStale } = useAppSelector((s) => s.walletData);
   const [page, setPage] = useState(1);
 
@@ -35,6 +40,12 @@ const Wallet = () => {
   useEffect(() => {
     dispatch(getWallet({ page, limit: LIMIT }));
   }, [page, dispatch]);
+
+   useEffect(() => {
+        if (isStale) {
+          dispatch(UserProfile());
+        }
+      }, [dispatch, isStale]);
 
   // refetch when something (e.g. a cancel) marks the wallet stale
   useEffect(() => {

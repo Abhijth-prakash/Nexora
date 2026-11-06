@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import ProfileSidebar from "../../components/layouts/Profilesidebar";
+import { UserProfile } from "../../redux/features/userSlice";
 
 
 const PAGE_LIMIT = 5;
@@ -26,7 +27,9 @@ const Orders = () => {
 
   const { orders, loading, ordererrors, page, pages, totalOrders } =
     useAppSelector((state) => state.orderData);
-
+ const {  isStale } = useAppSelector(
+    (state) => state.userData
+  );
   const [search, setSearch] = useState("");
 
   // Fetch from backend whenever page / search changes (debounced)
@@ -37,6 +40,14 @@ const Orders = () => {
 
     return () => clearTimeout(timer);
   }, [dispatch, page, search]);
+
+
+
+   useEffect(() => {
+        if (isStale) {
+          dispatch(UserProfile());
+        }
+      }, [dispatch, isStale]);
 
   // Any change to search goes back to page 1
   const onSearchChange = (value: string) => {
