@@ -6,6 +6,17 @@ import type { BaseAddress, BaseCartItem, Baseorder, BaseReturn } from "../../uti
 import type { BuyNowPayload } from "../../utils/apiTypes";
 
 
+export type PaymentFailureInfo = {
+  orderId: string | null;
+  razorpayOrderId: string | null;
+  amount: number;
+  currency: string | null;
+  keyId: string | null;
+  errorCode: string | null;
+  errorDescription: string | null;
+  errorReason: string | null;
+};
+
 export type orderType = {
   loading: boolean;
   ordererrors: string | null;
@@ -34,6 +45,8 @@ export type orderType = {
   returns:BaseReturn[]
   buyNowItem: BuyNowPayload | null
   checkoutItems: BaseCartItem[]
+  paymentFailure: PaymentFailureInfo | null
+  expiresAt: string | null
 };
 
 
@@ -59,6 +72,8 @@ const initialState:orderType = {
   returns:[],
   buyNowItem: null,
   checkoutItems: [],
+  paymentFailure: null,
+  expiresAt: null,
 }
 
 
@@ -397,6 +412,59 @@ export const getUserReturns = createAsyncThunk(
 
 
 
+//recordPaymentFailure
+export const recordPaymentFailure = createAsyncThunk(
+  "order/recordPaymentFailure",
+  async (
+    payload: {
+      orderId?: string;
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+      error?: {
+        code?: string;
+        description?: string;
+        reason?: string;
+      };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await orderApi.recordPaymentFailure(payload);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to record payment failure."
+        );
+      }
+      return rejectWithValue("Failed to record payment failure.");
+    }
+  }
+);
+
+
+//getPaymentStatus
+export const getPaymentStatus = createAsyncThunk(
+  "order/getPaymentStatus",
+  async (orderId: string, { rejectWithValue }) => {
+    try {
+      const response = await orderApi.getPaymentStatus(orderId);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(
+          error.response?.data?.error?.message ||
+            "Failed to fetch payment status."
+        );
+      }
+      return rejectWithValue("Failed to fetch payment status.");
+    }
+  }
+);
+
+
+
 const orderSlice = createSlice({
     name:'orderSLice',
     initialState,
@@ -413,7 +481,13 @@ const orderSlice = createSlice({
         },
         clearOrderErrors: (state) => {
             state.ordererrors = null
-        }
+        },
+        setPaymentFailure: (state, action: PayloadAction<PaymentFailureInfo>) => {
+            state.paymentFailure = action.payload
+        },
+        clearPaymentFailure: (state) => {
+            state.paymentFailure = null
+        },
     },
     extraReducers: (build)=>{
         build
@@ -488,6 +562,7 @@ const orderSlice = createSlice({
             state.amount = action.payload.amount
             state.currency = action.payload.currency
             state.orderId = action.payload.orderId
+            state.expiresAt = action.payload.expiresAt ?? null
       
         })
         .addCase(createRazorpayment.rejected,(state,action)=>{
@@ -590,4 +665,4 @@ const orderSlice = createSlice({
 
 export default orderSlice.reducer
 
-export const { setPage, setBuyNowItem, clearBuyNow, clearOrderErrors } = orderSlice.actions
+export const { setPage, setBuyNowItem, clearBuyNow, clearOrderErrors, setPaymentFailure, clearPaymentFailure } = orderSlice.actions

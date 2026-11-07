@@ -89,21 +89,32 @@ static GenerateOrder = BaseController.asyncHandler(
 static razorPaymentController = BaseController.asyncHandler(
   async (req,res)=>{
     const {orderId} = req.body
-    const result = await PaymentService.razorpayService(orderId)
+    const user = req.userId
+    const result = await PaymentService.razorpayService(orderId, user)
+
+    if (result.isPaid) {
+      return this.sendSuccessResponse(
+        res,
+        "Order is already paid",
+        result,
+        200
+      );
+    }
 
     BaseController.logAction(
-  `Razorpay order created successfully | Razorpay Order ID: ${result.razorpayOrderId} | Time: ${new Date().toISOString()}`
-);
+      `Razorpay order ready | Razorpay Order ID: ${result.razorpayOrderId} | Time: ${new Date().toISOString()}`
+    );
 
     return this.sendSuccessResponse(
       res,
-      `paymentOrder succesfully created ${result.OrderId}`  ,
+      `paymentOrder successfully ready ${result.orderId}`,
       { 
         razorpayOrderId:result.razorpayOrderId,
         amount: result.amount,
         currency: result.currency,
         keyId: config.RazorPay.api_key,
-        orderId:result.orderId
+        orderId:result.orderId,
+        expiresAt: result.expiresAt,
       },
       201
     )
@@ -130,6 +141,41 @@ BaseController.logAction(
     )
   }
 )
+
+//record payment failure
+static recordPaymentFailure = BaseController.asyncHandler(
+  async (req, res) => {
+    const user = req.userId;
+    const result = await PaymentService.recordPaymentFailure(user, req.body);
+
+    BaseController.logAction(
+      `Payment failure recorded for order ${result.orderId || req.body?.orderId} | User: ${user}`
+    );
+
+    return this.sendSuccessResponse(
+      res,
+      "Payment failure status recorded",
+      result,
+      200
+    );
+  }
+);
+
+//get payment status
+static getPaymentStatus = BaseController.asyncHandler(
+  async (req, res) => {
+    const user = req.userId;
+    const { orderId } = req.params;
+    const result = await PaymentService.getPaymentStatus(user, orderId);
+
+    return this.sendSuccessResponse(
+      res,
+      "Payment status fetched successfully",
+      result,
+      200
+    );
+  }
+);
 
 
 

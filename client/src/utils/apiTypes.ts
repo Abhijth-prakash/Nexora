@@ -153,6 +153,29 @@ export type RazorpaymentResponse = {
   currency: string;
   keyId: string;
   orderId:string;
+  expiresAt?: string;
+  isPaid?: boolean;
+  message?: string;
+};
+
+export type PaymentFailureResponse = {
+  isPaid: boolean;
+  paymentStatus?: string;
+  orderId: string;
+};
+
+export type PaymentStatusResponse = {
+  status: string;
+  isPaid: boolean;
+  orderStatus: string;
+  reservationValid: boolean;
+  expiresAt: string | null;
+  order: Baseorder;
+  amount?: number;
+  currency?: string;
+  keyId?: string;
+  razorpayOrderId?: string | null;
+  cancelReason?: string;
 };
 
 export type verifyPaymentResponse = Baseorder

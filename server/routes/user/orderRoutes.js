@@ -16,6 +16,8 @@ router.patch("/order/:id/cancel", OrderController.cancelOrder);
 //payment
 router.post('/order/payment/razorpay',OrderController.razorPaymentController)
 router.post('/order/razorpay/verifypayment',OrderController.verifyPayment)
+router.post('/order/razorpay/payment-failed',OrderController.recordPaymentFailure)
+router.get('/order/:orderId/payment-status',OrderController.getPaymentStatus)
 router.post('/order/cod/sendOtp',OrderController.SendCodOtp)
 router.post('/order/cod/veirfyOtp',OrderController.verifyCodOtp)
 router.post('/order/:id/pay-wallet',OrderController.payByWallet)

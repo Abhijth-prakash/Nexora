@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { createRazorpayment, sendCodOtp, verifyPayment, payByWallet } from "../../redux/features/orderSlice";
+import {
+  createRazorpayment,
+  sendCodOtp,
+  verifyPayment,
+  payByWallet,
+  recordPaymentFailure,
+} from "../../redux/features/orderSlice";
 import { markWalletStale } from "../../redux/features/walletSlice";
 import CodOtpModal from "../../components/CodOtpModal";
 import { toast } from "react-toastify";
@@ -150,6 +156,26 @@ const handleRazorpay = async () => {
         toast.error(
           response.error.description || "Payment failed"
         );
+
+        // tell the server this payment attempt failed.
+        // fire-and-forget: a failure here must not break the page
+        dispatch(
+          recordPaymentFailure({
+            orderId: orderId ?? undefined,
+            razorpayOrderId:
+              response.error.metadata?.order_id ?? paymentData.razorpayOrderId,
+            razorpayPaymentId: response.error.metadata?.payment_id,
+            error: {
+              code: response.error.code,
+              description: response.error.description,
+              reason: response.error.reason,
+            },
+          })
+        )
+          .unwrap()
+          .catch((err) =>
+            console.error("Failed to record payment failure:", err)
+          );
       }
     );
 

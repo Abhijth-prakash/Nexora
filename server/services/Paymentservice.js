@@ -1,5 +1,5 @@
 const Order = require("../models/Order");
-const { NotFoundError, ValidationError } = require("../utils/errors");
+const { NotFoundError, ValidationError, ConflictError } = require("../utils/errors");
 const logger = require("../utils/logger");
 const config = require('../config/config')
 const razorpay = require("../config/razorpay");
@@ -17,7 +17,7 @@ class PaymentService{
 
 
 //razorpayservice
-static async razorpayService(orderId) {
+static async razorpayService(orderId, userId = null) {
   try {
     const order = await Order.findById(orderId);
 
@@ -25,7 +25,86 @@ static async razorpayService(orderId) {
       throw new NotFoundError("Order not found");
     }
 
-    
+    if (userId && order.user.toString() !== userId.toString()) {
+      throw new NotFoundError("Order not found");
+    }
+
+    // Check if order is already paid
+    if (order.paymentStatus === "paid") {
+      return {
+        isPaid: true,
+        orderId: order._id,
+        message: "Order is already paid",
+      };
+    }
+
+    // Check if order is cancelled
+    if (order.orderStatus === "cancelled") {
+      throw new ValidationError(
+        order.cancelReason || "This order has been cancelled"
+      );
+    }
+
+    // Reconcile with Razorpay in case payment was already captured (Scenario 8)
+    if (order.razorpayOrderId) {
+      try {
+        const payments = await razorpay.orders.fetchPayments(order.razorpayOrderId);
+        const capturedPayment = payments.items?.find((p) => p.status === "captured");
+        if (capturedPayment) {
+          order.paymentStatus = "paid";
+          order.orderDate = new Date();
+          order.razorpay_payment_id = capturedPayment.id;
+          order.paymentMethod = "razorpay";
+          await order.save();
+
+          await StockReservation.findOneAndDelete({
+            orderId: order._id,
+          });
+
+          if (!order.isBuyNow) {
+            await CartService.deleteCart(order.user);
+          }
+
+          if (order.coupon) {
+            await CouponRedemption.updateOne(
+              { coupon: order.coupon, user: order.user, order: order._id },
+              { $setOnInsert: { coupon: order.coupon, user: order.user, order: order._id } },
+              { upsert: true }
+            );
+          }
+
+          logger.info(`Auto-reconciled captured payment for order ${order._id}`);
+          return {
+            isPaid: true,
+            orderId: order._id,
+            message: "Payment already completed successfully",
+          };
+        }
+      } catch (checkErr) {
+        logger.warn("Could not check Razorpay payments in razorpayService", checkErr);
+      }
+    }
+
+    // Validate stock reservation
+    const reservation = await StockReservation.findOne({
+      orderId: order._id,
+      status: "reserved",
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!reservation) {
+      if (order.paymentStatus !== "paid") {
+        order.orderStatus = "cancelled";
+        order.cancelReason = "Stock reservation expired";
+        order.cancelledBy = "system";
+        await order.save();
+      }
+      throw new ConflictError(
+        "Stock reservation has expired. Please return to checkout to initiate a fresh reservation."
+      );
+    }
+
+    // Reuse existing razorpayOrderId if present
     if (order.razorpayOrderId) {
       return {
         razorpayOrderId: order.razorpayOrderId,
@@ -33,10 +112,10 @@ static async razorpayService(orderId) {
         currency: "INR",
         keyId: config.RazorPay.api_key,
         orderId: order._id,
+        expiresAt: reservation.expiresAt,
       };
     }
 
-    
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(order.totalAmount * 100),
       currency: "INR",
@@ -44,7 +123,7 @@ static async razorpayService(orderId) {
     });
 
     order.razorpayOrderId = razorpayOrder.id;
-    order.paymentMethod = "razorpay"
+    order.paymentMethod = "razorpay";
     await order.save();
 
     logger.info(`Razorpay order created: ${razorpayOrder.id}`);
@@ -55,6 +134,7 @@ static async razorpayService(orderId) {
       currency: razorpayOrder.currency,
       keyId: config.RazorPay.api_key,
       orderId: order._id,
+      expiresAt: reservation.expiresAt,
     };
   } catch (error) {
     logger.error("Failed to create Razorpay order", error);
@@ -64,20 +144,28 @@ static async razorpayService(orderId) {
 
 
 
-//verifyPaymenet
-
-
+//verifyPayment
 static async verifyPayment(user, data) {
   try {
     const {
       razorpay_order_id,
       razorpay_payment_id,
+      razorpay_signature,
+      orderId,
     } = data;
 
-    const order = await Order.findOne({
+    if (!razorpay_order_id || !razorpay_payment_id) {
+      throw new ValidationError("Missing payment verification parameters");
+    }
+
+    let order = await Order.findOne({
       razorpayOrderId: razorpay_order_id,
       user,
     });
+
+    if (!order && orderId && mongoose.isValidObjectId(orderId)) {
+      order = await Order.findOne({ _id: orderId, user });
+    }
 
     if (!order) {
       throw new NotFoundError("Order not found");
@@ -104,7 +192,7 @@ static async verifyPayment(user, data) {
       );
     };
 
-    // Handle repeated verification requests
+    // Handle repeated verification requests (idempotent)
     if (order.paymentStatus === "paid") {
       await createCouponRedemption();
 
@@ -114,7 +202,21 @@ static async verifyPayment(user, data) {
       });
     }
 
-    // Verify actual payment status with Razorpay
+    // 1. Verify Razorpay cryptographic HMAC signature
+    if (razorpay_signature) {
+      const generated_signature = crypto
+        .createHmac("sha256", config.RazorPay.api_secret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest("hex");
+
+      if (generated_signature !== razorpay_signature) {
+        order.paymentStatus = "failed";
+        await order.save();
+        throw new ValidationError("Payment signature verification failed");
+      }
+    }
+
+    // 2. Verify actual payment status with Razorpay (source of truth)
     const payment = await razorpay.payments.fetch(
       razorpay_payment_id
     );
@@ -123,15 +225,26 @@ static async verifyPayment(user, data) {
       payment.order_id !== razorpay_order_id ||
       payment.status !== "captured"
     ) {
+      order.paymentStatus = "failed";
+      await order.save();
       throw new ValidationError(
         "Payment has not been captured"
       );
     }
 
+    // 3. Amount verification
+    const expectedAmount = Math.round(order.totalAmount * 100);
+    if (payment.amount !== expectedAmount) {
+      order.paymentStatus = "failed";
+      await order.save();
+      throw new ValidationError("Payment amount mismatch");
+    }
+
     // Update order payment status
     order.paymentStatus = "paid";
     order.orderDate = new Date();
-    order.razorpay_payment_id = razorpay_payment_id
+    order.razorpay_payment_id = razorpay_payment_id;
+    order.paymentMethod = "razorpay";
 
     await order.save();
 
@@ -161,6 +274,205 @@ static async verifyPayment(user, data) {
 
   } catch (error) {
     logger.error("Failed to verify payment", error);
+    throw error;
+  }
+}
+
+
+
+// recordPaymentFailure
+static async recordPaymentFailure(userId, data) {
+  try {
+    const { orderId, razorpayOrderId, razorpayPaymentId, error } = data || {};
+
+    const query = { user: userId };
+    if (orderId && mongoose.isValidObjectId(orderId)) {
+      query._id = orderId;
+    } else if (razorpayOrderId) {
+      query.razorpayOrderId = razorpayOrderId;
+    } else {
+      throw new ValidationError("Order identifier required");
+    }
+
+    const order = await Order.findOne(query);
+    if (!order) {
+      throw new NotFoundError("Order not found");
+    }
+
+    // Never downgrade an already paid order
+    if (order.paymentStatus === "paid") {
+      return { isPaid: true, orderId: order._id };
+    }
+
+    // Safety reconciliation check (Scenario 8)
+    const effectiveRazorpayOrderId = order.razorpayOrderId || razorpayOrderId;
+    if (effectiveRazorpayOrderId) {
+      try {
+        const payments = await razorpay.orders.fetchPayments(effectiveRazorpayOrderId);
+        const captured = payments.items?.find((p) => p.status === "captured");
+        if (captured) {
+          order.paymentStatus = "paid";
+          order.orderDate = new Date();
+          order.razorpay_payment_id = captured.id;
+          order.paymentMethod = "razorpay";
+          await order.save();
+
+          await StockReservation.findOneAndDelete({
+            user: userId,
+            orderId: order._id,
+          });
+
+          if (!order.isBuyNow) {
+            await CartService.deleteCart(userId);
+          }
+
+          if (order.coupon) {
+            await CouponRedemption.updateOne(
+              { coupon: order.coupon, user: userId, order: order._id },
+              { $setOnInsert: { coupon: order.coupon, user: userId, order: order._id } },
+              { upsert: true }
+            );
+          }
+
+          logger.info(`Auto-reconciled captured payment during failure recording: ${order._id}`);
+          return { isPaid: true, orderId: order._id };
+        }
+      } catch (checkErr) {
+        logger.warn("Could not check Razorpay payments during failure recording", checkErr);
+      }
+    }
+
+    // Mark paymentStatus as failed (keeping StockReservation intact for retry)
+    order.paymentStatus = "failed";
+    if (razorpayPaymentId) {
+      order.razorpay_payment_id = razorpayPaymentId;
+    }
+    await order.save();
+
+    logger.info(`Payment recorded as failed for order ${order._id}`, {
+      reason: error?.description || error?.reason || "Payment failed",
+    });
+
+    return {
+      isPaid: false,
+      paymentStatus: "failed",
+      orderId: order._id,
+    };
+  } catch (error) {
+    logger.error("Failed to record payment failure", error);
+    throw error;
+  }
+}
+
+
+
+// getPaymentStatus
+static async getPaymentStatus(userId, orderId) {
+  try {
+    if (!mongoose.isValidObjectId(orderId)) {
+      throw new ValidationError("Invalid order ID");
+    }
+
+    const order = await Order.findOne({ _id: orderId, user: userId })
+      .populate("items.product")
+      .populate("address")
+      .populate("coupon");
+
+    if (!order) {
+      throw new NotFoundError("Order not found");
+    }
+
+    // 1. If already marked paid
+    if (order.paymentStatus === "paid") {
+      return {
+        status: "paid",
+        isPaid: true,
+        orderStatus: order.orderStatus,
+        reservationValid: false,
+        expiresAt: null,
+        order,
+      };
+    }
+
+    // 2. Auto-reconcile with Razorpay (Scenario 8)
+    if (order.razorpayOrderId) {
+      try {
+        const payments = await razorpay.orders.fetchPayments(order.razorpayOrderId);
+        const captured = payments.items?.find((p) => p.status === "captured");
+        if (captured) {
+          order.paymentStatus = "paid";
+          order.orderDate = new Date();
+          order.razorpay_payment_id = captured.id;
+          order.paymentMethod = "razorpay";
+          await order.save();
+
+          await StockReservation.findOneAndDelete({
+            user: userId,
+            orderId: order._id,
+          });
+
+          if (!order.isBuyNow) {
+            await CartService.deleteCart(userId);
+          }
+
+          if (order.coupon) {
+            await CouponRedemption.updateOne(
+              { coupon: order.coupon, user: userId, order: order._id },
+              { $setOnInsert: { coupon: order.coupon, user: userId, order: order._id } },
+              { upsert: true }
+            );
+          }
+
+          logger.info(`Auto-reconciled captured payment during getPaymentStatus: ${order._id}`);
+          return {
+            status: "paid",
+            isPaid: true,
+            orderStatus: order.orderStatus,
+            reservationValid: false,
+            expiresAt: null,
+            order,
+          };
+        }
+      } catch (err) {
+        logger.warn("Could not check Razorpay payments during getPaymentStatus", err);
+      }
+    }
+
+    // 3. Check stock reservation
+    const reservation = await StockReservation.findOne({
+      orderId: order._id,
+      user: userId,
+      status: "reserved",
+    });
+
+    const isReservationValid = Boolean(
+      reservation && new Date(reservation.expiresAt) > new Date()
+    );
+
+    if (!isReservationValid && order.paymentStatus !== "paid") {
+      if (order.orderStatus !== "cancelled") {
+        order.orderStatus = "cancelled";
+        order.cancelReason = "Stock reservation expired";
+        order.cancelledBy = "system";
+        await order.save();
+      }
+    }
+
+    return {
+      status: order.paymentStatus,
+      isPaid: false,
+      orderStatus: order.orderStatus,
+      reservationValid: isReservationValid,
+      expiresAt: isReservationValid ? reservation.expiresAt : null,
+      order,
+      amount: Math.round(order.totalAmount * 100),
+      currency: "INR",
+      keyId: config.RazorPay.api_key,
+      razorpayOrderId: order.razorpayOrderId,
+      cancelReason: order.cancelReason,
+    };
+  } catch (error) {
+    logger.error("Failed to get payment status", error);
     throw error;
   }
 }

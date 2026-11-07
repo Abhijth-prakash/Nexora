@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, BuyNowPayload, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getAllreturnResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, BuyNowPayload, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getAllreturnResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse, PaymentFailureResponse, PaymentStatusResponse, productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -284,6 +284,32 @@ verifyPayment: async (payload: {
   const response = await ClientApi.post<ApiResponse<verifyPaymentResponse>>(
     "/users/order/razorpay/verifypayment", 
     payload
+  );
+  return response.data;
+},
+
+recordPaymentFailure: async (payload: {
+  orderId?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  error?: {
+    code?: string;
+    description?: string;
+    reason?: string;
+  };
+}): Promise<ApiResponse<PaymentFailureResponse>> => {
+  const response = await ClientApi.post<ApiResponse<PaymentFailureResponse>>(
+    "/users/order/razorpay/payment-failed",
+    payload
+  );
+  return response.data;
+},
+
+getPaymentStatus: async (
+  orderId: string
+): Promise<ApiResponse<PaymentStatusResponse>> => {
+  const response = await ClientApi.get<ApiResponse<PaymentStatusResponse>>(
+    `/users/order/${orderId}/payment-status`
   );
   return response.data;
 },
