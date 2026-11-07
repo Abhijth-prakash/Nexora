@@ -626,10 +626,17 @@ static async getReturns(user) {
       })
       .populate({
         path: "order",
-        populate: {
-          path: "address",
-          model: "Address",
-        },
+        populate: [
+          { path: "address", model: "Address" },
+          {
+            path: "items.product",
+            select: "name brand images image description",
+          },
+          {
+            path: "items.variantId",
+            select: "name size color images image",
+          },
+        ],
       })
       .sort({ createdAt: -1 });
 
@@ -640,7 +647,6 @@ static async getReturns(user) {
     throw error;
   }
 }
-
 
 }
 

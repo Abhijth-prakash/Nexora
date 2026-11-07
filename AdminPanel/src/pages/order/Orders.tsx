@@ -28,10 +28,13 @@ const ORDER_STATUSES = [
   "cancelled",
 ];
 
-// "pending" is left out: the backend hides orders with a pending payment
-const PAYMENT_STATUSES = ["paid", "failed", "refunded", "cod"];
+// statuses offered in the filter (includes orders still waiting for payment)
+const FILTER_STATUSES = ["payment_pending", ...ORDER_STATUSES];
+
+const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded", "cod"];
 
 const statusLabel: Record<string, string> = {
+  payment_pending: "Payment pending",
   confirmed: "Confirmed",
   shipped: "Shipped",
   out_for_delivery: "Out for delivery",
@@ -40,6 +43,7 @@ const statusLabel: Record<string, string> = {
 };
 
 const statusText: Record<string, string> = {
+  payment_pending: "text-gray-500",
   confirmed: "text-amber-600",
   shipped: "text-blue-600",
   out_for_delivery: "text-[#ff5a1f]",
@@ -120,6 +124,7 @@ const Orders = () => {
 
   // send the new status to the backend, wait for it, toast, then refresh
   const handleStatusChange = async (orderId: string, newStatus: string) => {
+    if (newStatus === "payment_pending") return; // never set manually
     setUpdatingId(orderId);
 
     try {
@@ -215,7 +220,7 @@ const Orders = () => {
               className={selectBase}
             >
               <option value="">All Status</option>
-              {ORDER_STATUSES.map((s) => (
+              {FILTER_STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {statusLabel[s]}
                 </option>
@@ -308,6 +313,8 @@ const Orders = () => {
                     {list.map((order) => {
                       const badge = paymentBadge(order.paymentStatus);
                       const orderStatus = order.orderStatus || "confirmed";
+                      // an order still waiting for payment can't be moved forward
+                      const isPaymentPending = orderStatus === "payment_pending";
                       const locked =
                         orderStatus === "delivered" ||
                         orderStatus === "cancelled";
@@ -346,6 +353,14 @@ const Orders = () => {
                           </td>
 
                           <td className="px-3 py-5">
+                            {isPaymentPending ? (
+                              <span
+                                title="Status can be changed once the payment is completed"
+                                className="inline-flex h-10 w-40 cursor-not-allowed items-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 text-xs font-medium text-gray-500"
+                              >
+                                {statusLabel.payment_pending}
+                              </span>
+                            ) : (
                             <div className="relative w-40">
                               <select
                                 value={orderStatus}
@@ -368,6 +383,7 @@ const Orders = () => {
                                 className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                               />
                             </div>
+                            )}
                           </td>
 
                           <td className="px-3 py-5">

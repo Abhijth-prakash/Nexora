@@ -110,7 +110,8 @@ export type Baseorder = {
 
   coupon: string | BaseCoupon | null;
 
- orderStatus:
+orderStatus:
+  | "payment_pending"
   | "confirmed"
   | "shipped"
   | "out_for_delivery"

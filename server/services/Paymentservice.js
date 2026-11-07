@@ -1,5 +1,10 @@
 const Order = require("../models/Order");
-const { NotFoundError, ValidationError, ConflictError } = require("../utils/errors");
+const {
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+  AuthenticationError,
+} = require("../utils/errors");
 const logger = require("../utils/logger");
 const config = require('../config/config')
 const razorpay = require("../config/razorpay");
@@ -9,11 +14,86 @@ const Mail = require('../utils/mail');
 const StockReservation = require("../models/StockReservation");
 const CartService = require("./cartService");
 const {CouponRedemption}= require('../models/Coupon')
-const Refund = require('../models/Return') 
+const Refund = require('../models/Return')
 const mongoose = require('mongoose')
 const Wallet = require('../models/Wallet')
 
+/*
+ * Order lifecycle used by this service
+ *
+ *  paymentStatus   orderStatus        meaning
+ *  -------------   ----------------   ------------------------------------------
+ *  pending         payment_pending    order created, nothing paid yet
+ *  failed          payment_pending    a payment attempt failed, user can retry
+ *  paid / cod      confirmed          payment done (razorpay / wallet / COD OTP)
+ *  failed|pending  cancelled          stock reservation expired without payment
+ */
+
 class PaymentService{
+
+
+// ---------------------------------------------------------------------------
+// helpers
+// ---------------------------------------------------------------------------
+
+// create the coupon redemption once per order (safe to call repeatedly)
+static async createCouponRedemption(order) {
+  if (!order.coupon) return;
+
+  await CouponRedemption.updateOne(
+    { coupon: order.coupon, user: order.user, order: order._id },
+    {
+      $setOnInsert: {
+        coupon: order.coupon,
+        user: order.user,
+        order: order._id,
+      },
+    },
+    { upsert: true }
+  );
+}
+
+// mark an order as paid through Razorpay and run all the follow-up work
+static async finalizeRazorpayPayment(order, razorpayPaymentId) {
+  order.paymentStatus = "paid";
+  order.paymentMethod = "razorpay";
+  order.razorpay_payment_id = razorpayPaymentId;
+  order.orderDate = new Date();
+
+  // only confirm an order that was waiting for payment. A cancelled order
+  // (reservation already released) stays cancelled so it can be refunded
+  if (order.orderStatus === "payment_pending") {
+    order.orderStatus = "confirmed";
+    order.trackingDates.confirmed = new Date();
+  }
+
+  await order.save();
+
+  await StockReservation.findOneAndDelete({
+    user: order.user,
+    orderId: order._id,
+  });
+
+  if (!order.isBuyNow) {
+    await CartService.deleteCart(order.user);
+  }
+
+  await PaymentService.createCouponRedemption(order);
+}
+
+// cancel an unpaid order whose stock reservation is gone
+static async cancelExpiredOrder(order) {
+  if (order.orderStatus === "cancelled") return;
+
+  order.orderStatus = "cancelled";
+  order.cancelReason =
+    order.paymentStatus === "failed"
+      ? "Payment failed and stock reservation expired"
+      : "Stock reservation expired";
+  order.cancelledBy = "system";
+  order.trackingDates.cancelled = new Date();
+  await order.save();
+}
 
 
 //razorpayservice
@@ -51,27 +131,7 @@ static async razorpayService(orderId, userId = null) {
         const payments = await razorpay.orders.fetchPayments(order.razorpayOrderId);
         const capturedPayment = payments.items?.find((p) => p.status === "captured");
         if (capturedPayment) {
-          order.paymentStatus = "paid";
-          order.orderDate = new Date();
-          order.razorpay_payment_id = capturedPayment.id;
-          order.paymentMethod = "razorpay";
-          await order.save();
-
-          await StockReservation.findOneAndDelete({
-            orderId: order._id,
-          });
-
-          if (!order.isBuyNow) {
-            await CartService.deleteCart(order.user);
-          }
-
-          if (order.coupon) {
-            await CouponRedemption.updateOne(
-              { coupon: order.coupon, user: order.user, order: order._id },
-              { $setOnInsert: { coupon: order.coupon, user: order.user, order: order._id } },
-              { upsert: true }
-            );
-          }
+          await PaymentService.finalizeRazorpayPayment(order, capturedPayment.id);
 
           logger.info(`Auto-reconciled captured payment for order ${order._id}`);
           return {
@@ -94,10 +154,7 @@ static async razorpayService(orderId, userId = null) {
 
     if (!reservation) {
       if (order.paymentStatus !== "paid") {
-        order.orderStatus = "cancelled";
-        order.cancelReason = "Stock reservation expired";
-        order.cancelledBy = "system";
-        await order.save();
+        await PaymentService.cancelExpiredOrder(order);
       }
       throw new ConflictError(
         "Stock reservation has expired. Please return to checkout to initiate a fresh reservation."
@@ -171,30 +228,9 @@ static async verifyPayment(user, data) {
       throw new NotFoundError("Order not found");
     }
 
-    // Create coupon redemption
-    const createCouponRedemption = async () => {
-      if (!order.coupon) return;
-
-      await CouponRedemption.updateOne(
-        {
-          coupon: order.coupon,
-          user,
-          order: order._id,
-        },
-        {
-          $setOnInsert: {
-            coupon: order.coupon,
-            user,
-            order: order._id,
-          },
-        },
-        { upsert: true }
-      );
-    };
-
     // Handle repeated verification requests (idempotent)
     if (order.paymentStatus === "paid") {
-      await createCouponRedemption();
+      await PaymentService.createCouponRedemption(order);
 
       return await Order.getCart({
         _id: order._id,
@@ -240,27 +276,8 @@ static async verifyPayment(user, data) {
       throw new ValidationError("Payment amount mismatch");
     }
 
-    // Update order payment status
-    order.paymentStatus = "paid";
-    order.orderDate = new Date();
-    order.razorpay_payment_id = razorpay_payment_id;
-    order.paymentMethod = "razorpay";
-
-    await order.save();
-
-    // Delete stock reservation
-    await StockReservation.findOneAndDelete({
-      user,
-      orderId: order._id,
-    });
-
-    // Clear cart (preserve for Buy Now)
-    if (!order.isBuyNow) {
-      await CartService.deleteCart(user);
-    }
-
-    // Create coupon redemption
-    await createCouponRedemption();
+    // Mark paid + confirm order, delete reservation, clear cart, redeem coupon
+    await PaymentService.finalizeRazorpayPayment(order, razorpay_payment_id);
 
     logger.info(
       `Payment verified successfully: ${razorpay_payment_id}`
@@ -311,28 +328,7 @@ static async recordPaymentFailure(userId, data) {
         const payments = await razorpay.orders.fetchPayments(effectiveRazorpayOrderId);
         const captured = payments.items?.find((p) => p.status === "captured");
         if (captured) {
-          order.paymentStatus = "paid";
-          order.orderDate = new Date();
-          order.razorpay_payment_id = captured.id;
-          order.paymentMethod = "razorpay";
-          await order.save();
-
-          await StockReservation.findOneAndDelete({
-            user: userId,
-            orderId: order._id,
-          });
-
-          if (!order.isBuyNow) {
-            await CartService.deleteCart(userId);
-          }
-
-          if (order.coupon) {
-            await CouponRedemption.updateOne(
-              { coupon: order.coupon, user: userId, order: order._id },
-              { $setOnInsert: { coupon: order.coupon, user: userId, order: order._id } },
-              { upsert: true }
-            );
-          }
+          await PaymentService.finalizeRazorpayPayment(order, captured.id);
 
           logger.info(`Auto-reconciled captured payment during failure recording: ${order._id}`);
           return { isPaid: true, orderId: order._id };
@@ -342,7 +338,8 @@ static async recordPaymentFailure(userId, data) {
       }
     }
 
-    // Mark paymentStatus as failed (keeping StockReservation intact for retry)
+    // Mark paymentStatus as failed. orderStatus stays "payment_pending" and
+    // the StockReservation is kept, so the user can retry the payment
     order.paymentStatus = "failed";
     if (razorpayPaymentId) {
       order.razorpay_payment_id = razorpayPaymentId;
@@ -356,6 +353,7 @@ static async recordPaymentFailure(userId, data) {
     return {
       isPaid: false,
       paymentStatus: "failed",
+      orderStatus: order.orderStatus,
       orderId: order._id,
     };
   } catch (error) {
@@ -400,28 +398,7 @@ static async getPaymentStatus(userId, orderId) {
         const payments = await razorpay.orders.fetchPayments(order.razorpayOrderId);
         const captured = payments.items?.find((p) => p.status === "captured");
         if (captured) {
-          order.paymentStatus = "paid";
-          order.orderDate = new Date();
-          order.razorpay_payment_id = captured.id;
-          order.paymentMethod = "razorpay";
-          await order.save();
-
-          await StockReservation.findOneAndDelete({
-            user: userId,
-            orderId: order._id,
-          });
-
-          if (!order.isBuyNow) {
-            await CartService.deleteCart(userId);
-          }
-
-          if (order.coupon) {
-            await CouponRedemption.updateOne(
-              { coupon: order.coupon, user: userId, order: order._id },
-              { $setOnInsert: { coupon: order.coupon, user: userId, order: order._id } },
-              { upsert: true }
-            );
-          }
+          await PaymentService.finalizeRazorpayPayment(order, captured.id);
 
           logger.info(`Auto-reconciled captured payment during getPaymentStatus: ${order._id}`);
           return {
@@ -450,12 +427,7 @@ static async getPaymentStatus(userId, orderId) {
     );
 
     if (!isReservationValid && order.paymentStatus !== "paid") {
-      if (order.orderStatus !== "cancelled") {
-        order.orderStatus = "cancelled";
-        order.cancelReason = "Stock reservation expired";
-        order.cancelledBy = "system";
-        await order.save();
-      }
+      await PaymentService.cancelExpiredOrder(order);
     }
 
     return {
@@ -495,12 +467,23 @@ static async SendCodOtp(userId, orderId) {
       throw new NotFoundError("order not found");
     }
 
-   
+
     if (order.user.toString() !== userId.toString()) {
       throw new NotFoundError("order not found");
     }
 
-    
+    // an order that is already placed or cancelled can't be placed again
+    if (order.paymentStatus === "paid" || order.paymentStatus === "cod") {
+      throw new ValidationError("This order is already placed");
+    }
+
+    if (order.orderStatus === "cancelled") {
+      throw new ValidationError(
+        order.cancelReason || "This order has been cancelled"
+      );
+    }
+
+
 
     const otp = Mail.generateOTP();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
@@ -544,7 +527,17 @@ static async verifyCodOtp(userId, data) {
       throw new NotFoundError("Order not found");
     }
 
-    // 2. Validate OTP state
+    // 2. Validate order + OTP state
+    if (order.paymentStatus === "paid" || order.paymentStatus === "cod") {
+      throw new ValidationError("This order is already placed");
+    }
+
+    if (order.orderStatus === "cancelled") {
+      throw new ValidationError(
+        order.cancelReason || "This order has been cancelled"
+      );
+    }
+
     if (order.otpVerified) {
       throw new ValidationError("OTP already verified");
     }
@@ -569,6 +562,8 @@ static async verifyCodOtp(userId, data) {
         otpExpiry: { $gt: new Date() },
         otpAttempts: { $lt: MAX_ATTEMPTS },
         otpVerified: false,
+        paymentStatus: { $in: ["pending", "failed"] },
+        orderStatus: { $ne: "cancelled" },
       },
       {
         $set: {
@@ -576,7 +571,9 @@ static async verifyCodOtp(userId, data) {
           otpExpiry: null,
           otpVerified: true,
           paymentMethod: "cod",
-          paymentStatus:"cod"
+          paymentStatus: "cod",
+          orderStatus: "confirmed",
+          "trackingDates.confirmed": new Date(),
         },
       },
       {
@@ -708,13 +705,24 @@ static async PayByWallet(user, data) {
     let alreadyPaid = false;
 
     await session.withTransaction(async () => {
-    
+
+      // "failed" is payable too: the user may switch to wallet after a
+      // failed Razorpay attempt
       const order = await Order.findOneAndUpdate(
-        { _id: orderId, user, paymentStatus: "pending" },
         {
-          paymentStatus: "paid",
-          paymentMethod: "wallet",
-          orderDate: new Date(),
+          _id: orderId,
+          user,
+          paymentStatus: { $in: ["pending", "failed"] },
+          orderStatus: { $ne: "cancelled" },
+        },
+        {
+          $set: {
+            paymentStatus: "paid",
+            paymentMethod: "wallet",
+            orderStatus: "confirmed",
+            orderDate: new Date(),
+            "trackingDates.confirmed": new Date(),
+          },
         },
         { new: true, session }
       );
@@ -724,25 +732,32 @@ static async PayByWallet(user, data) {
         if (!existing) throw new NotFoundError("Order not found");
 
         if (existing.paymentStatus === "paid") {
-          alreadyPaid = true; 
+          alreadyPaid = true;
           paidOrder = existing;
           return;
         }
+
+        if (existing.orderStatus === "cancelled") {
+          throw new ValidationError(
+            existing.cancelReason || "This order has been cancelled"
+          );
+        }
+
         throw new ValidationError("Order is not payable");
       }
 
-    
+
       const wallet = await Wallet.findOne({ user }).session(session);
       if (!wallet) {
         throw new ValidationError("Wallet not found. Add money to your wallet first");
       }
 
-      
+
       if (wallet.balance < order.totalAmount) {
         throw new ValidationError("Insufficient wallet balance");
       }
 
-     
+
       const debited = await Wallet.findOneAndUpdate(
         { user, balance: { $gte: order.totalAmount } },
         {
@@ -761,13 +776,13 @@ static async PayByWallet(user, data) {
 
       if (!debited) throw new ValidationError("Insufficient wallet balance");
 
-     
+
       await StockReservation.findOneAndDelete(
         { user, orderId: order._id },
         { session }
       );
 
-     
+
       if (order.coupon) {
         await CouponRedemption.updateOne(
           { coupon: order.coupon, user, order: order._id },
@@ -779,7 +794,7 @@ static async PayByWallet(user, data) {
       paidOrder = order;
     });
 
-   
+
     if (!alreadyPaid && !paidOrder.isBuyNow) {
       await CartService.deleteCart(user);
     }
@@ -803,4 +818,4 @@ static async PayByWallet(user, data) {
 
 }
 
-module.exports = PaymentService 
+module.exports = PaymentService
