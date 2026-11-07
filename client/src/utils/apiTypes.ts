@@ -112,6 +112,18 @@ export type CouponValidationResponse = {
 
 
 
+export type BuyNowPayload = {
+  productId: string;
+  variantId?: string | null;
+  size?: string | null;
+  quantity?: number;
+  name?: string;
+  brand?: string;
+  image?: string;
+  price?: number;
+  stock?: number;
+};
+
 export type orderSummaryResponse = {
   coupon: {
     _id: string;
@@ -119,10 +131,11 @@ export type orderSummaryResponse = {
     discountType: "percentage" | "fixed";
     discountValue: number;
     maxDiscount: number | null;
-  };
+  } | null;
   discount: number;
   finalAmount: number;
-  subtotal:number
+  subtotal: number;
+  items?: BaseCartItem[];
 };
 
 

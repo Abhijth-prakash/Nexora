@@ -3,8 +3,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import {  getOrderSummary, GenerateOrder } from "../../redux/features/orderSlice";
-import { getCart } from "../../redux/features/cartSlice";
+import {
+  getOrderSummary,
+  GenerateOrder,
+  clearOrderErrors,
+} from "../../redux/features/orderSlice";
+import { getCart, getCoupons } from "../../redux/features/cartSlice";
 import { getAddress } from "../../redux/features/addressSlice";
 import type { BaseAddress } from "../../utils/baseTypes";
 
@@ -13,25 +17,67 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const couponId: string | undefined =
+  const isBuyNow = Boolean(location.state?.isBuyNow);
+  const buyNowItem = location.state?.buyNowItem;
+  const initialCouponId: string | undefined =
     location.state?.couponId ?? undefined;
 
+  // "" means "no coupon" and is sent to the server explicitly
+  const [appliedCouponId, setAppliedCouponId] = useState<string>(
+    initialCouponId ?? ""
+  );
+
   const {
-    subtotal ,
-    finalAmount ,
-    discount ,
+    subtotal,
+    finalAmount,
+    discount,
     coupon,
     loading,
     ordererrors,
+    checkoutItems,
   } = useAppSelector((state) => state.orderData);
 
-  const { cartItems } = useAppSelector((state) => state.cartData);
+  const { cartItems, coupons } = useAppSelector((state) => state.cartData);
   const { address } = useAppSelector((state) => state.addressData);
   const [selectedAddress, setSelectedAddress] = useState("");
 
-  const addresses: BaseAddress[] = Array.isArray(address)
-    ? address
-    : [];
+  const addresses: BaseAddress[] = Array.isArray(address) ? address : [];
+
+  const availableCoupons: any[] = Array.isArray(coupons)
+    ? coupons
+    : (coupons as any)?.coupons ?? (coupons as any)?.data ?? [];
+
+  // Coupon shown in the UI: prefer the server's coupon, fall back to the
+  // selected coupon id (needed for Buy Now where the store may not return it)
+  const appliedCouponDetails =
+    coupon ??
+    availableCoupons.find((c: any) => (c._id ?? c.id) === appliedCouponId);
+
+  // If the server rejected the coupon (ordererrors set), don't show it as applied
+  const hasAppliedCoupon =
+    Boolean(coupon) || (Boolean(appliedCouponId) && !ordererrors);
+
+  // Determine items to display (isolated from cart for Buy Now)
+  const displayItems = isBuyNow
+    ? checkoutItems?.length
+      ? checkoutItems
+      : buyNowItem
+      ? [
+          {
+            _id: buyNowItem.productId,
+            productId: buyNowItem.productId,
+            variantId: buyNowItem.variantId,
+            name: buyNowItem.name,
+            brand: buyNowItem.brand,
+            size: buyNowItem.size,
+            price: buyNowItem.price,
+            quantity: buyNowItem.quantity,
+            image: buyNowItem.image,
+            lineTotal: (buyNowItem.price ?? 0) * (buyNowItem.quantity ?? 1),
+          },
+        ]
+      : []
+    : cartItems;
 
   const formatPrice = (amount: number) =>
     `₹${Number(amount ?? 0).toLocaleString("en-IN", {
@@ -40,54 +86,82 @@ const Checkout = () => {
     })}`;
 
   useEffect(() => {
-    dispatch(getOrderSummary(couponId));
-    dispatch(getCart());
+    if (isBuyNow && buyNowItem) {
+      dispatch(
+        getOrderSummary({
+          couponId: appliedCouponId,
+          isBuyNow: true,
+          buyNowItem: {
+            productId: buyNowItem.productId,
+            variantId: buyNowItem.variantId,
+            size: buyNowItem.size,
+            quantity: buyNowItem.quantity,
+          },
+        })
+      );
+    } else {
+      dispatch(getOrderSummary(appliedCouponId));
+      dispatch(getCart());
+    }
     dispatch(getAddress());
-  }, [dispatch, couponId]);
+    dispatch(getCoupons());
+  }, [dispatch, appliedCouponId, isBuyNow]);
+
+  // Clear stale errors when entering/leaving the checkout page
+  useEffect(() => {
+    dispatch(clearOrderErrors());
+    return () => {
+      dispatch(clearOrderErrors());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddress) {
-      const defaultAddress = addresses.find(
-        (item) => item.isDefault
-      );
+      const defaultAddress = addresses.find((item) => item.isDefault);
 
-      setSelectedAddress(
-        defaultAddress?._id ?? addresses[0]._id
-      );
+      setSelectedAddress(defaultAddress?._id ?? addresses[0]._id);
     }
   }, [addresses, selectedAddress]);
 
+  // Set to "" (not undefined) so the key is not dropped from the request.
+  // This changes appliedCouponId, so the effect above re-fetches the summary
+  // and sends couponId: "" to the server.
+  const handleRemoveCoupon = () => {
+    setAppliedCouponId("");
+  };
 
+  //order placing logic
+  const handlePlaceOrder = async () => {
+    try {
+      if (!selectedAddress) {
+        toast.error("Please select a delivery address.");
+        return;
+      }
 
+      await dispatch(
+        GenerateOrder({
+          addressId: selectedAddress,
+          couponId: appliedCouponId,
+          isBuyNow,
+          buyNowItem:
+            isBuyNow && buyNowItem
+              ? {
+                  productId: buyNowItem.productId,
+                  variantId: buyNowItem.variantId,
+                  quantity: buyNowItem.quantity,
+                  size: buyNowItem.size,
+                }
+              : undefined,
+        })
+      ).unwrap();
 
-//order placing logic
-
-const handlePlaceOrder = async () => {
-  try {
-    if (!selectedAddress) {
-      toast.error("Please select a delivery address.");
-      return;
+      navigate("/users/payment");
+    } catch (error) {
+      toast.error(
+        typeof error === "string" ? error : "Failed to verify checkout."
+      );
     }
-
-    // .unwrap() throws if GenerateOrder is rejected, so we only reach
-    // the navigate below when the order was created successfully
-    await dispatch(
-      GenerateOrder({
-        addressId: selectedAddress,
-        couponId,
-      })
-    ).unwrap();
-
-    navigate("/users/payment");
-  } catch (error) {
-    toast.error(
-      typeof error === "string"
-        ? error
-        : "Failed to verify checkout."
-    );
-  }
-};
-
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -189,17 +263,14 @@ const handlePlaceOrder = async () => {
               {addresses.length > 0 ? (
                 <div className="mt-6 space-y-3">
                   {addresses.map((item) => {
-                    const isSelected =
-                      selectedAddress === item._id;
+                    const isSelected = selectedAddress === item._id;
 
                     return (
                       <button
                         key={item._id}
                         type="button"
                         aria-pressed={isSelected}
-                        onClick={() =>
-                          setSelectedAddress(item._id)
-                        }
+                        onClick={() => setSelectedAddress(item._id)}
                         className={`w-full rounded-xl border p-4 text-left transition ${
                           isSelected
                             ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
@@ -245,9 +316,8 @@ const handlePlaceOrder = async () => {
                             </div>
 
                             <p className="mt-2 text-sm leading-6 text-gray-600">
-                              {item.address}, {item.city},{" "}
-                              {item.state}, {item.zipCode},{" "}
-                              {item.country}
+                              {item.address}, {item.city}, {item.state},{" "}
+                              {item.zipCode}, {item.country}
                             </p>
 
                             <p className="mt-2 text-sm text-gray-500">
@@ -293,15 +363,16 @@ const handlePlaceOrder = async () => {
                 </div>
 
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600">
-                  {cartItems?.length ?? 0} products
+                  {displayItems?.length ?? 0}{" "}
+                  {displayItems?.length === 1 ? "product" : "products"}
                 </span>
               </div>
 
               <div className="mt-6 divide-y divide-gray-100">
-                {cartItems?.length ? (
-                  cartItems.map((item: any) => (
+                {displayItems?.length ? (
+                  displayItems.map((item: any) => (
                     <div
-                      key={item._id}
+                      key={item._id || item.productId}
                       className="flex gap-4 py-5 first:pt-0 last:pb-0"
                     >
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 sm:h-28 sm:w-28">
@@ -342,10 +413,7 @@ const handlePlaceOrder = async () => {
 
                       <p className="shrink-0 font-semibold text-gray-900">
                         {formatPrice(
-                          Number(
-                            item.lineTotal ??
-                              item.price * item.quantity
-                          )
+                          Number(item.lineTotal ?? item.price * item.quantity)
                         )}
                       </p>
                     </div>
@@ -353,7 +421,9 @@ const handlePlaceOrder = async () => {
                 ) : (
                   <div className="py-10 text-center">
                     <p className="font-medium text-gray-700">
-                      Your cart is empty.
+                      {isBuyNow
+                        ? "No product selected for purchase."
+                        : "Your cart is empty."}
                     </p>
                     <button
                       type="button"
@@ -368,39 +438,75 @@ const handlePlaceOrder = async () => {
 
               <button
                 type="button"
-                onClick={() => navigate("/users/cart")}
+                onClick={() =>
+                  isBuyNow
+                    ? buyNowItem?.productId
+                      ? navigate(`/product/${buyNowItem.productId}`)
+                      : navigate(-1)
+                    : navigate("/users/cart")
+                }
                 className="mt-6 text-sm font-semibold text-red-700 hover:text-red-800"
               >
-                ← Return to cart
+                ← {isBuyNow ? "Return to product" : "Return to cart"}
               </button>
             </section>
           </div>
 
           {/* Right column: Order summary */}
           <aside className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 sm:p-7">
-            <h2 className="text-xl font-bold text-gray-900">
-              Order summary
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900">Order summary</h2>
 
             <p className="mt-1 text-sm text-gray-500">
               Your payment breakdown
             </p>
 
-            {coupon && (
-              <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-xl font-bold text-emerald-700">
-                  %
+            {hasAppliedCoupon ? (
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-xl font-bold text-emerald-700">
+                    %
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-emerald-800">
+                      {appliedCouponDetails?.code ?? "Coupon"}
+                    </p>
+                    <p className="mt-1 text-xs text-emerald-700">
+                      Coupon applied successfully
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-emerald-800">
-                    {coupon.code}
-                  </p>
-                  <p className="mt-1 text-xs text-emerald-700">
-                    Coupon applied successfully
-                  </p>
+                <button
+                  type="button"
+                  onClick={handleRemoveCoupon}
+                  className="text-xs font-semibold text-red-600 hover:text-red-800"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : availableCoupons.length > 0 ? (
+              <div className="mt-5 rounded-xl border border-dashed border-gray-300 p-4">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Apply Coupon
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={appliedCouponId}
+                    onChange={(e) => setAppliedCouponId(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Select a coupon</option>
+                    {availableCoupons.map((c: any) => (
+                      <option key={c._id ?? c.id} value={c._id ?? c.id}>
+                        {c.code} -{" "}
+                        {c.discountType === "percentage"
+                          ? `${c.discountValue}% off`
+                          : `₹${c.discountValue} off`}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-            )}
+            ) : null}
 
             <div className="mt-6 space-y-4 border-b border-gray-200 pb-5">
               <div className="flex items-center justify-between gap-3 text-sm">
@@ -444,11 +550,7 @@ const handlePlaceOrder = async () => {
 
             <button
               type="button"
-              disabled={
-                loading ||
-                !cartItems?.length ||
-                !selectedAddress
-              }
+              disabled={loading || !displayItems?.length || !selectedAddress}
               onClick={handlePlaceOrder}
               className="mt-6 w-full rounded-xl bg-red-700 px-5 py-4 font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-gray-300"
             >
@@ -465,8 +567,7 @@ const handlePlaceOrder = async () => {
               <span className="text-lg">🔒</span>
               <p className="text-xs leading-5 text-gray-500">
                 Your order total is calculated by the server. Your final
-                payment and confirmation depend on successful order
-                placement.
+                payment and confirmation depend on successful order placement.
               </p>
             </div>
           </aside>

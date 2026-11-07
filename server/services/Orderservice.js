@@ -18,8 +18,67 @@ const Wallet = require('../models/Wallet')
 class OrderService{
 
     //stockvalidation
-   static async StockValidation(user) {
+   static async StockValidation(user, buyNowItem = null) {
     try {
+        if (buyNowItem) {
+            const { productId, variantId, quantity = 1, size = null } = buyNowItem;
+
+            if (!productId || !mongoose.isValidObjectId(productId)) {
+                throw new ValidationError("Invalid product id");
+            }
+            if (variantId && !mongoose.isValidObjectId(variantId)) {
+                throw new ValidationError("Invalid variant id");
+            }
+
+            const qty = Math.max(1, parseInt(quantity, 10) || 1);
+
+            const product = await Product.findOne({ _id: productId, visible: true });
+            if (!product) {
+                throw new NotFoundError("Product not found");
+            }
+
+            let availableStock = product.stock;
+            let validSizes = product.size;
+
+            if (variantId) {
+                const variant = product.variants.id(variantId);
+                if (!variant) {
+                    throw new NotFoundError(`Variant not found for ${product.name}`);
+                }
+                availableStock = variant.stock;
+                validSizes = variant.size?.length > 0 ? variant.size : product.size;
+            }
+
+            if (validSizes && validSizes.length > 0 && size) {
+                if (!validSizes.includes(size)) {
+                    throw new ValidationError("Please select a valid size");
+                }
+            }
+
+            if (availableStock < qty) {
+                throw new ConflictError(
+                    `Insufficient stock for ${product.name}. Available: ${availableStock}, Requested: ${qty}`
+                );
+            }
+
+            logger.info("Stock validation successful for buy now item", {
+                productId,
+                variantId,
+                quantity: qty,
+            });
+
+            return {
+                items: [
+                    {
+                        product,
+                        variantId: variantId || null,
+                        quantity: qty,
+                        size: size || null,
+                    },
+                ],
+            };
+        }
+
         const cart = await Cart.findOne({
             user: user
         }).populate("items.product");
@@ -75,24 +134,85 @@ class OrderService{
 
 
     //order summary
-  static async orderSummary(user, couponId) {
+  static async orderSummary(user, couponId, buyNowItem = null) {
   try {
-    const cart = await Cart.findOne({ user }).populate("items.product");
+    let subtotal = 0;
+    let itemsForSummary = [];
 
-    if (!cart) {
-      throw new NotFoundError("Cart not found");
-    }
+    if (buyNowItem) {
+      const { productId, variantId, quantity = 1, size = null } = buyNowItem;
 
-    // Calculate subtotal
-    const subtotal = cart.items.reduce((total, item) => {
-      const product = item.product;
-
-      if (!product) {
-        throw new NotFoundError("Product in cart not found");
+      if (!productId || !mongoose.isValidObjectId(productId)) {
+        throw new ValidationError("Invalid product id");
+      }
+      if (variantId && !mongoose.isValidObjectId(variantId)) {
+        throw new ValidationError("Invalid variant id");
       }
 
-      return total + product.price * item.quantity;
-    }, 0);
+      const qty = Math.max(1, parseInt(quantity, 10) || 1);
+
+      const product = await Product.findOne({ _id: productId, visible: true });
+      if (!product) {
+        throw new NotFoundError("Product not found");
+      }
+
+      let unitPrice = product.price;
+      let variant = null;
+
+      if (variantId) {
+        variant = product.variants.id(variantId);
+        if (!variant) {
+          throw new NotFoundError("Variant not found");
+        }
+        unitPrice = variant.price;
+      }
+
+      subtotal = unitPrice * qty;
+
+      itemsForSummary = [
+        {
+          _id: product._id,
+          productId: product._id,
+          variantId: variantId || null,
+          name: product.name,
+          brand: product.brand,
+          color: variant?.color || product.color || null,
+          price: unitPrice,
+          quantity: qty,
+          size: size || null,
+          category: product.category,
+          image:
+            (variant?.images?.length ? variant.images[0] : product.images?.[0]) ||
+            null,
+          lineTotal: unitPrice * qty,
+        },
+      ];
+    } else {
+      const cart = await Cart.findOne({ user }).populate("items.product");
+
+      if (!cart) {
+        throw new NotFoundError("Cart not found");
+      }
+
+      // Calculate subtotal
+      subtotal = cart.items.reduce((total, item) => {
+        const product = item.product;
+
+        if (!product) {
+          throw new NotFoundError("Product in cart not found");
+        }
+
+        let price = product.price;
+        if (item.variantId) {
+          const variant = product.variants.id(item.variantId);
+          if (variant) {
+            price = variant.price;
+          }
+        }
+
+        return total + price * item.quantity;
+      }, 0);
+    }
 
     let discount = 0;
     let finalAmount = subtotal;
@@ -103,6 +223,68 @@ class OrderService{
 
       if (!coupon) {
         throw new NotFoundError("Coupon not found");
+      }
+
+      // Validate coupon state
+      const now = new Date();
+      if (!coupon.isActive) {
+        throw new ValidationError("Coupon is inactive");
+      }
+      if (coupon.startDate > now) {
+        throw new ValidationError("Coupon is not active yet");
+      }
+      if (coupon.expiryDate < now) {
+        throw new ValidationError("Coupon has expired");
+      }
+      if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+        throw new ConflictError("Coupon usage limit has been reached");
+      }
+
+      const redemptionCount = await CouponRedemption.countDocuments({
+        coupon: coupon._id,
+        user: user,
+      });
+
+      if (redemptionCount >= coupon.perUserLimit) {
+        throw new ConflictError(
+          "You have already reached the usage limit for this coupon"
+        );
+      }
+
+      if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
+        throw new ValidationError(
+          `Minimum order amount of ₹${coupon.minOrderAmount} is required to use this coupon`
+        );
+      }
+
+      // Check applicable categories
+      if (coupon.applicableCategories && coupon.applicableCategories.length > 0) {
+        let categoriesToCheck = [];
+        if (buyNowItem) {
+          const prod = itemsForSummary[0];
+          if (prod && prod.category) {
+            categoriesToCheck.push(prod.category.toString());
+          }
+        } else {
+          const cart = await Cart.findOne({ user }).populate("items.product");
+          if (cart) {
+            categoriesToCheck = cart.items
+              .map((i) => i.product?.category?.toString())
+              .filter(Boolean);
+          }
+        }
+
+        const isApplicable = categoriesToCheck.some((catId) =>
+          coupon.applicableCategories.some(
+            (appCat) => appCat.toString() === catId
+          )
+        );
+
+        if (!isApplicable) {
+          throw new ConflictError(
+            "Coupon is not applicable to items in your order"
+          );
+        }
       }
 
       // Calculate discount
@@ -135,6 +317,7 @@ class OrderService{
             discountValue: coupon.discountValue,
           }
         : null,
+      ...(buyNowItem ? { items: itemsForSummary } : {}),
     };
   } catch (error) {
     logger.error("Failed to calculate order summary", { error });
@@ -224,13 +407,13 @@ static async GenerateOrder(user, data) {
   const session = await mongoose.startSession();
 
   try {
-    const { addressId, couponId } = data;
+    const { addressId, couponId, isBuyNow, buyNowItem } = data;
 
     if (!mongoose.isValidObjectId(addressId)) {
-      throw new BadRequestError("Invalid address");
+      throw new ValidationError("Invalid address");
     }
     if (couponId && !mongoose.isValidObjectId(couponId)) {
-      throw new BadRequestError("Invalid coupon");
+      throw new ValidationError("Invalid coupon");
     }
 
     // ---- Lookups ----
@@ -241,14 +424,22 @@ static async GenerateOrder(user, data) {
 
     await this.releaseUserReservations(user);
 
-    const cart = await this.StockValidation(user);
-    if (!cart || !cart.items || cart.items.length === 0) {
-      throw new BadRequestError("Your cart is empty");
+    const checkoutData = isBuyNow
+      ? await this.StockValidation(user, buyNowItem)
+      : await this.StockValidation(user);
+
+    if (!checkoutData || !checkoutData.items || checkoutData.items.length === 0) {
+      throw new ValidationError(
+        isBuyNow ? "Invalid Buy Now item" : "Your cart is empty"
+      );
     }
 
-    const summary = await this.orderSummary(user, couponId);
+    const summary = isBuyNow
+      ? await this.orderSummary(user, couponId, buyNowItem)
+      : await this.orderSummary(user, couponId);
+
     if (!summary || !(summary.finalAmount > 0)) {
-      throw new BadRequestError("Invalid order amount");
+      throw new ValidationError("Invalid order amount");
     }
 
     const reservationId = new mongoose.Types.ObjectId();
@@ -262,7 +453,7 @@ static async GenerateOrder(user, data) {
       reservationItems.length = 0;
       orderItems.length = 0;
 
-      for (const item of cart.items) {
+      for (const item of checkoutData.items) {
         const product = item.product;
         if (!product) {
           throw new NotFoundError("Product not found");
@@ -304,7 +495,7 @@ static async GenerateOrder(user, data) {
 
         if (stockUpdate.modifiedCount !== 1) {
           throw new ConflictError(
-            `Insufficient stock for ${product.name}. Please refresh your cart.`
+            `Insufficient stock for ${product.name}. Please try again.`
           );
         }
 
@@ -348,8 +539,9 @@ static async GenerateOrder(user, data) {
             totalAmount: summary.finalAmount,
             coupon: summary.coupon?._id || null,
             paymentStatus: "pending",
-            subtotal:summary.subtotal,
-            discountAmount:summary.discount
+            subtotal: summary.subtotal,
+            discountAmount: summary.discount,
+            isBuyNow: Boolean(isBuyNow),
           },
         ],
         { session }
@@ -361,6 +553,7 @@ static async GenerateOrder(user, data) {
       reservationId,
       orderId,
       expiresAt,
+      isBuyNow: Boolean(isBuyNow),
     });
 
     return {

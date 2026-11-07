@@ -5,6 +5,7 @@ import { toast } from "react-toastify"
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
 import { getProductbyID } from '../../redux/features/productSlice'
 import { addToCart, getCart, setGuestItems } from '../../redux/features/cartSlice'
+import { validateCart, setBuyNowItem } from '../../redux/features/orderSlice'
 import type { BaseProduct } from '../../utils/baseTypes'
 import { addToGuestCart } from '../../utils/guestCart'
 
@@ -140,7 +141,7 @@ const cartHandle = async () => {
     dispatch(setGuestItems(items))
     setQuantiy(1)
 
-    const result = await dispatch(getCart()).unwrap()
+    await dispatch(getCart()).unwrap()
 
     toast.success('Added to bag')
 
@@ -164,6 +165,42 @@ const cartHandle = async () => {
     toast.success('Added to bag')
   } catch (err) {
     toast.error(typeof err === 'string' ? err : 'Could not add to bag')
+  }
+}
+
+const buyNowHandle = async () => {
+  if (!canBuy) return
+
+  if (!logged) {
+    toast.info('Please sign in to proceed with Buy Now')
+    navigate('/auth/login')
+    return
+  }
+
+  const buyNowItem = {
+    productId: product._id,
+    variantId: selectedVariant?._id ?? null,
+    size: sizes.length > 0 ? size : null,
+    quantity,
+    name: product.name,
+    brand: product.brand,
+    image: images[0],
+    price,
+    stock,
+  }
+
+  try {
+    await dispatch(validateCart(buyNowItem)).unwrap()
+    dispatch(setBuyNowItem(buyNowItem))
+
+    navigate('/users/Checkout', {
+      state: {
+        isBuyNow: true,
+        buyNowItem,
+      },
+    })
+  } catch (err) {
+    toast.error(typeof err === 'string' ? err : 'Product is currently unavailable or out of stock')
   }
 }
 
@@ -337,6 +374,7 @@ const cartHandle = async () => {
             <button
               type="button"
               disabled={!canBuy}
+              onClick={buyNowHandle}
               className="flex-1 rounded-lg border border-red-500 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Buy Now

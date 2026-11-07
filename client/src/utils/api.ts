@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getAllreturnResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, BuyNowPayload, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getAllreturnResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse,  productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
 
 
@@ -188,40 +188,78 @@ export const CartApi = {
 //orderAPi
 export const orderApi = {
   //stock validation
-  stockValidation: async (): Promise<ApiResponse<null>> => {
+  stockValidation: async (payload?: {
+    buyNowItem?: BuyNowPayload;
+  }): Promise<ApiResponse<null>> => {
     const response = await ClientApi.post<ApiResponse<null>>(
-      "/users/order/stockvalidation"
+      "/users/order/stockvalidation",
+      payload || {}
     );
     return response.data;
   },
 
   //order Summary
   orderSummary: async (
-  couponId?: string
-): Promise<ApiResponse<orderSummaryResponse>> => {
-  const response = await ClientApi.get<ApiResponse<orderSummaryResponse>>(
-    "/users/order/orderSummary",
-    {
-      params: couponId ? { couponId } : {},
+    params?:
+      | string
+      | { couponId?: string; isBuyNow?: boolean; buyNowItem?: BuyNowPayload }
+  ): Promise<ApiResponse<orderSummaryResponse>> => {
+    if (typeof params === "string") {
+      const response = await ClientApi.get<ApiResponse<orderSummaryResponse>>(
+        "/users/order/orderSummary",
+        {
+          params: { couponId: params },
+        }
+      );
+      return response.data;
     }
-  );
 
-  return response.data;
-},
-//orderVerification
-GenerateOrder: async (
-  addressId: string,
-  couponId?: string
-): Promise<ApiResponse<GenerateOrderResponse>> => {
-  const response = await ClientApi.post<
-    ApiResponse<GenerateOrderResponse>
-  >("/users/order/GenerateOrder", {
-    addressId,
-    couponId,
-  });
+    const { couponId, isBuyNow, buyNowItem } = params || {};
 
-  return response.data;
-},
+    if (isBuyNow && buyNowItem) {
+      const response = await ClientApi.post<ApiResponse<orderSummaryResponse>>(
+        "/users/order/orderSummary",
+        {
+          couponId,
+          isBuyNow: true,
+          buyNowItem,
+        }
+      );
+      return response.data;
+    }
+
+    const response = await ClientApi.get<ApiResponse<orderSummaryResponse>>(
+      "/users/order/orderSummary",
+      {
+        params: couponId ? { couponId } : {},
+      }
+    );
+
+    return response.data;
+  },
+  //orderVerification
+  GenerateOrder: async (
+    data:
+      | {
+          addressId: string;
+          couponId?: string;
+          isBuyNow?: boolean;
+          buyNowItem?: BuyNowPayload;
+        }
+      | string,
+    couponId?: string
+  ): Promise<ApiResponse<GenerateOrderResponse>> => {
+    const payload =
+      typeof data === "string"
+        ? { addressId: data, couponId }
+        : data;
+
+    const response = await ClientApi.post<
+      ApiResponse<GenerateOrderResponse>
+    >("/users/order/GenerateOrder", payload);
+
+    return response.data;
+  },
 
 createRazorpayment: async (
   orderId: string

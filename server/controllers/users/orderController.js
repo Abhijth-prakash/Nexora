@@ -9,14 +9,16 @@ class OrderController extends BaseController{
 
     //stockvalidation
     static StockValidation = BaseController.asyncHandler(async (req, res) => {
-    const cart = await OrderService.StockValidation(
+    const { buyNowItem } = req.body || {};
+    const result = await OrderService.StockValidation(
         req.userId,
+        buyNowItem
     );
 
     return this.sendSuccessResponse(
         res,
-        "Cart validated successfully",
-        null,
+        "Stock validated successfully",
+        result,
         200
     );
 });
@@ -24,11 +26,26 @@ class OrderController extends BaseController{
 
 //orderSummary
 static orderSummary = BaseController.asyncHandler(async (req, res) => {
-  const { couponId } = req.query;
+  const couponId = req.query.couponId || req.body?.couponId;
+  const isBuyNow =
+    req.query.isBuyNow === "true" ||
+    req.query.isBuyNow === true ||
+    req.body?.isBuyNow;
+
+  let buyNowItem = null;
+  if (isBuyNow) {
+    buyNowItem = req.body?.buyNowItem || {
+      productId: req.query.productId,
+      variantId: req.query.variantId || null,
+      quantity: req.query.quantity || 1,
+      size: req.query.size || null,
+    };
+  }
 
   const summary = await OrderService.orderSummary(
     req.userId,
-    couponId
+    couponId,
+    buyNowItem
   );
   return this.sendSuccessResponse(
     res,

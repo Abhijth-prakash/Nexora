@@ -62,6 +62,11 @@ const orderSchema = new mongoose.Schema(
       default: null,
     },
 
+    isBuyNow: {
+      type: Boolean,
+      default: false,
+    },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded", "cod"],

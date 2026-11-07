@@ -141,8 +141,10 @@ static async verifyPayment(user, data) {
       orderId: order._id,
     });
 
-    // Clear cart
-    await CartService.deleteCart(user);
+    // Clear cart (preserve for Buy Now)
+    if (!order.isBuyNow) {
+      await CartService.deleteCart(user);
+    }
 
     // Create coupon redemption
     await createCouponRedemption();
@@ -280,8 +282,10 @@ static async verifyCodOtp(userId, data) {
         orderId: verifiedOrder._id,
       });
 
-      // Clear cart
-      await CartService.deleteCart(userId);
+      // Clear cart (preserve for Buy Now)
+      if (!verifiedOrder.isBuyNow) {
+        await CartService.deleteCart(userId);
+      }
 
       // Coupon redemption
       if (verifiedOrder.coupon) {
@@ -464,7 +468,7 @@ static async PayByWallet(user, data) {
     });
 
    
-    if (!alreadyPaid) {
+    if (!alreadyPaid && !paidOrder.isBuyNow) {
       await CartService.deleteCart(user);
     }
 

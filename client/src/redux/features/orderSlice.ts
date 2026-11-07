@@ -2,7 +2,8 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import type { PayloadAction } from "@reduxjs/toolkit"
 import { orderApi } from "../../utils/api"
 import axios from "axios"
-import type { BaseAddress, Baseorder, BaseReturn } from "../../utils/baseTypes";
+import type { BaseAddress, BaseCartItem, Baseorder, BaseReturn } from "../../utils/baseTypes";
+import type { BuyNowPayload } from "../../utils/apiTypes";
 
 
 export type orderType = {
@@ -31,6 +32,8 @@ export type orderType = {
   pages:number|null
   totalOrders:number
   returns:BaseReturn[]
+  buyNowItem: BuyNowPayload | null
+  checkoutItems: BaseCartItem[]
 };
 
 
@@ -53,16 +56,20 @@ const initialState:orderType = {
   page:1,
   pages:null,
   totalOrders:0,
-  returns:[]
+  returns:[],
+  buyNowItem: null,
+  checkoutItems: [],
 }
 
 
 //validatecart
 export const validateCart = createAsyncThunk(
   "users/cart/validateCart",
-  async (_, { rejectWithValue }) => {
+  async (buyNowItem: BuyNowPayload | null | undefined, { rejectWithValue }) => {
     try {
-      const response = await orderApi.stockValidation();
+      const response = await orderApi.stockValidation(
+        buyNowItem ? { buyNowItem } : undefined
+      );
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -83,9 +90,15 @@ export const validateCart = createAsyncThunk(
 //ordersumamary
 export const getOrderSummary = createAsyncThunk(
   "cart/getOrderSummary",
-  async (couponId: string | undefined, { rejectWithValue }) => {
+  async (
+    params:
+      | string
+      | undefined
+      | { couponId?: string; isBuyNow?: boolean; buyNowItem?: BuyNowPayload },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await orderApi.orderSummary(couponId);
+      const response = await orderApi.orderSummary(params);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -106,14 +119,16 @@ export const getOrderSummary = createAsyncThunk(
 export const GenerateOrder = createAsyncThunk(
   "order/orderVerification",
   async (
-    data: { addressId: string; couponId?: string },
+    data: {
+      addressId: string;
+      couponId?: string;
+      isBuyNow?: boolean;
+      buyNowItem?: BuyNowPayload;
+    },
     { rejectWithValue }
   ) => {
     try {
-      const response = await orderApi.GenerateOrder(
-        data.addressId,
-        data.couponId
-      );
+      const response = await orderApi.GenerateOrder(data);
 
       return response.data;
     } catch (error) {
@@ -388,6 +403,16 @@ const orderSlice = createSlice({
     reducers:{
         setPage: (state, action: PayloadAction<number>) => {
             state.page = action.payload
+        },
+        setBuyNowItem: (state, action: PayloadAction<BuyNowPayload | null>) => {
+            state.buyNowItem = action.payload
+        },
+        clearBuyNow: (state) => {
+            state.buyNowItem = null
+            state.checkoutItems = []
+        },
+        clearOrderErrors: (state) => {
+            state.ordererrors = null
         }
     },
     extraReducers: (build)=>{
@@ -408,23 +433,32 @@ const orderSlice = createSlice({
         //orderSummary
         .addCase(getOrderSummary.pending,(state)=>{
             state.loading = true
+            state.ordererrors = null
         })
         .addCase(getOrderSummary.fulfilled,(state,action)=>{
             state.loading = false
-            state.coupon = action.payload.coupon
-            state.discount = action.payload.discount
+            state.ordererrors = null
+            state.coupon = action.payload.coupon ?? null
+            state.discount = action.payload.discount ?? 0
             state.subtotal = action.payload.subtotal
             state.finalAmount = action.payload.finalAmount
+            if (action.payload.items) {
+                state.checkoutItems = action.payload.items
+            }
         })
         .addCase(getOrderSummary.rejected,(state,action)=>{
             state.loading = false
             state.ordererrors = action.payload as string
+            // a rejected coupon must not leave a stale discount behind
+            state.coupon = null
+            state.discount = 0
         })
 
         //order verification
 
         .addCase(GenerateOrder.pending,(state)=>{
             state.loading = true
+            state.ordererrors = null
             state.orderId = null
         })
         .addCase(GenerateOrder.fulfilled,(state,action)=>{
@@ -482,7 +516,7 @@ const orderSlice = createSlice({
         .addCase(sendCodOtp.pending,(state)=>{
             state.loading = true
         })
-        .addCase(sendCodOtp.fulfilled,(state,action)=>{
+        .addCase(sendCodOtp.fulfilled,(state)=>{
             state.loading = false
            
         })
@@ -556,4 +590,4 @@ const orderSlice = createSlice({
 
 export default orderSlice.reducer
 
-export const { setPage } = orderSlice.actions
+export const { setPage, setBuyNowItem, clearBuyNow, clearOrderErrors } = orderSlice.actions
