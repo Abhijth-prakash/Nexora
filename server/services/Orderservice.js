@@ -14,6 +14,7 @@ const crypto = require("crypto");
 const User = require("../models/User");
 const Mail = require('../utils/mail')
 const Wallet = require('../models/Wallet')
+const WalletService = require('./Walletservice')
 
 class OrderService{
 
@@ -792,30 +793,47 @@ static async updateOrderStatus(orderId, status) {
       shipped: "shipped",
       out_for_delivery: "outForDelivery",
       delivered: "delivered",
+      cancelled: "cancelled",
+      return_requested: "returnRequested",
+      returned: "returned",
     };
 
-    if (!Object.keys(dateKey).includes(status) && status !== "cancelled") {
+    // Validate status
+    if (!dateKey[status]) {
       throw new Error("Invalid order status");
     }
 
+    // Find order
     const order = await Order.findById(orderId);
-    if (!order) throw new Error("Order not found");
 
-    if (order.orderStatus === "delivered" || order.orderStatus === "cancelled") {
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    // Prevent updating terminal statuses
+    if (
+      order.orderStatus === "delivered" ||
+      order.orderStatus === "cancelled" ||
+      order.orderStatus === "returned"
+    ) {
       throw new Error(`Order is already ${order.orderStatus}`);
     }
 
+    // Update order status
     order.orderStatus = status;
-    if (dateKey[status]) {
-      order.trackingDates[dateKey[status]] = new Date(); // stamp today's date
-    }
+
+    // Update corresponding tracking date
+    order.trackingDates[dateKey[status]] = new Date();
 
     await order.save();
 
-
     return null;
+
   } catch (error) {
-    logger.error("Failed to update order status", { error: error.message });
+    logger.error("Failed to update order status", {
+      error: error.message,
+    });
+
     throw error;
   }
 }
@@ -840,7 +858,6 @@ static async cancelOrder(user, data) {
       const order = await Order.findById(orderId).session(session);
       if (!order) throw new NotFoundError("Order not found");
 
-     
       const userId = user._id || user;
       if (order.user.toString() !== userId.toString()) {
         throw new AuthenticationError("You are not allowed to cancel this order");
@@ -849,15 +866,13 @@ static async cancelOrder(user, data) {
       if (order.orderStatus === "cancelled") {
         throw new ConflictError("Order is already cancelled");
       }
-
-     
       if (order.orderStatus !== "confirmed") {
         throw new ConflictError(
           `Order cannot be cancelled once it is ${order.orderStatus}`
         );
       }
 
-      // Atomically claim the reservation so stock is never restored twice
+      // 1. Release stock
       const reservation = await StockReservation.findOneAndUpdate(
         { orderId: order._id, status: { $in: ["reserved", "confirmed"] } },
         { $set: { status: "released" } },
@@ -881,10 +896,36 @@ static async cancelOrder(user, data) {
                 },
               }
         );
-
         await Product.bulkWrite(stockOps, { session });
       }
 
+      // 2. Refund to wallet (only if already paid via wallet/razorpay)
+      const needsRefund =
+        order.paymentStatus === "paid" &&
+        ["wallet", "razorpay"].includes(order.paymentMethod);
+
+      if (needsRefund) {
+        const credited = await WalletService.creditRefund({
+          userId: order.user,
+          orderId: order._id,
+          amount: order.totalAmount,
+          session,
+        });
+
+        if (!credited) {
+          throw new ConflictError("Refund for this order was already processed");
+        }
+
+        order.paymentStatus = "refunded";
+        order.cancelRefund = {
+          amount: order.totalAmount,
+          status: "completed",
+          method: "wallet",
+          refundedAt: new Date(),
+        };
+      }
+
+      // 3. Mark order cancelled
       order.orderStatus = "cancelled";
       order.cancelReason = cancelReason.trim();
       order.cancelledBy = "user";
@@ -894,9 +935,14 @@ static async cancelOrder(user, data) {
       cancelledOrder = order;
     });
 
+    logger.info("Order cancelled", { orderId, userId: user._id || user });
     return cancelledOrder;
   } catch (error) {
-    logger.error("failed to cancel order", { error });
+    logger.error("failed to cancel order", {
+      orderId: data?.orderId,
+      error: error.message,
+      stack: error.stack,
+    });
     throw error;
   } finally {
     await session.endSession();

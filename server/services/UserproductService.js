@@ -21,7 +21,6 @@ class UserproductService{
 ) {
     try {
         const uncategorisedId = config.UncategorisedId;
-        console.log(uncategorisedId)
         const currentlimit = Number(limit);
         const currentPage = Number(page);
 

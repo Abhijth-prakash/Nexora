@@ -1,3 +1,4 @@
+
 import {
   Search,
   User,
@@ -16,35 +17,37 @@ import { logout } from "../redux/features/userSlice"
 
 const Navbar = () => {
   const dispatch = useAppDispatch()
-  const { totalItems,guestItems } = useAppSelector(state => state.cartData)
-  const {logged} = useAppSelector(state=> state.userData)
+
+  const { guestItems, cartItems } = useAppSelector(
+    state => state.cartData
+  )
+
+  const { logged } = useAppSelector(state => state.userData)
+
   const navigate = useNavigate()
 
-  // logged in: server count, guest: number of items saved in localStorage
-  const cartCount = logged ? totalItems : guestItems.length
+  // Count products instead of total quantities
+  const cartCount = logged ? cartItems.length : guestItems.length
 
   useEffect(() => {
     if (logged) {
       dispatch(getCart())
     }
-  }, [logged])
+  }, [logged, dispatch])
 
-  // The dropdown opens on group-hover AND group-focus-within. After clicking a
-  // menu link the link keeps focus (the navbar never unmounts on route change),
-  // so the menu stays open. Blurring releases focus so it can close again.
   const closeMenu = () => {
     (document.activeElement as HTMLElement | null)?.blur()
   }
 
   const handleLogout = async () => {
     closeMenu()
-      try{
-        await dispatch(logout()).unwrap()
-        navigate('/auth/login')
 
-      }catch(error){
-        toast.error('something went wrong')
-      }
+    try {
+      await dispatch(logout()).unwrap()
+      navigate("/auth/login")
+    } catch (error) {
+      toast.error("something went wrong")
+    }
   }
 
   return (
@@ -66,6 +69,7 @@ const Navbar = () => {
       {/* Header */}
       <div className="bg-white border-b border-[#ececec]">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+
           {/* Logo */}
           <span className="text-2xl font-bold text-[#0a0a0a]">
             Nexora
@@ -133,6 +137,7 @@ const Navbar = () => {
 
           {/* Icons */}
           <div className="flex items-center gap-5">
+
             <button
               aria-label="Search"
               className="cursor-pointer text-[#0a0a0a] hover:text-[#ff5a1f] transition-colors"
@@ -150,12 +155,12 @@ const Navbar = () => {
                 <User size={20} strokeWidth={1.75} />
               </button>
 
-              {/* pt-3 keeps the hover area connected between icon and menu */}
               <div className="invisible absolute right-[-12px] top-full z-50 translate-y-2 pt-3 opacity-0 transition-all duration-200 ease-out group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                 <div
                   role="menu"
                   className="relative w-60 rounded-2xl border border-[#ececec] bg-white p-1.5 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.25)]"
                 >
+
                   {/* Arrow */}
                   <span className="absolute -top-[7px] right-[18px] h-3 w-3 rotate-45 border-l border-t border-[#ececec] bg-white" />
 
@@ -166,6 +171,7 @@ const Navbar = () => {
                         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ff5a1f] text-white">
                           <User size={18} strokeWidth={2} />
                         </span>
+
                         <div className="leading-tight">
                           <p className="text-sm font-semibold text-[#0a0a0a]">
                             Welcome back
@@ -186,7 +192,9 @@ const Navbar = () => {
                           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f4f4f4] text-[#4a4a4a] transition-colors group-hover/item:bg-white group-hover/item:text-[#ff5a1f]">
                             <User size={16} strokeWidth={1.75} />
                           </span>
+
                           <span className="flex-1">My Profile</span>
+
                           <ChevronRight
                             size={16}
                             strokeWidth={1.75}
@@ -203,7 +211,9 @@ const Navbar = () => {
                           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f4f4f4] text-[#4a4a4a] transition-colors group-hover/item:bg-white group-hover/item:text-[#ff5a1f]">
                             <Package size={16} strokeWidth={1.75} />
                           </span>
+
                           <span className="flex-1">My Orders</span>
+
                           <ChevronRight
                             size={16}
                             strokeWidth={1.75}
@@ -221,17 +231,19 @@ const Navbar = () => {
                           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f4f4f4] text-[#4a4a4a] transition-colors group-hover/item:bg-white group-hover/item:text-red-600">
                             <LogOut size={16} strokeWidth={1.75} />
                           </span>
+
                           <span className="flex-1">Logout</span>
                         </button>
                       </div>
                     </>
                   ) : (
                     <>
-                      {/* Header */}
+                      {/* Guest Header */}
                       <div className="px-3 pb-2 pt-3">
                         <p className="text-sm font-semibold text-[#0a0a0a]">
                           Hello, Guest
                         </p>
+
                         <p className="mt-0.5 text-xs text-[#6b6b6b]">
                           Sign in to access your account
                         </p>
@@ -263,6 +275,7 @@ const Navbar = () => {
                 {cartCount > 99 ? "99+" : cartCount}
               </span>
             </Link>
+
           </div>
         </div>
       </div>

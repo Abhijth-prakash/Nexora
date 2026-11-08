@@ -156,6 +156,12 @@ orderStatus: {
       returnRequested: { type: Date, default: null },
       returned: { type: Date, default: null },
     },
+   cancelRefund: {
+  amount:     { type: Number, default: 0, min: 0 },
+  status:     { type: String, enum: ["pending", "completed", "failed"], default: "pending" },
+  method:     { type: String, enum: ["wallet"], default: "wallet" },
+  refundedAt: { type: Date, default: null },
+},
   },
   {
     timestamps: true,
