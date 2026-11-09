@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
   createRazorpayment,
@@ -10,6 +10,7 @@ import {
 } from "../../redux/features/orderSlice";
 import { markWalletStale } from "../../redux/features/walletSlice";
 import CodOtpModal from "../../components/CodOtpModal";
+import PaymentFailedModal from '../../components/PaymentFailedModal'
 import { toast } from "react-toastify";
 import OrderSuccess from "../../components/OrderSuccess";
 import { getCart } from "../../redux/features/cartSlice";
@@ -51,6 +52,7 @@ interface RazorpayOptions {
 
 interface RazorpayInstance {
   open: () => void;
+  close: () => void;
   on: (
     event: "payment.failed",
     callback: (response: RazorpayFailureResponse) => void
@@ -63,20 +65,27 @@ declare global {
   }
 }
 
+type FailureInfo = {
+  type: "failed" | "cancelled" | "verification";
+  message: string;
+};
+
 const Payment = () => {
-
-  const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch()
-  
-  const [cod,setCod] = useState(false)
-   
+  const dispatch = useAppDispatch();
 
-  const {amount,razorpayOrderId,currency,keyId ,orderId}= useAppSelector(state=> state.orderData)
-  const [success,setSuccess] = useState(false)
-  const [codLoading, setCodLoading] = useState(false)
-  const [walletStatus, setWalletStatus] = useState<"idle" | "loading" | "success">("idle")
-  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [cod, setCod] = useState(false);
+
+  const { orderId } = useAppSelector((state) => state.orderData);
+  const [success] = useState(false);
+  const [codLoading, setCodLoading] = useState(false);
+  const [walletStatus, setWalletStatus] = useState<"idle" | "loading" | "success">("idle");
+  const [failure, setFailure] = useState<FailureInfo | null>(null);
+  const [razorpayLoading, setRazorpayLoading] = useState(false);
+
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // true once Razorpay's payment.failed event has fired for the current attempt
+  const failedRef = useRef(false);
 
   // clear the pending redirect if the user leaves this page some other way
   useEffect(() => {
@@ -85,77 +94,104 @@ const Payment = () => {
     };
   }, []);
 
-
-  //razor pay page open function
-const handleRazorpay = async () => {
-  try {
+  // razorpay page open function
+  const handleRazorpay = async () => {
     if (!orderId) {
       toast.error("Order ID is missing");
       return;
     }
+    if (razorpayLoading) return;
 
-    const paymentData = await dispatch(
-      createRazorpayment(orderId)
-    ).unwrap();
+    setFailure(null);
+    failedRef.current = false;
+    setRazorpayLoading(true);
 
-    if (!window.Razorpay) {
-      alert("Razorpay failed to load. Please refresh and try again.");
-      return;
-    }
+    try {
+      const paymentData = await dispatch(createRazorpayment(orderId)).unwrap();
 
-    if (
-      !paymentData.keyId ||
-      !paymentData.razorpayOrderId ||
-      !paymentData.amount ||
-      !paymentData.currency
-    ) {
-      alert("Payment details are missing.");
-      return;
-    }
+      if (!window.Razorpay) {
+        setFailure({
+          type: "failed",
+          message: "Razorpay failed to load. Please refresh the page and try again.",
+        });
+        setRazorpayLoading(false);
+        return;
+      }
 
-    const options: RazorpayOptions = {
-      key: paymentData.keyId,
-      amount: paymentData.amount,
-      currency: paymentData.currency,
-      name: "Nexora",
-      order_id: paymentData.razorpayOrderId,
+      if (
+        !paymentData.keyId ||
+        !paymentData.razorpayOrderId ||
+        !paymentData.amount ||
+        !paymentData.currency
+      ) {
+        setFailure({
+          type: "failed",
+          message: "Payment details are missing. Please try again.",
+        });
+        setRazorpayLoading(false);
+        return;
+      }
 
-      handler: async (response: RazorpaySuccessResponse) => {
-        try {
-          await dispatch(
-            verifyPayment({
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              paymentMethod: "razorpay",
-              orderId,
-            })
-          ).unwrap();
+      const options: RazorpayOptions = {
+        key: paymentData.keyId,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        name: "Nexora",
+        order_id: paymentData.razorpayOrderId,
 
-          navigate('/users/payment/sucess')
-          dispatch(getCart())
-        } catch (error) {
-          console.error("Payment verification failed:", error);
-          toast.error("Payment verification failed");
-        }
-      },
+        handler: async (response: RazorpaySuccessResponse) => {
+          try {
+            await dispatch(
+              verifyPayment({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                paymentMethod: "razorpay",
+                orderId,
+              })
+            ).unwrap();
 
-      modal: {
-        ondismiss: () => {
-          console.log("Payment popup closed");
+            navigate("/users/payment/sucess");
+            dispatch(getCart());
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            setFailure({
+              type: "verification",
+              message:
+                "If money was deducted, your order will be confirmed or refunded shortly. Please check your orders before paying again.",
+            });
+          } finally {
+            setRazorpayLoading(false);
+          }
         },
-      },
-    };
 
-    const razorpay = new window.Razorpay(options);
+        modal: {
+          ondismiss: () => {
+            setRazorpayLoading(false);
+            // if we closed it ourselves after a failure, keep the failure message
+            if (failedRef.current) return;
+            setFailure({
+              type: "cancelled",
+              message: "You closed the payment window before completing the payment.",
+            });
+          },
+        },
+      };
 
-    razorpay.on(
-      "payment.failed",
-      (response: RazorpayFailureResponse) => {
+      const razorpay = new window.Razorpay(options);
+
+      razorpay.on("payment.failed", (response: RazorpayFailureResponse) => {
         console.error("Payment failed:", response.error);
-        toast.error(
-          response.error.description || "Payment failed"
-        );
+        failedRef.current = true;
+
+        setFailure({
+          type: "failed",
+          message:
+            response.error.description ||
+            "Your payment could not be completed. No money has been deducted.",
+        });
+        // close Razorpay's checkout so our modal is visible
+        razorpay.close();
 
         // tell the server this payment attempt failed.
         // fire-and-forget: a failure here must not break the page
@@ -176,70 +212,70 @@ const handleRazorpay = async () => {
           .catch((err) =>
             console.error("Failed to record payment failure:", err)
           );
-      }
-    );
+      });
 
-    razorpay.open();
-  } catch (error) {
-    console.error("Razorpay initialization failed:", error);
-    toast.error("Unable to initialize Razorpay");
-  }
-};
+      razorpay.open();
+    } catch (error) {
+      console.error("Razorpay initialization failed:", error);
+      setFailure({
+        type: "failed",
+        message: "Unable to start the payment. Please try again.",
+      });
+      setRazorpayLoading(false);
+    }
+  };
 
-  
-//pay with wallet
-const handleWallet = async () => {
-  if (!orderId) {
-    toast.error("Order ID is missing");
-    return;
-  }
-  if (walletStatus !== "idle") return;
+  // pay with wallet
+  const handleWallet = async () => {
+    if (!orderId) {
+      toast.error("Order ID is missing");
+      return;
+    }
+    if (walletStatus !== "idle") return;
 
-  setWalletStatus("loading");
-  try {
-    await dispatch(payByWallet(orderId)).unwrap();
+    setFailure(null);
+    setWalletStatus("loading");
+    try {
+      await dispatch(payByWallet(orderId)).unwrap();
 
-    setWalletStatus("success");
-    dispatch(markWalletStale());
+      setWalletStatus("success");
+      dispatch(markWalletStale());
 
-    // keep the success animation on screen, then move to the success page.
-    // getCart runs after navigating (same as the Razorpay flow) so a cleared
-    // cart can't redirect the user away while the animation is playing.
-    redirectTimer.current = setTimeout(() => {
-      navigate('/users/payment/sucess');
-      dispatch(getCart());
-    }, WALLET_SUCCESS_DELAY);
-  } catch (error) {
-    console.error("Wallet payment failed:", error);
-    setWalletStatus("idle");
-    toast.error(
-      typeof error === "string" ? error : "Wallet payment failed. Please try again."
-    );
-  }
-};
+      // keep the success animation on screen, then move to the success page.
+      // getCart runs after navigating (same as the Razorpay flow) so a cleared
+      // cart can't redirect the user away while the animation is playing.
+      redirectTimer.current = setTimeout(() => {
+        navigate("/users/payment/sucess");
+        dispatch(getCart());
+      }, WALLET_SUCCESS_DELAY);
+    } catch (error) {
+      console.error("Wallet payment failed:", error);
+      setWalletStatus("idle");
+      toast.error(
+        typeof error === "string" ? error : "Wallet payment failed. Please try again."
+      );
+    }
+  };
 
+  const handleCod = async () => {
+    if (!orderId || codLoading) return;
 
-const handleCod = async () => {
-  if (!orderId || codLoading) return
+    setFailure(null);
+    setCodLoading(true);
+    try {
+      await dispatch(sendCodOtp(orderId)).unwrap();
+      setCod(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCodLoading(false);
+    }
+  };
 
-  setCodLoading(true)
-  try {
-    await dispatch(sendCodOtp(orderId)).unwrap()
-    setCod(true)
-  } catch (err) {
-    console.error(err)
-    
-  } finally {
-    setCodLoading(false)
-  }
-}
-
-//closing cod otp
-
-const onCLose = ()=>{
-  setCod(false)
-}
-  
+  // closing cod otp
+  const onCLose = () => {
+    setCod(false);
+  };
 
   return (
     <div className="relative flex min-h-[85vh] items-center justify-center overflow-hidden bg-[#EEF0F8] px-4 py-12 sm:px-6">
@@ -337,10 +373,10 @@ const onCLose = ()=>{
 
             <button
               onClick={handleRazorpay}
-              disabled={walletStatus !== "idle"}
+              disabled={walletStatus !== "idle" || razorpayLoading}
               className="group mt-7 flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 text-[15px] font-semibold text-[#12142B] transition hover:bg-[#F1EEFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B9B2FF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#12142B] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span>Pay with Razorpay</span>
+              <span>{razorpayLoading ? "Opening payment..." : "Pay with Razorpay"}</span>
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#12142B] text-white transition group-hover:translate-x-0.5">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -474,7 +510,21 @@ const onCLose = ()=>{
 
       {success && <OrderSuccess></OrderSuccess>}
 
-      {cod&& orderId&&  <CodOtpModal orderId={orderId} onClose={onCLose} email=""></CodOtpModal>}
+      {cod && orderId && (
+        <CodOtpModal orderId={orderId} onClose={onCLose} email=""></CodOtpModal>
+      )}
+
+      {/* Payment failed / cancelled modal with retry */}
+      {failure && (
+        <PaymentFailedModal
+          type={failure.type}
+          message={failure.message}
+          retrying={razorpayLoading}
+          onRetry={handleRazorpay}
+          onClose={() => setFailure(null)}
+          onViewOrders={() => navigate("/users/orders")}
+        />
+      )}
 
       {/* Wallet payment overlay: covers the whole screen so nothing can be clicked */}
       {walletStatus !== "idle" && (
