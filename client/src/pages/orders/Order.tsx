@@ -25,39 +25,10 @@ import { UserProfile } from "../../redux/features/userSlice";
 
 // the 4 main tracking stages, in order
 const TRACK_STEPS = [
-  {
-    key: "confirmed",
-    status: "confirmed",
-    label: "Order Confirmed",
-    note: "Your order has been placed.",
-  },
-  {
-    key: "shipped",
-    status: "shipped",
-    label: "Shipped",
-    note: "Your item has been shipped.",
-  },
-  {
-    key: "outForDelivery",
-    status: "out_for_delivery",
-    label: "Out For Delivery",
-    note: "Your item is out for delivery.",
-  },
-  {
-    key: "delivered",
-    status: "delivered",
-    label: "Delivered",
-    note: "Your item has been delivered.",
-  },
-] as const;
-
-const RETURN_TRACK_STEPS = [
-  { key: "requested", label: "Return requested", note: "Your return request has been submitted." },
-  { key: "approved", label: "Return approved", note: "Your return request has been approved." },
-  { key: "pickup_scheduled", label: "Pickup scheduled", note: "Pickup is being arranged for your item." },
-  { key: "picked_up", label: "Item picked up", note: "Your returned item has been collected." },
-  { key: "received", label: "Return received", note: "Your returned item has been received and checked." },
-  { key: "refunded", label: "Refund completed", note: "Your refund has been credited to your wallet." },
+  { key: "confirmed", status: "confirmed", label: "Order Confirmed", note: "Your order has been placed." },
+  { key: "shipped", status: "shipped", label: "Shipped", note: "Your item has been shipped." },
+  { key: "outForDelivery", status: "out_for_delivery", label: "Out For Delivery", note: "Your item is out for delivery." },
+  { key: "delivered", status: "delivered", label: "Delivered", note: "Your item has been delivered." },
 ] as const;
 
 const RETURN_REASONS = [
@@ -71,6 +42,40 @@ const RETURN_REASONS = [
 ];
 
 const RETURN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+// statuses after which an item can no longer be cancelled
+const NON_CANCELLABLE = [
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+  "return_requested",
+  "returned",
+];
+
+// badge for each item status
+const getItemStatus = (status: string) => {
+  switch (status) {
+    case "confirmed":
+      return { label: "Order confirmed", style: "bg-orange-50 text-orange-600" };
+    case "shipped":
+      return { label: "Shipped", style: "bg-blue-50 text-blue-700" };
+    case "out_for_delivery":
+      return { label: "Out for delivery", style: "bg-indigo-50 text-indigo-700" };
+    case "delivered":
+      return { label: "Delivered", style: "bg-green-50 text-green-700" };
+    case "cancelled":
+      return { label: "Cancelled", style: "bg-red-50 text-red-600" };
+    case "return_requested":
+      return { label: "Return requested", style: "bg-amber-50 text-amber-700" };
+    case "returned":
+      return { label: "Returned", style: "bg-gray-100 text-gray-700" };
+    default:
+      return {
+        label: String(status || "Processing").replaceAll("_", " "),
+        style: "bg-gray-50 text-gray-600",
+      };
+  }
+};
 
 const formatTrackDate = (date: string) =>
   new Date(date).toLocaleDateString("en-IN", {
@@ -87,25 +92,26 @@ const Order = () => {
     (state) => state.orderData
   );
 
-  const {  isStale } = useAppSelector(
-    (state) => state.userData
-  );
+  const { isStale } = useAppSelector((state) => state.userData);
 
   const { orderId } = useParams<{ orderId: string }>();
 
-  // ---- cancel order state ----
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  // ---- cancel item state ----
+  // id of the item being cancelled (null = modal closed)
+  const [cancelItemId, setCancelItemId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
-  // ---- return order state ----
-  const [showReturnModal, setShowReturnModal] = useState(false);
+  // ---- return item state ----
+  // id of the item being returned (null = modal closed)
+  const [returnItemId, setReturnItemId] = useState<string | null>(null);
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returning, setReturning] = useState(false);
   const [returnError, setReturnError] = useState("");
-  const [returnSent, setReturnSent] = useState(false);
+  // items for which a return was sent in this session
+  const [returnSentIds, setReturnSentIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!orders || orders.length === 0) {
@@ -113,13 +119,11 @@ const Order = () => {
     }
   }, [dispatch, orders]);
 
-
   useEffect(() => {
-        if (isStale) {
-          dispatch(UserProfile());
-        }
-      }, [dispatch, isStale]);
-  
+    if (isStale) {
+      dispatch(UserProfile());
+    }
+  }, [dispatch, isStale]);
 
   // Find the selected order
   const order = orders?.find((item) => item._id === orderId);
@@ -142,35 +146,30 @@ const Order = () => {
           icon: <CreditCard size={16} />,
           style: "bg-amber-50 text-amber-700 border-amber-200",
         };
-
       case "paid":
         return {
           label: "Paid",
           icon: <CheckCircle2 size={16} />,
           style: "bg-green-50 text-green-700 border-green-200",
         };
-
       case "pending":
         return {
           label: "Pending",
           icon: <Clock size={16} />,
           style: "bg-yellow-50 text-yellow-700 border-yellow-200",
         };
-
       case "failed":
         return {
           label: "Failed",
           icon: <XCircle size={16} />,
           style: "bg-red-50 text-red-700 border-red-200",
         };
-
       case "refunded":
         return {
           label: "Refunded",
           icon: <Receipt size={16} />,
           style: "bg-blue-50 text-blue-700 border-blue-200",
         };
-
       default:
         return {
           label: status,
@@ -180,22 +179,29 @@ const Order = () => {
     }
   };
 
+  // the item currently targeted by a modal
+  const cancelTarget = order?.items.find((i: any) => i._id === cancelItemId);
+  const returnTarget = order?.items.find((i: any) => i._id === returnItemId);
+
+  const getItemName = (item: any) =>
+    typeof item?.product === "string" ? "Product" : item?.product?.name || "Product";
+
   // ---- cancel handlers ----
-  const openCancelModal = () => {
+  const openCancelModal = (itemId: string) => {
     setCancelReason("");
     setCancelError("");
-    setShowCancelModal(true);
+    setCancelItemId(itemId);
   };
 
   const closeCancelModal = () => {
     if (cancelling) return; // don't close while the request is running
-    setShowCancelModal(false);
+    setCancelItemId(null);
     setCancelReason("");
     setCancelError("");
   };
 
-  const handleCancelOrder = async () => {
-    if (!order) return;
+  const handleCancelItem = async () => {
+    if (!order || !cancelItemId) return;
 
     const reason = cancelReason.trim();
     if (!reason) {
@@ -207,21 +213,23 @@ const Order = () => {
       setCancelling(true);
       setCancelError("");
 
-      // wait until the cancel request finishes
       await dispatch(
-        cancelOrder({ orderId: order._id, cancelReason: reason })
+        cancelOrder({
+          orderId: order._id,
+          itemId: cancelItemId,
+          cancelReason: reason,
+        } as any)
       ).unwrap();
 
-      // then fetch the latest orders
       await dispatch(getOrders({ page: 1, search: "" })).unwrap();
 
-      setShowCancelModal(false);
+      setCancelItemId(null);
       setCancelReason("");
     } catch (err) {
       setCancelError(
         typeof err === "string"
           ? err
-          : "Failed to cancel order. Please try again."
+          : "Failed to cancel item. Please try again."
       );
     } finally {
       setCancelling(false);
@@ -229,22 +237,22 @@ const Order = () => {
   };
 
   // ---- return handlers ----
-  const openReturnModal = () => {
+  const openReturnModal = (itemId: string) => {
     setReturnReason("");
     setReturnDescription("");
     setReturnError("");
-    setShowReturnModal(true);
+    setReturnItemId(itemId);
   };
 
   // only called from the "Close" button, never from clicking outside
   const closeReturnModal = () => {
-    if (returning) return; // don't close while the request is running
-    setShowReturnModal(false);
+    if (returning) return;
+    setReturnItemId(null);
     setReturnError("");
   };
 
-  const handleReturnOrder = async () => {
-    if (!order) return;
+  const handleReturnItem = async () => {
+    if (!order || !returnItemId) return;
 
     const description = returnDescription.trim();
 
@@ -265,14 +273,14 @@ const Order = () => {
       await dispatch(
         generateReturn({
           orderId: order._id,
+          itemId: returnItemId,
           payload: { reasonForreturning: returnReason, description },
-        })
+        } as any)
       ).unwrap();
 
-      setReturnSent(true);
-      setShowReturnModal(false);
+      setReturnSentIds((prev) => [...prev, returnItemId]);
+      setReturnItemId(null);
 
-      // fetch the latest orders
       await dispatch(getOrders({ page: 1, search: "" })).unwrap();
     } catch (err) {
       setReturnError(
@@ -337,31 +345,7 @@ const Order = () => {
   }
 
   const status = getStatus(order.paymentStatus);
-  const returnRequest =
-    order.return && typeof order.return !== "string" ? order.return : null;
-
-  // ---- tracking ----
   const isCancelled = order.orderStatus === "cancelled";
-
-  // cancel button is hidden once the order is out for delivery, delivered, cancelled or in return
-  const canCancel = ![
-    "out_for_delivery",
-    "delivered",
-    "cancelled",
-    "return_requested",
-    "returned",
-  ].includes(order.orderStatus);
-
-  // ---- return flags ----
-  const returnRequested =
-    returnSent || order.orderStatus === "return_requested";
-
-  const deliveredAt = order.trackingDates?.delivered;
-  const withinReturnWindow =
-    !!deliveredAt &&
-    Date.now() - new Date(deliveredAt).getTime() <= RETURN_WINDOW_MS;
-
-  const canReturn = order.orderStatus === "delivered" && withinReturnWindow;
 
   // date for each stage (confirmed falls back to the order date)
   const trackDates: Record<(typeof TRACK_STEPS)[number]["key"], string | null> =
@@ -391,6 +375,12 @@ const Order = () => {
     reachedIndex = TRACK_STEPS.length - 1;
   }
 
+  // show the success banner if any item had a return requested
+  const anyReturnRequested =
+    returnSentIds.length > 0 ||
+    order.orderStatus === "return_requested" ||
+    (order.items as any[]).some((i) => i.itemStatus === "return_requested");
+
   return (
     <div className="min-h-screen w-full bg-gray-50 px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
       <div className="w-full max-w-none">
@@ -417,43 +407,16 @@ const Order = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <span
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold w-fit ${status.style}`}
-            >
-              {status.icon}
-              {status.label}
-            </span>
-
-            {/* Cancel button (hidden when out for delivery / delivered / cancelled) */}
-            {canCancel && (
-              <button
-                type="button"
-                onClick={openCancelModal}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-white text-red-600 text-sm font-semibold hover:bg-red-50 transition"
-              >
-                <XCircle size={16} />
-                Cancel order
-              </button>
-            )}
-
-            {/* Return button (delivered within 7 days, disabled once requested) */}
-            {(canReturn || returnRequested) && (
-              <button
-                type="button"
-                onClick={openReturnModal}
-                disabled={returnRequested}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-white text-orange-600 text-sm font-semibold hover:bg-orange-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RotateCcw size={16} />
-                {returnRequested ? "Return requested" : "Return order"}
-              </button>
-            )}
-          </div>
+          <span
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold w-fit ${status.style}`}
+          >
+            {status.icon}
+            {status.label}
+          </span>
         </div>
 
         {/* Return request message */}
-        {returnRequested && (
+        {anyReturnRequested && (
           <div className="mb-6 flex items-start gap-4 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-5 shadow-sm">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100">
               <CheckCircle2 className="text-emerald-600" size={24} />
@@ -479,7 +442,7 @@ const Order = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Ordered products */}
+            {/* Ordered items, one by one */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-7">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
@@ -495,8 +458,8 @@ const Order = () => {
                 </div>
               </div>
 
-              <div className="divide-y divide-gray-100">
-                {order.items.map((item, index) => {
+              <div className="space-y-4">
+                {order.items.map((item: any, index: number) => {
                   const product =
                     typeof item.product === "string" ? null : item.product;
 
@@ -505,60 +468,149 @@ const Order = () => {
                       ? item.product
                       : item.product?._id;
 
+                  // item's own status, falls back to the order status
+                  const itemStatus: string =
+                    item.itemStatus || order.orderStatus;
+                  const badge = getItemStatus(itemStatus);
+
+                  const deliveredAt =
+                    item.trackingDates?.delivered ??
+                    order.trackingDates?.delivered;
+
+                  const withinReturnWindow =
+                    !!deliveredAt &&
+                    Date.now() - new Date(deliveredAt).getTime() <=
+                      RETURN_WINDOW_MS;
+
+                  const itemReturnRequested =
+                    returnSentIds.includes(item._id) ||
+                    itemStatus === "return_requested";
+
+                  // no cancel for failed-payment orders
+                  const canCancel =
+                    order.paymentStatus !== "failed" &&
+                    !NON_CANCELLABLE.includes(itemStatus);
+                  const canReturn =
+                    itemStatus === "delivered" &&
+                    withinReturnWindow &&
+                    !itemReturnRequested;
+
                   return (
                     <div
-                      key={`${productId || index}-${index}`}
-                      className="py-6 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                      key={`${item._id || productId || index}-${index}`}
+                      className="rounded-xl border border-gray-100 p-4 sm:p-5"
                     >
-                      <div className="flex items-center gap-5 min-w-0">
-                        {/* Clickable product image */}
-                        <Link
-                          to={productId ? `/product/${productId}` : "#"}
-                          className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center hover:border-orange-300 transition"
-                        >
-                          {product?.images?.[0] ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.name || "Product"}
-                              className="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <Package size={36} className="text-gray-300" />
-                          )}
-                        </Link>
-
-                        {/* Product information */}
-                        <div className="min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-5 min-w-0">
+                          {/* Clickable product image */}
                           <Link
                             to={productId ? `/product/${productId}` : "#"}
-                            className="font-semibold text-base sm:text-lg text-gray-900 hover:text-orange-600 transition line-clamp-2"
+                            className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center hover:border-orange-300 transition"
                           >
-                            {product?.name || "Product"}
+                            {product?.images?.[0] ? (
+                              <img
+                                src={product.images[0]}
+                                alt={product.name || "Product"}
+                                className="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <Package size={32} className="text-gray-300" />
+                            )}
                           </Link>
 
-                          {product?.brand && (
-                            <p className="text-sm text-gray-500 mt-1">
-                              {product.brand}
-                            </p>
-                          )}
+                          {/* Product information */}
+                          <div className="min-w-0">
+                            <Link
+                              to={productId ? `/product/${productId}` : "#"}
+                              className="font-semibold text-base sm:text-lg text-gray-900 hover:text-orange-600 transition line-clamp-2"
+                            >
+                              {product?.name || "Product"}
+                            </Link>
 
-                          <p className="text-sm text-gray-500 mt-3">
-                            Quantity: {item.quantity}
+                            {product?.brand && (
+                              <p className="text-sm text-gray-500 mt-1">
+                                {product.brand}
+                              </p>
+                            )}
+
+                            <p className="text-sm text-gray-500 mt-2">
+                              Quantity: {item.quantity}
+                            </p>
+
+                            <p className="text-xs text-gray-400 mt-1">
+                              Unit price: {formatPrice(item.price)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Item total */}
+                        <div className="sm:text-right">
+                          <p className="text-xs text-gray-400 mb-1">
+                            Item total
                           </p>
 
-                          <p className="text-xs text-gray-400 mt-1">
-                            Unit price: {formatPrice(item.price)}
+                          <p className="font-semibold text-lg text-gray-900 whitespace-nowrap">
+                            {formatPrice(item.price * item.quantity)}
                           </p>
                         </div>
                       </div>
 
-                      {/* Item total */}
-                      <div className="sm:text-right pl-0 sm:pl-4">
-                        <p className="text-xs text-gray-400 mb-1">Item total</p>
+                      {/* Item status + action */}
+                      <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold ${badge.style}`}
+                          >
+                            {badge.label}
+                          </span>
 
-                        <p className="font-semibold text-lg text-gray-900 whitespace-nowrap">
-                          {formatPrice(item.price * item.quantity)}
-                        </p>
+                          {itemStatus === "delivered" && deliveredAt && (
+                            <span className="text-xs text-gray-400">
+                              {formatTrackDate(deliveredAt)}
+                            </span>
+                          )}
+
+                          {itemStatus === "cancelled" && order.updatedAt && (
+                            <span className="text-xs text-gray-400">
+                              {formatTrackDate(order.updatedAt)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {canCancel && (
+                            <button
+                              type="button"
+                              onClick={() => openCancelModal(item._id)}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-white text-red-600 text-sm font-semibold hover:bg-red-50 transition"
+                            >
+                              <XCircle size={16} />
+                              Cancel item
+                            </button>
+                          )}
+
+                          {canReturn && (
+                            <button
+                              type="button"
+                              onClick={() => openReturnModal(item._id)}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-white text-orange-600 text-sm font-semibold hover:bg-orange-50 transition"
+                            >
+                              <RotateCcw size={16} />
+                              Return item
+                            </button>
+                          )}
+
+                          {itemReturnRequested && (
+                            <button
+                              type="button"
+                              disabled
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-white text-orange-600 text-sm font-semibold opacity-50 cursor-not-allowed"
+                            >
+                              <RotateCcw size={16} />
+                              Return requested
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -681,132 +733,6 @@ const Order = () => {
                 )}
               </ol>
             </section>
-
-            {/* RETURN TRACKING */}
-            {returnRequest && (
-              <section className="bg-white rounded-2xl border border-orange-100 shadow-sm p-5 sm:p-7">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                      <RotateCcw className="text-orange-500" size={20} />
-                    </div>
-                    <div>
-                      <h2 className="font-semibold text-gray-900">Return tracking</h2>
-                      <p className="text-xs text-gray-500">Follow your return and refund progress</p>
-                    </div>
-                  </div>
-                  <span className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
-                    returnRequest.status === "refunded"
-                      ? "bg-green-50 text-green-700"
-                      : returnRequest.status === "rejected" || returnRequest.status === "cancelled"
-                      ? "bg-red-50 text-red-600"
-                      : "bg-orange-50 text-orange-600"
-                  }`}>
-                    {returnRequest.status.replaceAll("_", " ")}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                    <p className="text-xs text-gray-500">Return reason</p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
-                      {returnRequest.reason.replaceAll("_", " ")}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                    <p className="text-xs text-gray-500">Refund amount</p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {formatPrice(returnRequest.refund.amount)}
-                      <span className="ml-2 text-xs font-normal text-gray-500">· Wallet</span>
-                    </p>
-                  </div>
-                </div>
-
-                {returnRequest.description && (
-                  <p className="mb-5 rounded-xl bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-600">
-                    {returnRequest.description}
-                  </p>
-                )}
-
-                <ol className="ml-1">
-                  {RETURN_TRACK_STEPS.map((step, index) => {
-                    const dateKey = step.key === "pickup_scheduled"
-                      ? null
-                      : step.key === "picked_up"
-                      ? "pickedUp"
-                      : step.key;
-                    const date = dateKey
-                      ? returnRequest.trackingDates?.[dateKey as keyof typeof returnRequest.trackingDates]
-                      : null;
-                    const currentIndex = RETURN_TRACK_STEPS.findIndex(
-                      (item) => item.key === returnRequest.status
-                    );
-                    const done = index <= currentIndex || Boolean(date);
-
-                    return (
-                      <li key={step.key} className="relative flex gap-4 pb-6 last:pb-0">
-                        {index !== RETURN_TRACK_STEPS.length - 1 && (
-                          <span className={`absolute left-[7px] top-4 h-full w-0.5 ${
-                            done && index < currentIndex ? "bg-green-500" : "bg-gray-200"
-                          }`} />
-                        )}
-                        <span className={`relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
-                          done ? "border-green-500 bg-green-500" : "border-gray-300 bg-white"
-                        }`} />
-                        <div className="min-w-0">
-                          <p className={`text-sm font-semibold ${done ? "text-gray-900" : "text-gray-400"}`}>
-                            {step.label}
-                            {typeof date === "string" && date && (
-                              <span className="ml-2 text-xs font-normal text-gray-400">
-                                {formatTrackDate(date)}
-                              </span>
-                            )}
-                          </p>
-                          <p className={`mt-1 text-xs ${done ? "text-gray-500" : "text-gray-300"}`}>
-                            {done ? step.note : "Waiting"}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-
-                  {(returnRequest.status === "rejected" || returnRequest.status === "cancelled") && (
-                    <li className="flex gap-4">
-                      <span className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
-                        returnRequest.status === "rejected"
-                          ? "border-red-500 bg-red-500"
-                          : "border-gray-400 bg-gray-400"
-                      }`} />
-                      <div>
-                        <p className={`text-sm font-semibold ${
-                          returnRequest.status === "rejected" ? "text-red-600" : "text-gray-700"
-                        }`}>
-                          Return {returnRequest.status}
-                        </p>
-                        {returnRequest.rejectionReason && (
-                          <p className="mt-1 text-xs leading-5 text-gray-500">
-                            {returnRequest.rejectionReason}
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  )}
-                </ol>
-
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <span className="text-xs font-medium text-gray-500">Refund status</span>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                    returnRequest.refund.status === "completed"
-                      ? "bg-green-100 text-green-700"
-                      : returnRequest.refund.status === "failed"
-                      ? "bg-red-100 text-red-600"
-                      : "bg-amber-100 text-amber-700"
-                  }`}>
-                    {returnRequest.refund.status}
-                  </span>
-                </div>
-              </section>
-            )}
 
             {/* Delivery address */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-7">
@@ -974,8 +900,8 @@ const Order = () => {
         </div>
       </div>
 
-      {/* Cancel order modal */}
-      {showCancelModal && (
+      {/* Cancel item modal */}
+      {cancelItemId && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4"
           onClick={(e) => e.stopPropagation()}
@@ -995,16 +921,17 @@ const Order = () => {
                 <XCircle className="text-red-500" size={20} />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <h3
                   id="cancel-order-title"
                   className="font-semibold text-gray-900"
                 >
-                  Cancel this order?
+                  Cancel this item?
                 </h3>
 
-                <p className="text-xs text-gray-500">
-                  Order #{order._id.slice(-8).toUpperCase()}
+                <p className="text-xs text-gray-500 truncate">
+                  {getItemName(cancelTarget)} · Order #
+                  {order._id.slice(-8).toUpperCase()}
                 </p>
               </div>
             </div>
@@ -1026,7 +953,7 @@ const Order = () => {
                 if (cancelError) setCancelError("");
               }}
               disabled={cancelling}
-              placeholder="Tell us why you want to cancel this order"
+              placeholder="Tell us why you want to cancel this item"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-gray-50 resize-none"
             />
 
@@ -1043,12 +970,12 @@ const Order = () => {
                 disabled={cancelling}
                 className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
               >
-                Keep order
+                Keep item
               </button>
 
               <button
                 type="button"
-                onClick={handleCancelOrder}
+                onClick={handleCancelItem}
                 disabled={cancelling || !cancelReason.trim()}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1062,8 +989,8 @@ const Order = () => {
         </div>
       )}
 
-      {/* Return order modal (stays open when clicking outside; use the Close button) */}
-      {showReturnModal && (
+      {/* Return item modal (stays open when clicking outside; use the Close button) */}
+      {returnItemId && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4"
           onClick={(e) => e.stopPropagation()}
@@ -1083,16 +1010,17 @@ const Order = () => {
                 <RotateCcw className="text-orange-500" size={20} />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <h3
                   id="return-order-title"
                   className="font-semibold text-gray-900"
                 >
-                  Return this order
+                  Return this item
                 </h3>
 
-                <p className="text-xs text-gray-500">
-                  Order #{order._id.slice(-8).toUpperCase()}
+                <p className="text-xs text-gray-500 truncate">
+                  {getItemName(returnTarget)} · Order #
+                  {order._id.slice(-8).toUpperCase()}
                 </p>
               </div>
             </div>
@@ -1163,7 +1091,7 @@ const Order = () => {
 
               <button
                 type="button"
-                onClick={handleReturnOrder}
+                onClick={handleReturnItem}
                 disabled={
                   returning || !returnReason || !returnDescription.trim()
                 }
