@@ -49,25 +49,27 @@ static async getWallet(user, { page = 1, limit = 10 } = {}) {
 
 
  //refuund from canceling 
-  static async creditRefund({ userId, orderId, amount, session }) {
+ static async creditRefund({ userId, orderId, itemId = null, amount, session }) {
   try {
     if (!amount || amount <= 0) {
       throw new ValidationError("Refund amount must be greater than 0");
     }
 
-    // make sure the wallet exists
+   
     await Wallet.updateOne(
       { user: userId },
       { $setOnInsert: { balance: 0, transactions: [] } },
       { upsert: true, session }
     );
 
-    // credit only if this order has no refund entry yet
+   
     const wallet = await Wallet.findOneAndUpdate(
       {
         user: userId,
         transactions: {
-          $not: { $elemMatch: { order: orderId, reason: "refund" } },
+          $not: {
+            $elemMatch: { order: orderId, reason: "refund", item: itemId },
+          },
         },
       },
       {
@@ -78,6 +80,7 @@ static async getWallet(user, { page = 1, limit = 10 } = {}) {
             reason: "refund",
             amount,
             order: orderId,
+            item: itemId,
             createdAt: new Date(),
           },
         },
@@ -89,6 +92,7 @@ static async getWallet(user, { page = 1, limit = 10 } = {}) {
       logger.warn("Refund already credited, skipping", {
         userId,
         orderId,
+        itemId,
       });
       return false;
     }
@@ -96,6 +100,7 @@ static async getWallet(user, { page = 1, limit = 10 } = {}) {
     logger.info("Refund credited to wallet", {
       userId,
       orderId,
+      itemId,
       amount,
       newBalance: wallet.balance,
     });
@@ -105,6 +110,7 @@ static async getWallet(user, { page = 1, limit = 10 } = {}) {
     logger.error("Failed to credit refund to wallet", {
       userId,
       orderId,
+      itemId,
       amount,
       error: error.message,
       stack: error.stack,

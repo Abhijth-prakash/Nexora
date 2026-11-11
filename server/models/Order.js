@@ -8,32 +8,48 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-  items: [
-  {
-    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-    variantId: { type: mongoose.Schema.Types.ObjectId, default: null },
-    quantity: { type: Number, required: true, min: 1 },
-    price: { type: Number, required: true, min: 0 },
+    items: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        variantId: { type: mongoose.Schema.Types.ObjectId, default: null },
+        quantity: { type: Number, required: true, min: 1 },
+        price: { type: Number, required: true, min: 0 },
 
-    
-    discountShare: { type: Number, default: 0, min: 0 }, 
-    finalAmount:   { type: Number, required: true, min: 0 }, 
+        discountShare: { type: Number, default: 0, min: 0 },
+        finalAmount: { type: Number, required: true, min: 0 },
 
-    status: {
-      type: String,
-      enum: ["active", "cancelled", "return_requested", "returned"],
-      default: "active",
-    },
-    cancelReason:  { type: String, trim: true, maxlength: 500, default: null },
-    cancelledBy:   { type: String, enum: ["user", "admin", "system", null], default: null },
-    cancelledAt:   { type: Date, default: null },
-    refund: {
-      amount:     { type: Number, default: 0, min: 0 },
-      status:     { type: String, enum: ["none", "pending", "completed", "failed"], default: "none" },
-      refundedAt: { type: Date, default: null },
-    },
-  },
-],
+        status: {
+          type: String,
+          enum: ["active", "cancelled", "return_requested", "returned"],
+          default: "active",
+        },
+        cancelReason: {
+          type: String,
+          trim: true,
+          maxlength: 500,
+          default: null,
+        },
+        cancelledBy: {
+          type: String,
+          enum: ["user", "admin", "system", null],
+          default: null,
+        },
+        cancelledAt: { type: Date, default: null },
+        refund: {
+          amount: { type: Number, default: 0, min: 0 },
+          status: {
+            type: String,
+            enum: ["none", "pending", "completed", "failed"],
+            default: "none",
+          },
+          refundedAt: { type: Date, default: null },
+        },
+      },
+    ],
 
     address: {
       type: mongoose.Schema.Types.ObjectId,
@@ -72,13 +88,22 @@ const orderSchema = new mongoose.Schema(
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded", "cod"],
+      enum: [
+        "pending",
+        "paid",
+        "failed",
+        "partially_refunded",
+        "refunded",
+        "cod",
+      ],
       default: "pending",
     },
 
+    refundedAmount: { type: Number, default: 0, min: 0 },
+
     paymentMethod: {
       type: String,
-      enum: ["razorpay", "cod","wallet"],
+      enum: ["razorpay", "cod", "wallet"],
     },
 
     razorpayOrderId: {
@@ -116,20 +141,20 @@ const orderSchema = new mongoose.Schema(
       default: false,
     },
 
-orderStatus: {
-  type: String,
-  enum: [
-    "payment_pending",
-    "confirmed",
-    "shipped",
-    "out_for_delivery",
-    "delivered",
-    "cancelled",
-    "return_requested",
-    "returned",
-  ],
-  default: "payment_pending",
-},
+    orderStatus: {
+      type: String,
+      enum: [
+        "payment_pending",
+        "confirmed",
+        "shipped",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+        "return_requested",
+        "returned",
+      ],
+      default: "payment_pending",
+    },
 
     cancelReason: {
       type: String,
@@ -159,16 +184,20 @@ orderStatus: {
       returnRequested: { type: Date, default: null },
       returned: { type: Date, default: null },
     },
-   cancelRefund: {
-  amount:     { type: Number, default: 0, min: 0 },
-  status:     { type: String, enum: ["pending", "completed", "failed"], default: "pending" },
-  method:     { type: String, enum: ["wallet"], default: "wallet" },
-  refundedAt: { type: Date, default: null },
-},
+    cancelRefund: {
+      amount: { type: Number, default: 0, min: 0 },
+      status: {
+        type: String,
+        enum: ["pending", "completed", "failed"],
+        default: "pending",
+      },
+      method: { type: String, enum: ["wallet"], default: "wallet" },
+      refundedAt: { type: Date, default: null },
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes

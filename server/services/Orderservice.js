@@ -992,6 +992,173 @@ static async cancelOrder(user, data) {
   }
 }
 
+
+
+
+
+//cancel single item from order
+static async cancelOrderItem(user, data) {
+  const session = await mongoose.startSession();
+  try {
+    const { orderId, itemId, cancelReason } = data;
+
+    if (!mongoose.isValidObjectId(orderId)) {
+      throw new ValidationError("Invalid order");
+    }
+    if (!mongoose.isValidObjectId(itemId)) {
+      throw new ValidationError("Invalid item");
+    }
+    if (!cancelReason || !cancelReason.trim()) {
+      throw new ValidationError("Cancel reason is required");
+    }
+
+    const toPaise = (n) => Math.round((n || 0) * 100);
+    let result;
+
+    await session.withTransaction(async () => {
+      const order = await Order.findById(orderId).session(session);
+      if (!order) throw new NotFoundError("Order not found");
+
+      const userId = user._id || user;
+      if (order.user.toString() !== userId.toString()) {
+        throw new AuthenticationError("You are not allowed to cancel this order");
+      }
+
+      if (order.orderStatus === "cancelled") {
+        throw new ConflictError("Order is already cancelled");
+      }
+      if (order.orderStatus !== "confirmed") {
+        throw new ConflictError(
+          `Order cannot be cancelled once it is ${order.orderStatus}`
+        );
+      }
+
+      const item = order.items.id(itemId);
+      if (!item) throw new NotFoundError("Item not found in this order");
+
+      if (item.status !== "active") {
+        throw new ConflictError(`Item is already ${item.status}`);
+      }
+      if (typeof item.finalAmount !== "number") {
+        // old order created before per-item amounts existed
+        throw new ConflictError("This order does not support item cancellation");
+      }
+
+      const isLastActiveItem =
+        order.items.filter((i) => i.status === "active").length === 1;
+
+      // 1. Release stock for this item only
+      const reservation = await StockReservation.findOne({
+        orderId: order._id,
+        status: { $in: ["reserved", "confirmed"] },
+      }).session(session);
+
+      if (reservation) {
+        const stockOp = item.variantId
+          ? {
+              updateOne: {
+                filter: { _id: item.product },
+                update: { $inc: { "variants.$[v].stock": item.quantity } },
+                arrayFilters: [{ "v._id": item.variantId }],
+              },
+            }
+          : {
+              updateOne: {
+                filter: { _id: item.product },
+                update: { $inc: { stock: item.quantity } },
+              },
+            };
+        await Product.bulkWrite([stockOp], { session });
+
+        if (isLastActiveItem) {
+          reservation.status = "released";
+          await reservation.save({ session });
+        }
+      }
+
+      // 2. Refund this item's final amount to wallet
+      const needsRefund =
+        ["paid", "partially_refunded"].includes(order.paymentStatus) &&
+        ["wallet", "razorpay"].includes(order.paymentMethod);
+
+      let refundAmount = 0;
+
+      if (needsRefund) {
+        refundAmount = item.finalAmount;
+
+        const newRefunded = toPaise(order.refundedAmount) + toPaise(refundAmount);
+        if (newRefunded > toPaise(order.totalAmount)) {
+          throw new ConflictError("Refund exceeds the amount paid for this order");
+        }
+
+        if (refundAmount > 0) {
+          const credited = await WalletService.creditRefund({
+            userId: order.user,
+            orderId: order._id,
+            itemId: item._id,
+            amount: refundAmount,
+            session,
+          });
+
+          if (!credited) {
+            throw new ConflictError("Refund for this item was already processed");
+          }
+        }
+
+        order.refundedAmount = newRefunded / 100;
+        item.refund = {
+          amount: refundAmount,
+          status: "completed",
+          refundedAt: new Date(),
+        };
+        order.paymentStatus = isLastActiveItem ? "refunded" : "partially_refunded";
+      }
+
+      // 3. Mark the item cancelled
+      item.status = "cancelled";
+      item.cancelReason = cancelReason.trim();
+      item.cancelledBy = "user";
+      item.cancelledAt = new Date();
+
+      // 4. If nothing is left, the whole order is cancelled
+      if (isLastActiveItem) {
+        order.orderStatus = "cancelled";
+        order.cancelReason = cancelReason.trim();
+        order.cancelledBy = "user";
+        order.trackingDates.cancelled = new Date();
+      }
+
+      await order.save({ session });
+
+      result = {
+        order,
+        itemId: item._id,
+        refundedAmount: refundAmount,
+        orderCancelled: isLastActiveItem,
+      };
+    });
+
+    logger.info("Order item cancelled", {
+      orderId,
+      itemId,
+      userId: user._id || user,
+      refundedAmount: result.refundedAmount,
+      orderCancelled: result.orderCancelled,
+    });
+    return result;
+  } catch (error) {
+    logger.error("failed to cancel order item", {
+      orderId: data?.orderId,
+      itemId: data?.itemId,
+      error: error.message,
+      stack: error.stack,
+    });
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+}
+
 }
 
 
