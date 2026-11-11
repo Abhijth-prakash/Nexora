@@ -8,29 +8,32 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    items: [
-      {
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-        variantId: {
-          type: mongoose.Schema.Types.ObjectId,
-          default: null,
-        },
-        quantity: {
-          type: Number,
-          required: true,
-          min: 1,
-        },
-        price: {
-          type: Number,
-          required: true,
-          min: 0,
-        },
-      },
-    ],
+  items: [
+  {
+    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+    variantId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    quantity: { type: Number, required: true, min: 1 },
+    price: { type: Number, required: true, min: 0 },
+
+    
+    discountShare: { type: Number, default: 0, min: 0 }, 
+    finalAmount:   { type: Number, required: true, min: 0 }, 
+
+    status: {
+      type: String,
+      enum: ["active", "cancelled", "return_requested", "returned"],
+      default: "active",
+    },
+    cancelReason:  { type: String, trim: true, maxlength: 500, default: null },
+    cancelledBy:   { type: String, enum: ["user", "admin", "system", null], default: null },
+    cancelledAt:   { type: Date, default: null },
+    refund: {
+      amount:     { type: Number, default: 0, min: 0 },
+      status:     { type: String, enum: ["none", "pending", "completed", "failed"], default: "none" },
+      refundedAt: { type: Date, default: null },
+    },
+  },
+],
 
     address: {
       type: mongoose.Schema.Types.ObjectId,

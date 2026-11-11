@@ -403,7 +403,37 @@ static async releaseUserReservations(user) {
 
 
 
-//generateorder
+
+//caluclating discounr rate for item
+static allocateDiscount(items, totalDiscount) {
+  const toPaise = (n) => Math.round(n * 100);
+
+  const lineTotals = items.map((i) => toPaise(i.price) * i.quantity);
+  const subtotal = lineTotals.reduce((sum, t) => sum + t, 0);
+  const discount = Math.min(toPaise(totalDiscount || 0), subtotal);
+
+  let allocated = 0;
+  return items.map((item, idx) => {
+    const isLast = idx === items.length - 1;
+    const share = isLast
+      ? discount - allocated
+      : subtotal > 0
+      ? Math.floor((discount * lineTotals[idx]) / subtotal)
+      : 0;
+
+    allocated += share;
+
+    return {
+      ...item,
+      discountShare: share / 100,
+      finalAmount: (lineTotals[idx] - share) / 100,
+    };
+  });
+}
+
+
+
+//generate order
 static async GenerateOrder(user, data) {
   const session = await mongoose.startSession();
 
@@ -514,6 +544,19 @@ static async GenerateOrder(user, data) {
         });
       }
 
+    
+      const itemsWithDiscount = this.allocateDiscount(orderItems, summary.discount);
+
+    
+      const itemsTotal = itemsWithDiscount.reduce((sum, i) => sum + i.finalAmount, 0);
+      if (Math.abs(itemsTotal - summary.finalAmount) > 0.01) {
+        logger.warn("Item totals do not match order total", {
+          orderId,
+          itemsTotal,
+          finalAmount: summary.finalAmount,
+        });
+      }
+
       await StockReservation.create(
         [
           {
@@ -535,7 +578,7 @@ static async GenerateOrder(user, data) {
           {
             _id: orderId,
             user,
-            items: orderItems,
+            items: itemsWithDiscount, 
             address: addressId,
             totalAmount: summary.finalAmount,
             coupon: summary.coupon?._id || null,
