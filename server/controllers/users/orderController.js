@@ -318,8 +318,35 @@ static cancelOrder = BaseController.asyncHandler(
 );
 
 
+//cancel single item
+static cancelOrderItem = BaseController.asyncHandler(
+  async (req, res) => {
+    const { orderId, itemId } = req.params;
+    const { cancelReason } = req.body;
+    const user = req.userId;
 
-//cancel order
+    const result = await OrderService.cancelOrderItem(user, {
+      orderId,
+      itemId,
+      cancelReason,
+    });
+
+    BaseController.logAction(`cancelled item ${itemId} of order ${orderId}`);
+
+    return this.sendSuccessResponse(
+      res,
+      result.orderCancelled
+        ? "Last item cancelled, order cancelled successfully"
+        : "Item cancelled successfully",
+      null,
+      200
+    );
+  }
+);
+
+
+
+//paybywallet 
 static payByWallet = BaseController.asyncHandler(
   async (req, res) => {
     const { id } = req.params;

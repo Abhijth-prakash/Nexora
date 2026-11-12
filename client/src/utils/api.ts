@@ -362,6 +362,20 @@ cancelOrder: async (
   return response.data;
 },
 
+cancelOrderItem: async (
+  orderId: string,
+  itemId: string,
+  cancelReason: string
+): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.patch<ApiResponse<null>>(
+    `/users/order/${orderId}/item/${itemId}/cancel`,
+    { cancelReason }
+  );
+
+  return response.data;
+},
+
+
 payByWallet: async (
   orderId: string
 ): Promise<ApiResponse<payBywalletRespponse>> => {

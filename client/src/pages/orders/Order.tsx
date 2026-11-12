@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
   getOrders,
-  cancelOrder,
+  cancelOrderItem,
   generateReturn,
 } from "../../redux/features/orderSlice";
 import { useParams, Link } from "react-router-dom";
@@ -170,6 +170,12 @@ const Order = () => {
           icon: <Receipt size={16} />,
           style: "bg-blue-50 text-blue-700 border-blue-200",
         };
+      case "partially_refunded":
+        return {
+          label: "Partially refunded",
+          icon: <Receipt size={16} />,
+          style: "bg-blue-50 text-blue-700 border-blue-200",
+        };
       default:
         return {
           label: status,
@@ -213,14 +219,16 @@ const Order = () => {
       setCancelling(true);
       setCancelError("");
 
+      // 1. cancel the single item
       await dispatch(
-        cancelOrder({
+        cancelOrderItem({
           orderId: order._id,
           itemId: cancelItemId,
           cancelReason: reason,
-        } as any)
+        })
       ).unwrap();
 
+      // 2. refetch orders so item status, order status and refund are fresh
       await dispatch(getOrders({ page: 1, search: "" })).unwrap();
 
       setCancelItemId(null);
@@ -468,9 +476,13 @@ const Order = () => {
                       ? item.product
                       : item.product?._id;
 
-                  // item's own status, falls back to the order status
+                  // item's own status. `item.status === "cancelled"` is set by
+                  // the cancel-item API; otherwise fall back to the item's
+                  // tracking status, then the order status.
                   const itemStatus: string =
-                    item.itemStatus || order.orderStatus;
+                    item.status === "cancelled"
+                      ? "cancelled"
+                      : item.itemStatus || order.orderStatus;
                   const badge = getItemStatus(itemStatus);
 
                   const deliveredAt =
@@ -494,6 +506,8 @@ const Order = () => {
                     itemStatus === "delivered" &&
                     withinReturnWindow &&
                     !itemReturnRequested;
+
+                  const cancelledDate = item.cancelledAt || order.updatedAt;
 
                   return (
                     <div
@@ -570,11 +584,19 @@ const Order = () => {
                             </span>
                           )}
 
-                          {itemStatus === "cancelled" && order.updatedAt && (
+                          {itemStatus === "cancelled" && cancelledDate && (
                             <span className="text-xs text-gray-400">
-                              {formatTrackDate(order.updatedAt)}
+                              {formatTrackDate(cancelledDate)}
                             </span>
                           )}
+
+                          {itemStatus === "cancelled" &&
+                            item.refund?.status === "completed" && (
+                              <span className="text-xs text-green-600">
+                                {formatPrice(item.refund.amount)} refunded to
+                                wallet
+                              </span>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -721,7 +743,9 @@ const Order = () => {
                       <p className="text-sm sm:text-base font-semibold text-red-600">
                         Cancelled
                         <span className="ml-2 text-xs sm:text-sm font-normal text-gray-400">
-                          {formatTrackDate(order.updatedAt)}
+                          {formatTrackDate(
+                            order.trackingDates?.cancelled || order.updatedAt
+                          )}
                         </span>
                       </p>
 
@@ -799,7 +823,7 @@ const Order = () => {
                   <span className="text-gray-500">Payment status</span>
 
                   <span className="font-medium text-gray-900 capitalize">
-                    {order.paymentStatus}
+                    {String(order.paymentStatus).replaceAll("_", " ")}
                   </span>
                 </div>
 
@@ -864,6 +888,16 @@ const Order = () => {
                     {formatPrice(order.totalAmount)}
                   </span>
                 </div>
+
+                {(order as any).refundedAmount > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Refunded</span>
+
+                    <span className="font-medium text-blue-600">
+                      {formatPrice((order as any).refundedAmount)}
+                    </span>
+                  </div>
+                )}
               </div>
             </section>
 
