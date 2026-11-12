@@ -406,7 +406,7 @@ generateReturn: async (
 
 getUserReturns: async (): Promise<ApiResponse<getAllreturnResponse>> => {
   const response = await ClientApi.get<ApiResponse<getAllreturnResponse>>(
-    "/admin/return"
+    "/users/order/return"
   );
 
   return response.data;

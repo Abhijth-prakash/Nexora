@@ -290,6 +290,7 @@ static updateOrderStatus = BaseController.asyncHandler(
     const { id } = req.params;
     const { status } = req.body;
 
+    
     const order = await OrderService.updateOrderStatus(id, status);
 
     BaseController.logAction(`updated order ${id} to ${status}`);

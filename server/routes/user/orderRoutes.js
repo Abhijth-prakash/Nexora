@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const {authenticate} = require('../../middilewares/auth')
 const OrderController = require('../../controllers/users/orderController')
+const ReturnController = require('../../controllers/Admin/ReturnController')
 
 router.use(authenticate)
 
@@ -22,6 +23,10 @@ router.get('/order/:orderId/payment-status',OrderController.getPaymentStatus)
 router.post('/order/cod/sendOtp',OrderController.SendCodOtp)
 router.post('/order/cod/veirfyOtp',OrderController.verifyCodOtp)
 router.post('/order/:id/pay-wallet',OrderController.payByWallet)
+
+
+//return
+router.get('/order/return',ReturnController.getUserReturns)
 
 
 module.exports = router
