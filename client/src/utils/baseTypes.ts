@@ -109,17 +109,42 @@ export type BaseCoupon = {
   isActive: boolean;
 };
 
+export type OrderItemStatus =
+  | "active"
+  | "cancelled"
+  | "return_requested"
+  | "returned";
+
+export type RefundStatus = "none" | "pending" | "completed" | "failed";
+
+export type BaseOrderItem = {
+  _id: string;
+  product: string | BaseProduct;
+  variantId: string | BaseVarient | null;
+  quantity: number;
+  price: number;
+
+  discountShare: number;
+  finalAmount: number;
+
+  status: OrderItemStatus;
+  cancelReason: string | null;
+  cancelledBy: "user" | "admin" | "system" | null;
+  cancelledAt: string | null;
+
+  refund: {
+    amount: number;
+    status: RefundStatus;
+    refundedAt: string | null;
+  };
+};
+
 export type Baseorder = {
   _id: string;
 
   user: string | BaseUser;
 
-  items: {
-    product: string | BaseProduct;
-    variantId: string | BaseVarient | null;
-    quantity: number;
-    price: number;
-  }[];
+  items: BaseOrderItem[];
 
   address: string | BaseAddress;
 
@@ -128,33 +153,53 @@ export type Baseorder = {
   totalAmount: number;
 
   coupon: string | BaseCoupon | null;
+  isBuyNow: boolean;
 
- orderStatus:
-  | "confirmed"
-  | "shipped"
-  | "out_for_delivery"
-  | "delivered"
-  | "cancelled"
-  | "return_requested"
-  | "returned";
+  orderStatus:
+    | "payment_pending"
+    | "confirmed"
+    | "shipped"
+    | "out_for_delivery"
+    | "delivered"
+    | "cancelled"
+    | "return_requested"
+    | "returned";
+
+  cancelReason: string | null;
+  cancelledBy: "user" | "admin" | "system" | null;
 
   return: string | BaseReturn | null;
 
-
   trackingDates: {
-  confirmed: string | null;
-  shipped: string | null;
-  outForDelivery: string | null;
-  delivered: string | null;
-  cancelled: string | null;
-  returnRequested: string | null;
-  returned: string | null;
-};
+    confirmed: string | null;
+    shipped: string | null;
+    outForDelivery: string | null;
+    delivered: string | null;
+    cancelled: string | null;
+    returnRequested: string | null;
+    returned: string | null;
+  };
 
-  paymentStatus: "pending" | "paid" | "failed" | "refunded" | "cod";
-  paymentMethod?: "razorpay" | "cod";
+  paymentStatus:
+    | "pending"
+    | "paid"
+    | "failed"
+    | "partially_refunded"
+    | "refunded"
+    | "cod";
+  paymentMethod?: "razorpay" | "cod" | "wallet";
+
+  refundedAmount: number;
+
+  cancelRefund: {
+    amount: number;
+    status: "pending" | "completed" | "failed";
+    method: "wallet";
+    refundedAt: string | null;
+  };
 
   razorpayOrderId: string | null;
+  razorpay_payment_id: string | null;
 
   orderDate: string;
 
@@ -168,6 +213,8 @@ export type Baseorder = {
   __v: number;
 };
 
+
+//wallletuser
 export type WalletUser = {
   _id: string;
   name: string;

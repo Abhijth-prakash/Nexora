@@ -43,18 +43,13 @@ const RETURN_REASONS = [
 
 const RETURN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
-// statuses after which an item can no longer be cancelled
-const NON_CANCELLABLE = [
-  "out_for_delivery",
-  "delivered",
-  "cancelled",
-  "return_requested",
-  "returned",
-];
-
-// badge for each item status
-const getItemStatus = (status: string) => {
+// badge for each displayed item status
+// (item.status is "active" | "cancelled" | "return_requested" | "returned";
+//  for "active" items we show the order's own status instead)
+const getItemBadge = (status: string) => {
   switch (status) {
+    case "payment_pending":
+      return { label: "Payment pending", style: "bg-yellow-50 text-yellow-700" };
     case "confirmed":
       return { label: "Order confirmed", style: "bg-orange-50 text-orange-600" };
     case "shipped":
@@ -77,6 +72,53 @@ const getItemStatus = (status: string) => {
   }
 };
 
+const getPaymentBadge = (status: string) => {
+  switch (status) {
+    case "cod":
+      return {
+        label: "Cash on delivery",
+        icon: <CreditCard size={16} />,
+        style: "bg-amber-50 text-amber-700 border-amber-200",
+      };
+    case "paid":
+      return {
+        label: "Paid",
+        icon: <CheckCircle2 size={16} />,
+        style: "bg-green-50 text-green-700 border-green-200",
+      };
+    case "pending":
+      return {
+        label: "Pending",
+        icon: <Clock size={16} />,
+        style: "bg-yellow-50 text-yellow-700 border-yellow-200",
+      };
+    case "failed":
+      return {
+        label: "Failed",
+        icon: <XCircle size={16} />,
+        style: "bg-red-50 text-red-700 border-red-200",
+      };
+    case "partially_refunded":
+      return {
+        label: "Partially refunded",
+        icon: <Receipt size={16} />,
+        style: "bg-blue-50 text-blue-700 border-blue-200",
+      };
+    case "refunded":
+      return {
+        label: "Refunded",
+        icon: <Receipt size={16} />,
+        style: "bg-blue-50 text-blue-700 border-blue-200",
+      };
+    default:
+      return {
+        label: status,
+        icon: <Clock size={16} />,
+        style: "bg-gray-50 text-gray-700 border-gray-200",
+      };
+  }
+};
+
 const formatTrackDate = (date: string) =>
   new Date(date).toLocaleDateString("en-IN", {
     weekday: "short",
@@ -84,6 +126,16 @@ const formatTrackDate = (date: string) =>
     month: "short",
     year: "2-digit",
   });
+
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+const formatPrice = (amount: number) =>
+  `₹${(amount ?? 0).toLocaleString("en-IN")}`;
 
 const Order = () => {
   const dispatch = useAppDispatch();
@@ -128,69 +180,14 @@ const Order = () => {
   // Find the selected order
   const order = orders?.find((item) => item._id === orderId);
 
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-
-  const formatPrice = (amount: number) =>
-    `₹${(amount ?? 0).toLocaleString("en-IN")}`;
-
-  const getStatus = (status: string) => {
-    switch (status) {
-      case "cod":
-        return {
-          label: "Cash on delivery",
-          icon: <CreditCard size={16} />,
-          style: "bg-amber-50 text-amber-700 border-amber-200",
-        };
-      case "paid":
-        return {
-          label: "Paid",
-          icon: <CheckCircle2 size={16} />,
-          style: "bg-green-50 text-green-700 border-green-200",
-        };
-      case "pending":
-        return {
-          label: "Pending",
-          icon: <Clock size={16} />,
-          style: "bg-yellow-50 text-yellow-700 border-yellow-200",
-        };
-      case "failed":
-        return {
-          label: "Failed",
-          icon: <XCircle size={16} />,
-          style: "bg-red-50 text-red-700 border-red-200",
-        };
-      case "refunded":
-        return {
-          label: "Refunded",
-          icon: <Receipt size={16} />,
-          style: "bg-blue-50 text-blue-700 border-blue-200",
-        };
-      case "partially_refunded":
-        return {
-          label: "Partially refunded",
-          icon: <Receipt size={16} />,
-          style: "bg-blue-50 text-blue-700 border-blue-200",
-        };
-      default:
-        return {
-          label: status,
-          icon: <Clock size={16} />,
-          style: "bg-gray-50 text-gray-700 border-gray-200",
-        };
-    }
-  };
-
   // the item currently targeted by a modal
-  const cancelTarget = order?.items.find((i: any) => i._id === cancelItemId);
-  const returnTarget = order?.items.find((i: any) => i._id === returnItemId);
+  const cancelTarget = order?.items.find((i) => i._id === cancelItemId);
+  const returnTarget = order?.items.find((i) => i._id === returnItemId);
 
-  const getItemName = (item: any) =>
-    typeof item?.product === "string" ? "Product" : item?.product?.name || "Product";
+  const getItemName = (item?: { product: string | { name?: string } }) =>
+    !item || typeof item.product === "string"
+      ? "Product"
+      : item.product.name || "Product";
 
   // ---- cancel handlers ----
   const openCancelModal = (itemId: string) => {
@@ -352,17 +349,17 @@ const Order = () => {
     );
   }
 
-  const status = getStatus(order.paymentStatus);
+  const paymentBadge = getPaymentBadge(order.paymentStatus);
   const isCancelled = order.orderStatus === "cancelled";
 
   // date for each stage (confirmed falls back to the order date)
   const trackDates: Record<(typeof TRACK_STEPS)[number]["key"], string | null> =
     {
       confirmed:
-        order.trackingDates?.confirmed || order.orderDate || order.createdAt,
-      shipped: order.trackingDates?.shipped ?? null,
-      outForDelivery: order.trackingDates?.outForDelivery ?? null,
-      delivered: order.trackingDates?.delivered ?? null,
+        order.trackingDates.confirmed || order.orderDate || order.createdAt,
+      shipped: order.trackingDates.shipped,
+      outForDelivery: order.trackingDates.outForDelivery,
+      delivered: order.trackingDates.delivered,
     };
 
   // index of the last stage the order has reached
@@ -379,7 +376,7 @@ const Order = () => {
   if (reachedIndex < 0) reachedIndex = 0;
 
   // return requested / returned orders were already delivered
-  if (["return_requested", "returned"].includes(order.orderStatus)) {
+  if (order.orderStatus === "return_requested" || order.orderStatus === "returned") {
     reachedIndex = TRACK_STEPS.length - 1;
   }
 
@@ -387,7 +384,13 @@ const Order = () => {
   const anyReturnRequested =
     returnSentIds.length > 0 ||
     order.orderStatus === "return_requested" ||
-    (order.items as any[]).some((i) => i.itemStatus === "return_requested");
+    order.items.some((i) => i.status === "return_requested");
+
+  // delivery date is stored on the order only
+  const deliveredAt = order.trackingDates.delivered;
+  const withinReturnWindow =
+    !!deliveredAt &&
+    Date.now() - new Date(deliveredAt).getTime() <= RETURN_WINDOW_MS;
 
   return (
     <div className="min-h-screen w-full bg-gray-50 px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
@@ -416,10 +419,10 @@ const Order = () => {
           </div>
 
           <span
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold w-fit ${status.style}`}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold w-fit ${paymentBadge.style}`}
           >
-            {status.icon}
-            {status.label}
+            {paymentBadge.icon}
+            {paymentBadge.label}
           </span>
         </div>
 
@@ -467,7 +470,7 @@ const Order = () => {
               </div>
 
               <div className="space-y-4">
-                {order.items.map((item: any, index: number) => {
+                {order.items.map((item, index) => {
                   const product =
                     typeof item.product === "string" ? null : item.product;
 
@@ -476,38 +479,29 @@ const Order = () => {
                       ? item.product
                       : item.product?._id;
 
-                  // item's own status. `item.status === "cancelled"` is set by
-                  // the cancel-item API; otherwise fall back to the item's
-                  // tracking status, then the order status.
-                  const itemStatus: string =
-                    item.status === "cancelled"
-                      ? "cancelled"
-                      : item.itemStatus || order.orderStatus;
-                  const badge = getItemStatus(itemStatus);
+                  // "active" items follow the order's status; the others
+                  // (cancelled / return_requested / returned) have their own
+                  const displayStatus: string =
+                    item.status === "active" ? order.orderStatus : item.status;
+                  const badge = getItemBadge(displayStatus);
 
-                  const deliveredAt =
-                    item.trackingDates?.delivered ??
-                    order.trackingDates?.delivered;
-
-                  const withinReturnWindow =
-                    !!deliveredAt &&
-                    Date.now() - new Date(deliveredAt).getTime() <=
-                      RETURN_WINDOW_MS;
+                  const itemCancelled = item.status === "cancelled";
 
                   const itemReturnRequested =
                     returnSentIds.includes(item._id) ||
-                    itemStatus === "return_requested";
+                    item.status === "return_requested";
 
-                  // no cancel for failed-payment orders
+                  // the backend only allows cancelling while the order is
+                  // "confirmed" and the item is still active
                   const canCancel =
-                    order.paymentStatus !== "failed" &&
-                    !NON_CANCELLABLE.includes(itemStatus);
+                    item.status === "active" &&
+                    order.orderStatus === "confirmed";
+
                   const canReturn =
-                    itemStatus === "delivered" &&
+                    item.status === "active" &&
+                    order.orderStatus === "delivered" &&
                     withinReturnWindow &&
                     !itemReturnRequested;
-
-                  const cancelledDate = item.cancelledAt || order.updatedAt;
 
                   return (
                     <div
@@ -557,15 +551,27 @@ const Order = () => {
                           </div>
                         </div>
 
-                        {/* Item total */}
+                        {/* Item total (after this item's share of the discount) */}
                         <div className="sm:text-right">
                           <p className="text-xs text-gray-400 mb-1">
                             Item total
                           </p>
 
-                          <p className="font-semibold text-lg text-gray-900 whitespace-nowrap">
-                            {formatPrice(item.price * item.quantity)}
+                          <p
+                            className={`font-semibold text-lg whitespace-nowrap ${
+                              itemCancelled
+                                ? "text-gray-400 line-through"
+                                : "text-gray-900"
+                            }`}
+                          >
+                            {formatPrice(item.finalAmount)}
                           </p>
+
+                          {item.discountShare > 0 && (
+                            <p className="text-xs text-green-600 mt-1">
+                              Saved {formatPrice(item.discountShare)}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -578,25 +584,37 @@ const Order = () => {
                             {badge.label}
                           </span>
 
-                          {itemStatus === "delivered" && deliveredAt && (
+                          {displayStatus === "delivered" && deliveredAt && (
                             <span className="text-xs text-gray-400">
                               {formatTrackDate(deliveredAt)}
                             </span>
                           )}
 
-                          {itemStatus === "cancelled" && cancelledDate && (
+                          {itemCancelled && item.cancelledAt && (
                             <span className="text-xs text-gray-400">
-                              {formatTrackDate(cancelledDate)}
+                              {formatTrackDate(item.cancelledAt)}
                             </span>
                           )}
 
-                          {itemStatus === "cancelled" &&
-                            item.refund?.status === "completed" && (
-                              <span className="text-xs text-green-600">
-                                {formatPrice(item.refund.amount)} refunded to
-                                wallet
-                              </span>
-                            )}
+                          {itemCancelled && item.refund.status === "completed" && (
+                            <span className="text-xs text-green-600">
+                              {formatPrice(item.refund.amount)} refunded to
+                              wallet
+                            </span>
+                          )}
+
+                          {itemCancelled && item.refund.status === "pending" && (
+                            <span className="text-xs text-amber-600">
+                              Refund of {formatPrice(item.refund.amount)} is
+                              pending
+                            </span>
+                          )}
+
+                          {itemCancelled && item.refund.status === "failed" && (
+                            <span className="text-xs text-red-600">
+                              Refund failed, please contact support
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -634,6 +652,16 @@ const Order = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* Cancel reason */}
+                      {itemCancelled && item.cancelReason && (
+                        <p className="mt-3 text-xs text-gray-500">
+                          <span className="font-medium text-gray-700">
+                            Reason:
+                          </span>{" "}
+                          {item.cancelReason}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
@@ -674,6 +702,8 @@ const Order = () => {
                     ? "Return requested"
                     : order.orderStatus === "returned"
                     ? "Returned"
+                    : order.orderStatus === "payment_pending"
+                    ? "Payment pending"
                     : TRACK_STEPS[reachedIndex].label}
                 </span>
               </div>
@@ -744,13 +774,15 @@ const Order = () => {
                         Cancelled
                         <span className="ml-2 text-xs sm:text-sm font-normal text-gray-400">
                           {formatTrackDate(
-                            order.trackingDates?.cancelled || order.updatedAt
+                            order.trackingDates.cancelled || order.updatedAt
                           )}
                         </span>
                       </p>
 
                       <p className="text-xs sm:text-sm mt-1 text-gray-500">
-                        This order was cancelled.
+                        {order.cancelReason
+                          ? `This order was cancelled: ${order.cancelReason}`
+                          : "This order was cancelled."}
                       </p>
                     </div>
                   </li>
@@ -823,7 +855,7 @@ const Order = () => {
                   <span className="text-gray-500">Payment status</span>
 
                   <span className="font-medium text-gray-900 capitalize">
-                    {String(order.paymentStatus).replaceAll("_", " ")}
+                    {order.paymentStatus.replaceAll("_", " ")}
                   </span>
                 </div>
 
@@ -866,7 +898,7 @@ const Order = () => {
                   </span>
                 </div>
 
-                {typeof order.coupon !== "string" && order.coupon && (
+                {order.coupon && typeof order.coupon !== "string" && (
                   <div className="flex justify-between items-center gap-2">
                     <span className="text-gray-500 flex items-center gap-1">
                       <Tag size={14} />
@@ -889,12 +921,12 @@ const Order = () => {
                   </span>
                 </div>
 
-                {(order as any).refundedAmount > 0 && (
+                {order.refundedAmount > 0 && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Refunded</span>
+                    <span className="text-gray-500">Refunded to wallet</span>
 
                     <span className="font-medium text-blue-600">
-                      {formatPrice((order as any).refundedAmount)}
+                      {formatPrice(order.refundedAmount)}
                     </span>
                   </div>
                 )}
@@ -969,6 +1001,13 @@ const Order = () => {
                 </p>
               </div>
             </div>
+
+            {cancelTarget && order.paymentStatus !== "cod" && (
+              <p className="mb-4 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                {formatPrice(cancelTarget.finalAmount)} will be refunded to
+                your wallet.
+              </p>
+            )}
 
             <label
               htmlFor="cancelReason"
