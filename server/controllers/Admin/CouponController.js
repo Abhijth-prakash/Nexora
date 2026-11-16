@@ -113,7 +113,7 @@ static getByid = BaseController.asyncHandler(async (req, res) => {
 static getCouponsForUser = BaseController.asyncHandler(async (req, res) => {
   const user = req.userId
   const result = await CouponService.getCouponsForUser(user);
-
+  
   BaseController.sendSuccessResponse(
     res,
     "Coupons fetched successfully",

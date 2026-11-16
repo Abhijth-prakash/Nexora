@@ -13,7 +13,7 @@ const User = require('../models/User')
 const Mail = require('../utils/mail');
 const StockReservation = require("../models/StockReservation");
 const CartService = require("./cartService");
-const {CouponRedemption}= require('../models/Coupon')
+const { Coupon, CouponRedemption } = require('../models/Coupon')
 const Refund = require('../models/Return')
 const mongoose = require('mongoose')
 const Wallet = require('../models/Wallet')
@@ -26,7 +26,7 @@ class PaymentService{
 static async createCouponRedemption(order) {
   if (!order.coupon) return;
 
-  await CouponRedemption.updateOne(
+  const result = await CouponRedemption.updateOne(
     { coupon: order.coupon, user: order.user, order: order._id },
     {
       $setOnInsert: {
@@ -37,6 +37,14 @@ static async createCouponRedemption(order) {
     },
     { upsert: true }
   );
+
+  // count the coupon only the first time this order's redemption is created
+  if (result.upsertedCount > 0) {
+    await Coupon.updateOne(
+      { _id: order.coupon._id || order.coupon },
+      { $inc: { usedCount: 1 } }
+    );
+  }
 }
 
 // mark an order as paid through Razorpay and run all the follow-up work
@@ -583,7 +591,7 @@ static async verifyCodOtp(userId, data) {
 
       // Coupon redemption
       if (verifiedOrder.coupon) {
-        await CouponRedemption.updateOne(
+        const result = await CouponRedemption.updateOne(
           {
             order: verifiedOrder._id,
           },
@@ -600,6 +608,14 @@ static async verifyCodOtp(userId, data) {
             upsert: true,
           }
         );
+
+        // count the coupon only the first time this order's redemption is created
+        if (result.upsertedCount > 0) {
+          await Coupon.updateOne(
+            { _id: verifiedOrder.coupon },
+            { $inc: { usedCount: 1 } }
+          );
+        }
       }
 
       // Return populated order
@@ -769,11 +785,20 @@ static async PayByWallet(user, data) {
 
 
       if (order.coupon) {
-        await CouponRedemption.updateOne(
+        const result = await CouponRedemption.updateOne(
           { coupon: order.coupon, user, order: order._id },
           { $setOnInsert: { coupon: order.coupon, user, order: order._id } },
           { upsert: true, session }
         );
+
+        // count the coupon only the first time this order's redemption is created
+        if (result.upsertedCount > 0) {
+          await Coupon.updateOne(
+            { _id: order.coupon },
+            { $inc: { usedCount: 1 } },
+            { session }
+          );
+        }
       }
 
       paidOrder = order;
