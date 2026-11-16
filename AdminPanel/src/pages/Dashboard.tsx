@@ -1,23 +1,13 @@
 import { useEffect, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch } from "react-redux"
-// TODO: adjust this path to where your typed hook lives
 import { useAppSelector } from "../redux/hooks"
 import AdminSidebar from "../components/Adminsidebar"
-
-
-
-
 
 import type { Baseorder, BaseProduct, BaseUser } from "../utils/BaseType"
 import { getOrders } from "../redux/features/orderSlice"
 import { getUser } from "../redux/features/userSlice"
 import { getProducts } from "../redux/features/ProductSlice"
-
-
-/* ------------------------------------------------------------------ */
-/* Helpers                                                             */
-/* ------------------------------------------------------------------ */
 
 type OrderStatus = Baseorder["orderStatus"]
 
@@ -231,277 +221,271 @@ const Dashboard = () => {
   )
 
   return (
-    <div className="min-h-screen bg-[#f6f6f6] text-[#111111]">
-      <div className="w-full px-3 py-4 sm:px-4 lg:px-5">
-        <div className="grid min-h-[calc(100vh-32px)] w-full grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-          <AdminSidebar />
+    <div className="flex min-h-screen bg-white">
+      <AdminSidebar />
 
-          <main className="min-w-0 w-full rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="flex min-h-[calc(100vh-32px)] flex-col p-6 sm:p-7 lg:p-9">
-              {/* HEADER */}
-              <div className="flex flex-col gap-5 border-b border-gray-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[#ff5a1f]">Admin Panel</p>
-                  <h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Dashboard</h1>
-                  <p className="mt-1 text-sm text-gray-400">Overview of your store and recent activity.</p>
-                </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fff1eb] text-[#ff5a1f]">
-                  <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="3" y="3" width="7" height="7" rx="1" />
-                    <rect x="14" y="3" width="7" height="7" rx="1" />
-                    <rect x="3" y="14" width="7" height="7" rx="1" />
-                    <rect x="14" y="14" width="7" height="7" rx="1" />
-                  </svg>
-                </div>
-              </div>
+      <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 lg:px-10">
+        {/* HEADER */}
+        <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-[#ff5a1f]">Admin Panel</p>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-black">Dashboard</h1>
+            <p className="mt-1.5 text-sm text-[#8a7568]">Overview of your store and recent activity.</p>
+          </div>
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fff1eb] text-[#ff5a1f]">
+            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          </div>
+        </div>
 
-              {/* STATS */}
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard
-                  label="Total Users"
-                  value={totalUsers.toLocaleString("en-IN")}
-                  sub={`${verifiedUsers} verified · ${bannedUsers} banned`}
-                  loading={usersLoading}
-                  tint="bg-[#fff1eb] text-[#ff5a1f]"
-                  icon={
-                    <svg {...iconProps}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                    </svg>
-                  }
+        {/* STATS */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Total Users"
+            value={totalUsers.toLocaleString("en-IN")}
+            sub={`${verifiedUsers} verified · ${bannedUsers} banned`}
+            loading={usersLoading}
+            tint="bg-[#fff1eb] text-[#ff5a1f]"
+            icon={
+              <svg {...iconProps}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Products"
+            value={totalProducts.toLocaleString("en-IN")}
+            sub={`${lowStock} low stock · ${outOfStock} out of stock`}
+            loading={productsLoading}
+            tint="bg-blue-50 text-blue-600"
+            icon={
+              <svg {...iconProps}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8l-9-5-9 5 9 5 9-5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8v9l9 5 9-5V8" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Orders"
+            value={totalOrders.toLocaleString("en-IN")}
+            sub={`${toShip} to ship · ${returnsPending} return requests`}
+            loading={ordersLoading}
+            tint="bg-purple-50 text-purple-600"
+            icon={
+              <svg {...iconProps}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12l1 4H5l1-4zM5 7h14v13H5V7z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Revenue"
+            value={formatINR(revenue)}
+            sub="After refunds, excl. cancelled"
+            loading={ordersLoading}
+            tint="bg-green-50 text-green-600"
+            icon={
+              <svg {...iconProps}>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3v18M17 7.5c0-1.66-2.24-3-5-3s-5 1.34-5 3 2.24 3 5 3 5 1.34 5 3-2.24 3-5 3-5-1.34-5-3"
                 />
-                <StatCard
-                  label="Products"
-                  value={totalProducts.toLocaleString("en-IN")}
-                  sub={`${lowStock} low stock · ${outOfStock} out of stock`}
-                  loading={productsLoading}
-                  tint="bg-blue-50 text-blue-600"
-                  icon={
-                    <svg {...iconProps}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8l-9-5-9 5 9 5 9-5z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8v9l9 5 9-5V8" />
-                    </svg>
-                  }
-                />
-                <StatCard
-                  label="Orders"
-                  value={totalOrders.toLocaleString("en-IN")}
-                  sub={`${toShip} to ship · ${returnsPending} return requests`}
-                  loading={ordersLoading}
-                  tint="bg-purple-50 text-purple-600"
-                  icon={
-                    <svg {...iconProps}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12l1 4H5l1-4zM5 7h14v13H5V7z" />
-                    </svg>
-                  }
-                />
-                <StatCard
-                  label="Revenue"
-                  value={formatINR(revenue)}
-                  sub="After refunds, excl. cancelled"
-                  loading={ordersLoading}
-                  tint="bg-green-50 text-green-600"
-                  icon={
-                    <svg {...iconProps}>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 3v18M17 7.5c0-1.66-2.24-3-5-3s-5 1.34-5 3 2.24 3 5 3 5 1.34 5 3-2.24 3-5 3-5-1.34-5-3"
-                      />
-                    </svg>
-                  }
-                />
-              </div>
+              </svg>
+            }
+          />
+        </div>
 
-              {/* CONTENT GRID */}
-              <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
-                {/* RECENT ORDERS */}
-                <div className="rounded-2xl border border-gray-200 bg-white">
-                  <CardHeader title="Recent Orders" sub="Latest customer orders" to="/admin/orders" />
+        {/* CONTENT GRID */}
+        <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
+          {/* RECENT ORDERS */}
+          <div className="rounded-2xl border border-gray-200 bg-white">
+            <CardHeader title="Recent Orders" sub="Latest customer orders" to="/admin/orders" />
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px]">
-                      <thead>
-                        <tr className="border-b border-gray-100 text-left">
-                          {["Order", "Customer", "Items", "Amount", "Status"].map((h) => (
-                            <th key={h} className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ordersLoading &&
-                          Array.from({ length: 4 }).map((_, i) => (
-                            <tr key={i} className="border-b border-gray-100">
-                              {Array.from({ length: 5 }).map((__, j) => (
-                                <td key={j} className="px-6 py-4">
-                                  <Skeleton className="h-4 w-16" />
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-
-                        {!ordersLoading && recentOrders.length === 0 && (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
-                              No orders yet.
-                            </td>
-                          </tr>
-                        )}
-
-                        {!ordersLoading &&
-                          recentOrders.map((o, i) => (
-                            <tr
-                              key={o._id}
-                              className={i < recentOrders.length - 1 ? "border-b border-gray-100" : ""}
-                            >
-                              <td className="px-6 py-4">
-                                <p className="text-sm font-semibold text-gray-900">{shortId(o)}</p>
-                                <p className="mt-0.5 text-[11px] text-gray-400">{timeAgo(o.createdAt)}</p>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">{customerName(o)}</td>
-                              <td className="px-6 py-4 text-sm text-gray-500">{o.items?.length ?? 0}</td>
-                              <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                                ₹{o.totalAmount.toLocaleString("en-IN")}
-                              </td>
-                              <td className="px-6 py-4">
-                                <span
-                                  className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                    STATUS_META[o.orderStatus]?.badge ?? "bg-gray-100 text-gray-600"
-                                  }`}
-                                >
-                                  {STATUS_META[o.orderStatus]?.label ?? o.orderStatus}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* RIGHT COLUMN */}
-                <div className="flex flex-col gap-5">
-                  {/* ORDER STATUS */}
-                  <div className="rounded-2xl border border-gray-200 bg-white">
-                    <CardHeader title="Order Status" sub="Breakdown of loaded orders" />
-                    <div className="space-y-4 p-6">
-                      {ordersLoading &&
-                        Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}
-
-                      {!ordersLoading && statusBreakdown.length === 0 && (
-                        <p className="py-4 text-center text-sm text-gray-400">No data yet.</p>
-                      )}
-
-                      {!ordersLoading &&
-                        statusBreakdown.map(({ status, count }) => (
-                          <div key={status}>
-                            <div className="mb-1.5 flex items-center justify-between text-xs">
-                              <span className="font-medium text-gray-700">{STATUS_META[status].label}</span>
-                              <span className="font-semibold text-gray-900">{count}</span>
-                            </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-                              <div
-                                className={`h-full rounded-full ${STATUS_META[status].bar}`}
-                                style={{ width: `${(count / Math.max(orders.length, 1)) * 100}%` }}
-                              />
-                            </div>
-                          </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-gray-100 text-left">
+                    {["Order", "Customer", "Items", "Amount", "Status"].map((h) => (
+                      <th key={h} className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ordersLoading &&
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i} className="border-b border-gray-100">
+                        {Array.from({ length: 5 }).map((__, j) => (
+                          <td key={j} className="px-6 py-4">
+                            <Skeleton className="h-4 w-16" />
+                          </td>
                         ))}
-                    </div>
-                  </div>
+                      </tr>
+                    ))}
 
-                  {/* STOCK ALERTS */}
-                  <div className="rounded-2xl border border-gray-200 bg-white">
-                    <CardHeader title="Stock Alerts" sub={`Products with ${LOW_STOCK} or fewer left`} to="/admin/products" />
-                    <div className="p-5">
-                      {productsLoading &&
-                        Array.from({ length: 3 }).map((_, i) => (
-                          <div key={i} className="flex items-center gap-4 py-3">
-                            <Skeleton className="h-12 w-12 rounded-xl" />
-                            <div className="flex-1 space-y-2">
-                              <Skeleton className="h-4 w-32" />
-                              <Skeleton className="h-3 w-16" />
-                            </div>
-                          </div>
-                        ))}
+                  {!ordersLoading && recentOrders.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                        No orders yet.
+                      </td>
+                    </tr>
+                  )}
 
-                      {!productsLoading && stockAlerts.length === 0 && (
-                        <p className="py-6 text-center text-sm text-gray-400">All products are well stocked 🎉</p>
-                      )}
-
-                      {!productsLoading &&
-                        stockAlerts.map((p) => (
-                          <div
-                            key={p._id}
-                            className="flex items-center gap-4 border-b border-gray-100 py-3 first:pt-0 last:border-0 last:pb-0"
+                  {!ordersLoading &&
+                    recentOrders.map((o, i) => (
+                      <tr
+                        key={o._id}
+                        className={i < recentOrders.length - 1 ? "border-b border-gray-100" : ""}
+                      >
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-semibold text-gray-900">{shortId(o)}</p>
+                          <p className="mt-0.5 text-[11px] text-gray-400">{timeAgo(o.createdAt)}</p>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{customerName(o)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{o.items?.length ?? 0}</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                          ₹{o.totalAmount.toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${
+                              STATUS_META[o.orderStatus]?.badge ?? "bg-gray-100 text-gray-600"
+                            }`}
                           >
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#fff1eb] text-sm font-bold text-[#ff5a1f]">
-                              {p.images?.[0] ? (
-                                <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
-                              ) : (
-                                p.name.charAt(0).toUpperCase()
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-semibold text-gray-900">{p.name}</p>
-                              <p className="mt-0.5 truncate text-xs text-gray-400">
-                                {p.category?.name} · ₹{p.price.toLocaleString("en-IN")}
-                              </p>
-                            </div>
-                            <span
-                              className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                p.stock <= 0 ? "bg-red-50 text-red-500" : "bg-orange-50 text-[#ff5a1f]"
-                              }`}
-                            >
-                              {p.stock <= 0 ? "Out of stock" : `${p.stock} left`}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                            {STATUS_META[o.orderStatus]?.label ?? o.orderStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-              {/* QUICK ACTIONS */}
-              <div className="mt-5">
-                <h2 className="mb-4 text-lg font-bold text-gray-900">Quick Actions</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <Link
-                    to="/admin/products"
-                    className="group flex items-center justify-between rounded-2xl bg-[#ff5a1f] px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#e64f19] hover:shadow-lg"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold">Add Product</p>
-                      <p className="mt-1 text-xs text-white/70">Create a new product</p>
-                    </div>
-                    <span className="text-xl transition group-hover:translate-x-1">+</span>
-                  </Link>
+          {/* RIGHT COLUMN */}
+          <div className="flex flex-col gap-5">
+            {/* ORDER STATUS */}
+            <div className="rounded-2xl border border-gray-200 bg-white">
+              <CardHeader title="Order Status" sub="Breakdown of loaded orders" />
+              <div className="space-y-4 p-6">
+                {ordersLoading &&
+                  Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}
 
-                  {[
-                    { to: "/admin/category", title: "Add Category", sub: "Create a category", icon: "+" },
-                    { to: "/admin/orders", title: "View Orders", sub: "Manage customer orders", icon: "→" },
-                    { to: "/admin/users/view", title: "Manage Users", sub: "View registered users", icon: "→" },
-                  ].map((a) => (
-                    <Link
-                      key={a.to}
-                      to={a.to}
-                      className="group flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-4 transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{a.title}</p>
-                        <p className="mt-1 text-xs text-gray-400">{a.sub}</p>
+                {!ordersLoading && statusBreakdown.length === 0 && (
+                  <p className="py-4 text-center text-sm text-gray-400">No data yet.</p>
+                )}
+
+                {!ordersLoading &&
+                  statusBreakdown.map(({ status, count }) => (
+                    <div key={status}>
+                      <div className="mb-1.5 flex items-center justify-between text-xs">
+                        <span className="font-medium text-gray-700">{STATUS_META[status].label}</span>
+                        <span className="font-semibold text-gray-900">{count}</span>
                       </div>
-                      <span className="text-xl text-gray-400 transition group-hover:translate-x-1">{a.icon}</span>
-                    </Link>
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className={`h-full rounded-full ${STATUS_META[status].bar}`}
+                          style={{ width: `${(count / Math.max(orders.length, 1)) * 100}%` }}
+                        />
+                      </div>
+                    </div>
                   ))}
-                </div>
               </div>
             </div>
-          </main>
+
+            {/* STOCK ALERTS */}
+            <div className="rounded-2xl border border-gray-200 bg-white">
+              <CardHeader title="Stock Alerts" sub={`Products with ${LOW_STOCK} or fewer left`} to="/admin/products" />
+              <div className="p-5">
+                {productsLoading &&
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 py-3">
+                      <Skeleton className="h-12 w-12 rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                  ))}
+
+                {!productsLoading && stockAlerts.length === 0 && (
+                  <p className="py-6 text-center text-sm text-gray-400">All products are well stocked 🎉</p>
+                )}
+
+                {!productsLoading &&
+                  stockAlerts.map((p) => (
+                    <div
+                      key={p._id}
+                      className="flex items-center gap-4 border-b border-gray-100 py-3 first:pt-0 last:border-0 last:pb-0"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#fff1eb] text-sm font-bold text-[#ff5a1f]">
+                        {p.images?.[0] ? (
+                          <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
+                        ) : (
+                          p.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-900">{p.name}</p>
+                        <p className="mt-0.5 truncate text-xs text-gray-400">
+                          {p.category?.name} · ₹{p.price.toLocaleString("en-IN")}
+                        </p>
+                      </div>
+                      <span
+                        className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${
+                          p.stock <= 0 ? "bg-red-50 text-red-500" : "bg-orange-50 text-[#ff5a1f]"
+                        }`}
+                      >
+                        {p.stock <= 0 ? "Out of stock" : `${p.stock} left`}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* QUICK ACTIONS */}
+        <div className="mt-5">
+          <h2 className="mb-4 text-lg font-bold text-gray-900">Quick Actions</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <Link
+              to="/admin/products"
+              className="group flex items-center justify-between rounded-2xl bg-[#ff5a1f] px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#e64f19] hover:shadow-lg"
+            >
+              <div>
+                <p className="text-sm font-semibold">Add Product</p>
+                <p className="mt-1 text-xs text-white/70">Create a new product</p>
+              </div>
+              <span className="text-xl transition group-hover:translate-x-1">+</span>
+            </Link>
+
+            {[
+              { to: "/admin/category", title: "Add Category", sub: "Create a category", icon: "+" },
+              { to: "/admin/orders", title: "View Orders", sub: "Manage customer orders", icon: "→" },
+              { to: "/admin/users/view", title: "Manage Users", sub: "View registered users", icon: "→" },
+            ].map((a) => (
+              <Link
+                key={a.to}
+                to={a.to}
+                className="group flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-4 transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{a.title}</p>
+                  <p className="mt-1 text-xs text-gray-400">{a.sub}</p>
+                </div>
+                <span className="text-xl text-gray-400 transition group-hover:translate-x-1">{a.icon}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </main>
     </div>
   )
 }
