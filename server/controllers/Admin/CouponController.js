@@ -85,8 +85,7 @@ static update = BaseController.asyncHandler(async (req, res) => {
   const { id } = req.params;
   const data = req.body;
 
-  await CouponService.update(id, data);
-
+  const result = await CouponService.update(id, data);
   BaseController.sendSuccessResponse(
     res,
     "Coupon updated successfully",

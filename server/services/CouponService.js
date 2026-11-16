@@ -61,7 +61,7 @@ class CouponService {
                 `Successfully ${coupon.isActive ? "activated" : "deactivated"} coupon ${coupon.code}`
             );
 
-            return true;
+            return coupon;
         } catch (error) {
             logger.error("Failed to toggle coupon active status", error);
             throw error;

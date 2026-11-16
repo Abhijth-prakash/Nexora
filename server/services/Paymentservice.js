@@ -18,25 +18,11 @@ const Refund = require('../models/Return')
 const mongoose = require('mongoose')
 const Wallet = require('../models/Wallet')
 
-/*
- * Order lifecycle used by this service
- *
- *  paymentStatus   orderStatus        meaning
- *  -------------   ----------------   ------------------------------------------
- *  pending         payment_pending    order created, nothing paid yet
- *  failed          payment_pending    a payment attempt failed, user can retry
- *  paid / cod      confirmed          payment done (razorpay / wallet / COD OTP)
- *  failed|pending  cancelled          stock reservation expired without payment
- */
+
 
 class PaymentService{
 
 
-// ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
-
-// create the coupon redemption once per order (safe to call repeatedly)
 static async createCouponRedemption(order) {
   if (!order.coupon) return;
 
@@ -60,8 +46,7 @@ static async finalizeRazorpayPayment(order, razorpayPaymentId) {
   order.razorpay_payment_id = razorpayPaymentId;
   order.orderDate = new Date();
 
-  // only confirm an order that was waiting for payment. A cancelled order
-  // (reservation already released) stays cancelled so it can be refunded
+
   if (order.orderStatus === "payment_pending") {
     order.orderStatus = "confirmed";
     order.trackingDates.confirmed = new Date();
