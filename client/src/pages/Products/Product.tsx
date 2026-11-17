@@ -8,6 +8,8 @@ import { addToCart, getCart, setGuestItems } from '../../redux/features/cartSlic
 import { validateCart, setBuyNowItem } from '../../redux/features/orderSlice'
 import type { BaseProduct } from '../../utils/baseTypes'
 import { addToGuestCart } from '../../utils/guestCart'
+import ReviewForm from '../../components/ReviewForm'
+
 
 type Variant = NonNullable<BaseProduct['variants']>[number]
 
@@ -23,6 +25,7 @@ const Product = () => {
   const [activeImage, setActiveImage] = useState(0)
   const [tab, setTab] = useState<'description' | 'specifications' | 'reviews'>('description')
   const [quantity, setQuantiy] = useState(1)
+  const [review,setReview] = useState(false)
   
   
 
@@ -205,12 +208,25 @@ const buyNowHandle = async () => {
 }
 
 
+//review handle
+
+const reviewHanlde = ()=>{
+  setReview(true)
+}
+
+const reviewCLose = ()=>{
+  setReview(false)
+}
+
+
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-16">
-      {/* Product gallery and details */}
+    
+      
       <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
 
+    {review && <ReviewForm close={reviewCLose}></ReviewForm>}
         {/* Gallery */}
         <div className="flex min-w-0 flex-col-reverse gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:gap-4 sm:p-4">
           <div className="flex min-w-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-white">
@@ -406,7 +422,9 @@ const buyNowHandle = async () => {
           {tab === 'reviews' && <p>No reviews yet.</p>}
         </div>
       </div>
+      <button onClick={reviewHanlde}>+review</button>
     </main>
+
   )
 }
 
