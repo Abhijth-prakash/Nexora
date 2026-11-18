@@ -1,35 +1,44 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { ReviewSchema } from '../utils/Validation'
 
-export type reviewForm = {
-    review : string
-    rating : string
-}
+export type reviewInput = z.input<typeof ReviewSchema>
+export type reviewForm = z.output<typeof ReviewSchema>
 
 export type props = {
-    close : ()=> void
+    close: () => void
 }
 
-const ReviewForm = ({close}:props) => {
-    const { register, handleSubmit } = useForm<reviewForm>()
+const ReviewForm = ({ close }: props) => {
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<reviewInput, unknown, reviewForm>({
+        resolver: zodResolver(ReviewSchema),
+    })
 
-    const dataHandle = (data:reviewForm)=>{
-        console.log(data)
+    const dataHandle = (data: reviewForm) => {
+        console.log(data) // rating is a number here
     }
 
-  return (
-    <div>
+    return (
+        <div>
+            <form onSubmit={handleSubmit(dataHandle)}>
+                <input type="text" placeholder="review" {...register('review')} />
+                {errors.review && <p>{errors.review.message}</p>}
 
-        <form onSubmit={handleSubmit(dataHandle)}>
-            <input type="text" placeholder='review' {...register('review')} />
-            <input type="text" placeholder='rating' {...register('rating')} />
-            <input type="submit" />
-        </form>
-      
-    <button onClick={close}>close</button>
+                <input type="text" placeholder="rating" {...register('rating')} />
+                {errors.rating && <p>{errors.rating.message}</p>}
 
-    </div>
-  )
+                <input type="submit" />
+            </form>
+
+            <button onClick={close}>close</button>
+        </div>
+    )
 }
 
 export default ReviewForm

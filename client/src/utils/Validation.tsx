@@ -185,3 +185,20 @@ export const ProfileSchema = z.object({
 
 
 export type ProfileData = z.infer<typeof ProfileSchema>
+
+
+
+
+export const ReviewSchema = z.object({
+  review: z
+    .string()
+    .trim()
+    .min(5, "Review must be at least 5 characters")
+    .max(500, "Review cannot exceed 500 characters"),
+
+  rating: z.coerce
+    .number({ error: "Rating must be a number" })
+    .int("Rating must be a whole number")
+    .min(1, "Rating must be at least 1")
+    .max(5, "Rating cannot exceed 5"),
+})
