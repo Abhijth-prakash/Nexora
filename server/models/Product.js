@@ -27,6 +27,7 @@ const VariantSchema = new mongoose.Schema(
       default: [],
     },
 
+    // Cached average, updated by Review.recalculateProductRating
     rating: {
       type: Number,
       default: 0,
@@ -98,6 +99,8 @@ const ProductSchema = new mongoose.Schema(
       default: [],
     },
 
+    // Cached summary, updated by Review.recalculateProductRating.
+    // Don't set these manually.
     rating: {
       type: Number,
       default: 0,
@@ -108,6 +111,7 @@ const ProductSchema = new mongoose.Schema(
     numReviews: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     images: {
@@ -122,11 +126,20 @@ const ProductSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
 ProductSchema.index({ category: 1, visible: 1, createdAt: -1 });
 ProductSchema.index({ subCategory: 1, visible: 1, createdAt: -1 });
+
+// Virtual link to the Review collection (nothing stored on the product)
+ProductSchema.virtual("reviews", {
+  ref: "Review",
+  localField: "_id",
+  foreignField: "product",
+});
 
 // Populate category and subcategory details
 ProductSchema.methods.populateDetails = async function () {
