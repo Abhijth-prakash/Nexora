@@ -1,9 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
-import type { Basecategory, BaseProduct } from "../../utils/baseTypes"
+import type { Basecategory, BaseProduct, BaseReview } from "../../utils/baseTypes"
 import axios from "axios"
 import { CartApi, ProductApi } from "../../utils/api"
 import type { CategoryTreeItem } from "../../utils/apiTypes"
 import type { PayloadAction } from "@reduxjs/toolkit"
+import type { CreateReviewPayload } from "../../components/ReviewForm"
+
+
+
 
 type ProductState = {
   categories: Basecategory[]
@@ -23,6 +27,7 @@ type ProductState = {
   maxPrice: number
   categoriesLimit: number | null
   productsKey: string | null
+  review:BaseReview | null
 }
 
 const initialState: ProductState = {
@@ -42,7 +47,8 @@ const initialState: ProductState = {
   minPrice: 0,
   maxPrice: 10000,
   categoriesLimit: null,
-  productsKey: null
+  productsKey: null,
+  review:null
 }
 
 type GetProductsArgs = {
@@ -146,6 +152,25 @@ export const getCategoryTree = createAsyncThunk(
   {
     condition: (_, { getState }) => {
       if (getProductState(getState).categoryTree.length > 0) return false
+    }
+  }
+)
+
+
+
+
+
+
+export const createReview = createAsyncThunk(
+  'users/createReview',
+  async (payload: CreateReviewPayload, { rejectWithValue }) => {
+    try {
+      const response = await ProductApi.createReview(payload)
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to add review"
+      )
     }
   }
 )

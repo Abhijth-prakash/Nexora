@@ -82,18 +82,12 @@ class ProductsController extends BaseController{
 static createReview = BaseController.asyncHandler(async (req, res) => {
   const userId = req.userId;
 
-  const { productId, variantId, rating, review } =
-    BaseController.validateRequest(ReviewValidation, req.body);
+   const data = BaseController.validateRequest(ReviewValidation, req.body);
 
-  const newReview = await UserproductService.createReview(userId, {
-    productId,
-    variantId: variantId || null,
-    rating,
-    review,
-  });
+  const newReview = await UserproductService.createReview(userId, data);
 
   BaseController.logAction(
-    `Review ${newReview._id} created by user ${userId} for product ${productId}`
+    `Review ${newReview._id} created by user ${userId} for product ${data.productId}`
   );
 
   return this.sendSuccessResponse(

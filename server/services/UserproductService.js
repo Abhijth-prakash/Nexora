@@ -3,7 +3,7 @@ const { NotFoundError,ConflictError } = require("../utils/errors")
 const logger = require("../utils/logger")
 const Product = require('../models/Product')
 const config = require('../config/config')
-
+const Review = require('../models/Review')
  
 
 class UserproductService{
@@ -152,11 +152,11 @@ class UserproductService{
 static async createReview(user, data) {
   try {
     const { productId, variantId = null, review, rating } = data;
-
+   
     const existing = await Review.findOne({
       product: productId,
       variant: variantId || null,
-      user: user._id,
+      user: user,
     });
 
     if (existing) {
@@ -167,16 +167,15 @@ static async createReview(user, data) {
       );
     }
 
+    
     return await Review.create({
       product: productId,
       variant: variantId || null,
-      user: user._id,
+      user: user,
       rating,
       review,
     });
   } catch (error) {
-    // Race condition: two simultaneous requests passed the findOne check,
-    // the unique index rejects the second one
     if (error.code === 11000) {
       throw new ConflictError("You have already reviewed this item");
     }

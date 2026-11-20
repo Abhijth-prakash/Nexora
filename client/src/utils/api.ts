@@ -1,9 +1,9 @@
 import axios from "axios";
 import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
-import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, BuyNowPayload, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getAllreturnResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse, PaymentFailureResponse, PaymentStatusResponse, productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
+import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, BuyNowPayload, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, CreateReviewResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getAllreturnResponse, getOrderResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse, PaymentFailureResponse, PaymentStatusResponse, productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
-
+import type { CreateReviewPayload } from "../components/ReviewForm";
 
 const ClientApi = axios.create({
   baseURL: BASE_URL,
@@ -112,6 +112,15 @@ export const ProductApi = {
   },
   getCategoryTree: async (): Promise<ApiResponse<CategoryTreeItem[]>> => {
   const response = await ClientApi.get<ApiResponse<CategoryTreeItem[]>>('/users/category-tree')
+  return response.data
+},
+createReview: async (
+  payload: CreateReviewPayload
+): Promise<ApiResponse<CreateReviewResponse>> => {
+  const response = await ClientApi.post<ApiResponse<CreateReviewResponse>>(
+    '/users/products/review',
+    payload
+  )
   return response.data
 },
 }

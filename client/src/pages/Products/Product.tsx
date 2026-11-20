@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from "react-toastify"
@@ -9,7 +8,6 @@ import { validateCart, setBuyNowItem } from '../../redux/features/orderSlice'
 import type { BaseProduct } from '../../utils/baseTypes'
 import { addToGuestCart } from '../../utils/guestCart'
 import ReviewForm from '../../components/ReviewForm'
-
 
 type Variant = NonNullable<BaseProduct['variants']>[number]
 
@@ -25,15 +23,21 @@ const Product = () => {
   const [activeImage, setActiveImage] = useState(0)
   const [tab, setTab] = useState<'description' | 'specifications' | 'reviews'>('description')
   const [quantity, setQuantiy] = useState(1)
-  const [review,setReview] = useState(false)
-  
-  
+  const [review, setReview] = useState(false)
 
   useEffect(() => {
     if (id) {
       dispatch(getProductbyID(id))
     }
   }, [])
+
+  // lock page scroll while the review modal is open
+  useEffect(() => {
+    document.body.style.overflow = review ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [review])
 
   if (!product) {
     return (
@@ -125,108 +129,104 @@ const Product = () => {
     setQuantiy(1)
   }
 
-const cartHandle = async () => {
-  if (!canBuy) return
+  const cartHandle = async () => {
+    if (!canBuy) return
 
-  if (!logged) {
-    const items = addToGuestCart({
+    if (!logged) {
+      const items = addToGuestCart({
+        productId: product._id,
+        variantId: selectedVariant?._id ?? null,
+        size: sizes.length > 0 ? size : null,
+        quantity,
+        name: product.name,
+        image: images[0],
+        price,
+        brand: product.brand,
+        stock,
+      })
+
+      dispatch(setGuestItems(items))
+      setQuantiy(1)
+
+      await dispatch(getCart()).unwrap()
+
+      toast.success('Added to bag')
+
+      return
+    }
+
+    try {
+      await dispatch(
+        addToCart({
+          productId: product._id,
+          variantId: selectedVariant?._id ?? null,
+          size: sizes.length > 0 ? size : null,
+          quantity,
+        })
+      ).unwrap()
+
+      await dispatch(getCart()).unwrap()
+
+      setQuantiy(1)
+      toast.success('Added to bag')
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not add to bag')
+    }
+  }
+
+  const buyNowHandle = async () => {
+    if (!canBuy) return
+
+    if (!logged) {
+      toast.info('Please sign in to proceed with Buy Now')
+      navigate('/auth/login')
+      return
+    }
+
+    const buyNowItem = {
       productId: product._id,
       variantId: selectedVariant?._id ?? null,
       size: sizes.length > 0 ? size : null,
       quantity,
       name: product.name,
+      brand: product.brand,
       image: images[0],
       price,
-      brand: product.brand,
       stock,
-    })
+    }
 
-    dispatch(setGuestItems(items))
-    setQuantiy(1)
+    try {
+      await dispatch(validateCart(buyNowItem)).unwrap()
+      dispatch(setBuyNowItem(buyNowItem))
 
-    await dispatch(getCart()).unwrap()
-
-    toast.success('Added to bag')
-
-    return
-  }
-
-  
-  try {
-    await dispatch(
-      addToCart({
-        productId: product._id,
-        variantId: selectedVariant?._id ?? null,
-        size: sizes.length > 0 ? size : null,
-        quantity,
+      navigate('/users/Checkout', {
+        state: {
+          isBuyNow: true,
+          buyNowItem,
+        },
       })
-    ).unwrap()
-
-    await dispatch(getCart()).unwrap()
-
-    setQuantiy(1)
-    toast.success('Added to bag')
-  } catch (err) {
-    toast.error(typeof err === 'string' ? err : 'Could not add to bag')
-  }
-}
-
-const buyNowHandle = async () => {
-  if (!canBuy) return
-
-  if (!logged) {
-    toast.info('Please sign in to proceed with Buy Now')
-    navigate('/auth/login')
-    return
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Product is currently unavailable or out of stock')
+    }
   }
 
-  const buyNowItem = {
-    productId: product._id,
-    variantId: selectedVariant?._id ?? null,
-    size: sizes.length > 0 ? size : null,
-    quantity,
-    name: product.name,
-    brand: product.brand,
-    image: images[0],
-    price,
-    stock,
+  // review handlers
+  const reviewHanlde = () => {
+    if (!logged) {
+      toast.info('Please sign in to write a review')
+      navigate('/auth/login')
+      return
+    }
+    setReview(true)
   }
 
-  try {
-    await dispatch(validateCart(buyNowItem)).unwrap()
-    dispatch(setBuyNowItem(buyNowItem))
-
-    navigate('/users/Checkout', {
-      state: {
-        isBuyNow: true,
-        buyNowItem,
-      },
-    })
-  } catch (err) {
-    toast.error(typeof err === 'string' ? err : 'Product is currently unavailable or out of stock')
+  const reviewCLose = () => {
+    setReview(false)
   }
-}
-
-
-//review handle
-
-const reviewHanlde = ()=>{
-  setReview(true)
-}
-
-const reviewCLose = ()=>{
-  setReview(false)
-}
-
-
 
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-16">
-    
-      
       <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-
-    {review && <ReviewForm close={reviewCLose}></ReviewForm>}
         {/* Gallery */}
         <div className="flex min-w-0 flex-col-reverse gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:gap-4 sm:p-4">
           <div className="flex min-w-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-white">
@@ -422,9 +422,32 @@ const reviewCLose = ()=>{
           {tab === 'reviews' && <p>No reviews yet.</p>}
         </div>
       </div>
-      <button onClick={reviewHanlde}>+review</button>
-    </main>
 
+      {/* Write review button */}
+      <button
+        type="button"
+        onClick={reviewHanlde}
+        className="mt-4 rounded-lg border border-red-500 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50"
+      >
+        + Write a review
+      </button>
+
+      {/* Review modal */}
+      {review && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={reviewCLose}
+        >
+          <div onClick={e => e.stopPropagation()} className="w-full max-w-md">
+            <ReviewForm
+              productId={product._id}
+              variantId={selectedVariant?._id ?? null}
+              close={reviewCLose}
+            />
+          </div>
+        </div>
+      )}
+    </main>
   )
 }
 
