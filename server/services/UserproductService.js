@@ -184,6 +184,42 @@ static async createReview(user, data) {
     throw error;
   }
 }
+
+//getReviews
+static async getReviews(productId, { variantId = null, page = 1, limit = 10 } = {}) {
+  try {
+    const filter = { product: productId };
+
+    if (variantId) filter.variant = variantId;
+
+    const skip = (page - 1) * limit;
+
+    const [reviews, total] = await Promise.all([
+      Review.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("user", "name")
+        .lean(),
+      Review.countDocuments(filter),
+    ]);
+
+    
+    return {
+      reviews,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + reviews.length < total,
+      },
+    };
+  } catch (error) {
+    logger.error("failed to get reviews", error);
+    throw error;
+  }
+}
 }
 
 module.exports = UserproductService

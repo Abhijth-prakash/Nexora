@@ -10,6 +10,8 @@ router.get('/product',ProductsController.GetProductbyid)
 router.get('/category',ProductsController.getCategories)
 router.get('/category-tree', ProductsController.getCategoryTree)
 
+
+router.get('/products/review', ProductsController.getReviews)
 router.use(authenticate)
 router.post('/products/review',ProductsController.createReview)
 

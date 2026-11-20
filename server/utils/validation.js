@@ -452,6 +452,33 @@ const ReviewValidation = Joi.object({
 });
 
 
+
+const GetReviewsValidation = Joi.object({
+  productId: Joi.string()
+    .trim()
+    .pattern(/^[0-9a-fA-F]{24}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "productId must be a valid ID",
+    }),
+
+  variantId: Joi.string()
+    .trim()
+    .pattern(/^[0-9a-fA-F]{24}$/)
+    .allow(null, "")
+    .optional()
+    .default(null)
+    .messages({
+      "string.pattern.base": "variantId must be a valid ID",
+    }),
+
+  page: Joi.number().integer().min(1).default(1),
+
+  limit: Joi.number().integer().min(1).max(50).default(10),
+});
+
+
+
 module.exports = {
   registerValidate,
   OTPValidation,
@@ -468,5 +495,6 @@ module.exports = {
   VariantValidation,
   couponValidation,
   ReturnValidation,
-  ReviewValidation
+  ReviewValidation,
+  GetReviewsValidation
 };

@@ -206,3 +206,23 @@ export type GenerateReturnResponse = BaseReturn
 export type getAllreturnResponse = BaseReturn[]
 
 export type CreateReviewResponse = BaseReview
+
+export type ReviewPagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+};
+
+export type GetReviewParams = {
+  productId: string;
+  variantId?: string | null;
+  page?: number;
+  limit?: number;
+};
+
+export type GetReviewResponse = {
+  reviews: BaseReview[];
+  pagination: ReviewPagination;
+};

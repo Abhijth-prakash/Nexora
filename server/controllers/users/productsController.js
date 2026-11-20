@@ -1,5 +1,5 @@
 const UserproductService = require("../../services/UserproductService");
-const { ReviewValidation } = require("../../utils/validation");
+const { ReviewValidation,GetReviewsValidation } = require("../../utils/validation");
 const BaseController = require("../baseController")
 
 class ProductsController extends BaseController{
@@ -95,6 +95,34 @@ static createReview = BaseController.asyncHandler(async (req, res) => {
     "Review added successfully",
     newReview,
     201
+  );
+});
+
+
+
+//getReviews
+static getReviews = BaseController.asyncHandler(async (req, res) => {
+  const { productId, variantId, page, limit } = BaseController.validateRequest(
+    GetReviewsValidation,
+    req.query
+  );
+  
+
+  const result = await UserproductService.getReviews(productId, {
+    variantId: variantId || null,
+    page,
+    limit,
+  });
+
+  BaseController.logAction(
+    `Fetched reviews for product ${productId} (page ${page})`
+  );
+   
+  return this.sendSuccessResponse(
+    res,
+    "Reviews fetched successfully",
+    result,
+    200
   );
 });
 

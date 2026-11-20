@@ -297,11 +297,16 @@ export type BaseReturn = {
   __v: number;
 };
 
+export type ReviewUser = {
+  _id: string;
+  name: string;
+};
+
 export type BaseReview = {
   _id: string;
   product: string;
   variant: string | null;
-  user: string;
+  user: ReviewUser | null;
   rating: number;
   review?: string | null;
   createdAt: string;

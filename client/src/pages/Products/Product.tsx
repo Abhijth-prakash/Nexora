@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from "react-toastify"
 import { useAppDispatch, useAppSelector } from '../../redux/hooks'
-import { getProductbyID } from '../../redux/features/productSlice'
+import { getProductbyID, getReviews } from '../../redux/features/productSlice'
 import { addToCart, getCart, setGuestItems } from '../../redux/features/cartSlice'
 import { validateCart, setBuyNowItem } from '../../redux/features/orderSlice'
 import type { BaseProduct } from '../../utils/baseTypes'
@@ -11,17 +11,29 @@ import ReviewForm from '../../components/ReviewForm'
 
 type Variant = NonNullable<BaseProduct['variants']>[number]
 
+const formatReviewDate = (value: string) => {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+const getInitial = (name?: string | null) => (name?.trim()?.[0] ?? '?').toUpperCase()
+
 const Product = () => {
   const { id } = useParams()
   const dispatch = useAppDispatch()
-  const { product } = useAppSelector(state => state.productData)
+  const { product, reviews } = useAppSelector(state => state.productData)
   const { logged } = useAppSelector(state => state.userData)
   const navigate = useNavigate()
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
   const [size, setSize] = useState<string | null>(null)
   const [activeImage, setActiveImage] = useState(0)
-  const [tab, setTab] = useState<'description' | 'specifications' | 'reviews'>('description')
   const [quantity, setQuantiy] = useState(1)
   const [review, setReview] = useState(false)
 
@@ -30,6 +42,20 @@ const Product = () => {
       dispatch(getProductbyID(id))
     }
   }, [])
+
+  // fetch reviews (refetches when the selected variant changes)
+  useEffect(() => {
+    if (!id) return
+
+    dispatch(
+      getReviews({
+        productId: id,
+        variantId: selectedVariant?._id ?? null,
+        page: 1,
+        limit: 10,
+      })
+    )
+  }, [id, selectedVariant?._id])
 
   // lock page scroll while the review modal is open
   useEffect(() => {
@@ -121,6 +147,9 @@ const Product = () => {
   const sizeOk = sizes.length === 0 || !!size
   const outOfStock = stock <= 0
   const canBuy = sizeOk && !outOfStock
+
+  const avgRating = Math.min(5, Math.max(0, Number(product.rating) || 0))
+  const avgStars = Math.round(avgRating)
 
   const selectVariant = (variant: Variant | null) => {
     setSelectedVariant(variant)
@@ -399,38 +428,106 @@ const Product = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mt-8 min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <div className="flex gap-4 overflow-x-auto border-b border-gray-200 px-4 sm:gap-6 sm:px-6">
-          {(['description', 'specifications', 'reviews'] as const).map(t => (
+      {/* Info + reviews */}
+      <section className="mt-8 grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          {/* Description */}
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+            <h2 className="text-base font-semibold text-gray-900">Description</h2>
+            <p className="mt-3 break-words text-sm leading-relaxed text-gray-600">
+              {product.description}
+            </p>
+          </div>
+
+          {/* Specifications */}
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+            <h2 className="text-base font-semibold text-gray-900">Specifications</h2>
+            <p className="mt-3 text-sm text-gray-600">No specifications added yet.</p>
+          </div>
+
+          {/* Reviews */}
+          <div id="reviews" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-base font-semibold text-gray-900">Customer reviews</h2>
+              <span className="text-xs text-gray-500">{product.numReviews} total</span>
+            </div>
+
+            {reviews && reviews.length > 0 ? (
+              <ul className="mt-4 divide-y divide-gray-200">
+                {reviews.map(r => {
+                  const name = r.user?.name?.trim() || 'Anonymous'
+                  const rating = Math.min(5, Math.max(0, Math.round(r.rating)))
+
+                  return (
+                    <li key={r._id} className="flex gap-3 py-5 first:pt-0 last:pb-0">
+                      <div
+                        aria-hidden="true"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-semibold text-red-500"
+                      >
+                        {getInitial(r.user?.name)}
+                      </div>
+
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                          <p className="truncate text-sm font-medium text-gray-900">{name}</p>
+                          <time dateTime={r.createdAt} className="shrink-0 text-xs text-gray-400">
+                            {formatReviewDate(r.createdAt)}
+                          </time>
+                        </div>
+
+                        <div className="flex items-center gap-2" aria-label={`Rated ${rating} out of 5`}>
+                          <span className="text-sm tracking-wide text-red-500">
+                            {'★'.repeat(rating)}
+                            <span className="text-gray-300">{'★'.repeat(5 - rating)}</span>
+                          </span>
+                          <span className="text-xs text-gray-500">{rating}/5</span>
+                        </div>
+
+                        {r.review && (
+                          <p className="break-words text-sm leading-relaxed text-gray-700">{r.review}</p>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-gray-600">
+                No reviews yet. Be the first to review this product.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Rating summary */}
+        <aside className="min-w-0 lg:col-span-1">
+          <div className="rounded-lg border border-gray-200 bg-white p-5 sm:p-6 lg:sticky lg:top-6">
+            <h2 className="text-base font-semibold text-gray-900">Rating</h2>
+
+            <div className="mt-4 flex items-end gap-3">
+              <span className="text-4xl font-bold text-gray-900">{avgRating.toFixed(1)}</span>
+              <span className="pb-1 text-sm text-gray-500">out of 5</span>
+            </div>
+
+            <p className="mt-2 text-lg tracking-wide text-red-500" aria-label={`Average rating ${avgRating.toFixed(1)} out of 5`}>
+              {'★'.repeat(avgStars)}
+              <span className="text-gray-300">{'★'.repeat(5 - avgStars)}</span>
+            </p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Based on {product.numReviews} {product.numReviews === 1 ? 'review' : 'reviews'}
+            </p>
+
             <button
-              key={t}
               type="button"
-              onClick={() => setTab(t)}
-              className={`shrink-0 py-3 text-sm capitalize ${
-                tab === t ? 'border-b-2 border-red-500 text-red-500' : 'text-gray-500'
-              }`}
+              onClick={reviewHanlde}
+              className="mt-5 w-full rounded-lg border border-red-500 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50"
             >
-              {t}
+              + Write a review
             </button>
-          ))}
-        </div>
-
-        <div className="break-words p-4 text-sm text-gray-600 sm:p-6">
-          {tab === 'description' && <p>{product.description}</p>}
-          {tab === 'specifications' && <p>No specifications added yet.</p>}
-          {tab === 'reviews' && <p>No reviews yet.</p>}
-        </div>
-      </div>
-
-      {/* Write review button */}
-      <button
-        type="button"
-        onClick={reviewHanlde}
-        className="mt-4 rounded-lg border border-red-500 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50"
-      >
-        + Write a review
-      </button>
+          </div>
+        </aside>
+      </section>
 
       {/* Review modal */}
       {review && (

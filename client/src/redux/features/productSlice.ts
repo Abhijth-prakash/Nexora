@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import type { Basecategory, BaseProduct, BaseReview } from "../../utils/baseTypes"
 import axios from "axios"
 import { CartApi, ProductApi } from "../../utils/api"
-import type { CategoryTreeItem } from "../../utils/apiTypes"
+import type { CategoryTreeItem, GetReviewParams } from "../../utils/apiTypes"
 import type { PayloadAction } from "@reduxjs/toolkit"
 import type { CreateReviewPayload } from "../../components/ReviewForm"
 
@@ -28,6 +28,7 @@ type ProductState = {
   categoriesLimit: number | null
   productsKey: string | null
   review:BaseReview | null
+  reviews:BaseReview[]
 }
 
 const initialState: ProductState = {
@@ -48,7 +49,8 @@ const initialState: ProductState = {
   maxPrice: 10000,
   categoriesLimit: null,
   productsKey: null,
-  review:null
+  review:null,
+  reviews:[]
 }
 
 type GetProductsArgs = {
@@ -160,7 +162,7 @@ export const getCategoryTree = createAsyncThunk(
 
 
 
-
+//createReview
 export const createReview = createAsyncThunk(
   'users/createReview',
   async (payload: CreateReviewPayload, { rejectWithValue }) => {
@@ -170,6 +172,21 @@ export const createReview = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(
         error?.response?.data?.message || "Failed to add review"
+      )
+    }
+  }
+)
+
+//getReviews
+export const getReviews = createAsyncThunk(
+  'users/getReviews',
+  async (params: GetReviewParams, { rejectWithValue }) => {
+    try {
+      const response = await ProductApi.getReviews(params)
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch reviews"
       )
     }
   }
@@ -273,6 +290,18 @@ export const ProductSlice = createSlice({
         state.categoryTree = action.payload
       })
       .addCase(getCategoryTree.rejected, (state) => {
+        state.loading = false
+      })
+
+      // get category tree
+      .addCase(getReviews.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(getReviews.fulfilled, (state, action) => {
+        state.loading = false
+        state.reviews = action.payload.reviews
+      })
+      .addCase(getReviews.rejected, (state) => {
         state.loading = false
       })
   }
