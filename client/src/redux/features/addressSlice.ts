@@ -17,7 +17,6 @@ const initialState: AddressState = {
   loading: false,
   error: null,
   fetched:false
-
 }
 
 

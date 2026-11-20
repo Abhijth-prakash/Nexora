@@ -5,9 +5,10 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks'
 import { getProductbyID, getReviews } from '../../redux/features/productSlice'
 import { addToCart, getCart, setGuestItems } from '../../redux/features/cartSlice'
 import { validateCart, setBuyNowItem } from '../../redux/features/orderSlice'
-import type { BaseProduct } from '../../utils/baseTypes'
+import type { BaseProduct, BaseReview } from '../../utils/baseTypes'
 import { addToGuestCart } from '../../utils/guestCart'
 import ReviewForm from '../../components/ReviewForm'
+import { UserProfile } from '../../redux/features/userSlice'
 
 type Variant = NonNullable<BaseProduct['variants']>[number]
 
@@ -24,11 +25,48 @@ const formatReviewDate = (value: string) => {
 
 const getInitial = (name?: string | null) => (name?.trim()?.[0] ?? '?').toUpperCase()
 
+const ReviewItem = ({ r }: { r: BaseReview }) => {
+  const name = r.user?.name?.trim() || 'Anonymous'
+  const rating = Math.min(5, Math.max(0, Math.round(r.rating)))
+
+  return (
+    <div className="flex gap-3">
+      <div
+        aria-hidden="true"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-semibold text-red-500"
+      >
+        {getInitial(r.user?.name)}
+      </div>
+
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <p className="truncate text-sm font-medium text-gray-900">{name}</p>
+          <time dateTime={r.createdAt} className="shrink-0 text-xs text-gray-400">
+            {formatReviewDate(r.createdAt)}
+          </time>
+        </div>
+
+        <div className="flex items-center gap-2" aria-label={`Rated ${rating} out of 5`}>
+          <span className="text-sm tracking-wide text-red-500">
+            {'★'.repeat(rating)}
+            <span className="text-gray-300">{'★'.repeat(5 - rating)}</span>
+          </span>
+          <span className="text-xs text-gray-500">{rating}/5</span>
+        </div>
+
+        {r.review && (
+          <p className="break-words text-sm leading-relaxed text-gray-700">{r.review}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 const Product = () => {
   const { id } = useParams()
   const dispatch = useAppDispatch()
   const { product, reviews } = useAppSelector(state => state.productData)
-  const { logged } = useAppSelector(state => state.userData)
+  const { logged, user, isStale } = useAppSelector(state => state.userData)
   const navigate = useNavigate()
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
@@ -42,6 +80,13 @@ const Product = () => {
       dispatch(getProductbyID(id))
     }
   }, [])
+
+  // load the profile when it is stale
+  useEffect(() => {
+    if (isStale) {
+      dispatch(UserProfile())
+    }
+  }, [dispatch, isStale])
 
   // fetch reviews (refetches when the selected variant changes)
   useEffect(() => {
@@ -150,6 +195,11 @@ const Product = () => {
 
   const avgRating = Math.min(5, Math.max(0, Number(product.rating) || 0))
   const avgStars = Math.round(avgRating)
+
+  // has the signed-in user already reviewed this product?
+  const allReviews = reviews ?? []
+  const myReview = user ? allReviews.find(r => r.user?._id === user._id) : undefined
+  const otherReviews = myReview ? allReviews.filter(r => r._id !== myReview._id) : allReviews
 
   const selectVariant = (variant: Variant | null) => {
     setSelectedVariant(variant)
@@ -452,45 +502,33 @@ const Product = () => {
               <span className="text-xs text-gray-500">{product.numReviews} total</span>
             </div>
 
-            {reviews && reviews.length > 0 ? (
-              <ul className="mt-4 divide-y divide-gray-200">
-                {reviews.map(r => {
-                  const name = r.user?.name?.trim() || 'Anonymous'
-                  const rating = Math.min(5, Math.max(0, Math.round(r.rating)))
-
-                  return (
-                    <li key={r._id} className="flex gap-3 py-5 first:pt-0 last:pb-0">
-                      <div
-                        aria-hidden="true"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-semibold text-red-500"
+            {myReview || otherReviews.length > 0 ? (
+              <div className="mt-4 space-y-4">
+                {myReview && (
+                  <div className="rounded-lg border border-red-200 bg-red-50/40 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-xs font-medium text-red-500">Your review</p>
+                      <button
+                        type="button"
+                        className="rounded-lg border border-red-500 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
                       >
-                        {getInitial(r.user?.name)}
-                      </div>
+                        Edit review
+                      </button>
+                    </div>
+                    <ReviewItem r={myReview} />
+                  </div>
+                )}
 
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                          <p className="truncate text-sm font-medium text-gray-900">{name}</p>
-                          <time dateTime={r.createdAt} className="shrink-0 text-xs text-gray-400">
-                            {formatReviewDate(r.createdAt)}
-                          </time>
-                        </div>
-
-                        <div className="flex items-center gap-2" aria-label={`Rated ${rating} out of 5`}>
-                          <span className="text-sm tracking-wide text-red-500">
-                            {'★'.repeat(rating)}
-                            <span className="text-gray-300">{'★'.repeat(5 - rating)}</span>
-                          </span>
-                          <span className="text-xs text-gray-500">{rating}/5</span>
-                        </div>
-
-                        {r.review && (
-                          <p className="break-words text-sm leading-relaxed text-gray-700">{r.review}</p>
-                        )}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+                {otherReviews.length > 0 && (
+                  <ul className="divide-y divide-gray-200">
+                    {otherReviews.map(r => (
+                      <li key={r._id} className="py-5 first:pt-0 last:pb-0">
+                        <ReviewItem r={r} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ) : (
               <p className="mt-4 text-sm text-gray-600">
                 No reviews yet. Be the first to review this product.
@@ -518,13 +556,19 @@ const Product = () => {
               Based on {product.numReviews} {product.numReviews === 1 ? 'review' : 'reviews'}
             </p>
 
-            <button
-              type="button"
-              onClick={reviewHanlde}
-              className="mt-5 w-full rounded-lg border border-red-500 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50"
-            >
-              + Write a review
-            </button>
+            {myReview ? (
+              <p className="mt-5 rounded-lg bg-gray-50 px-4 py-2.5 text-center text-sm text-gray-600">
+                You have reviewed this product
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={reviewHanlde}
+                className="mt-5 w-full rounded-lg border border-red-500 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50"
+              >
+                + Write a review
+              </button>
+            )}
           </div>
         </aside>
       </section>
