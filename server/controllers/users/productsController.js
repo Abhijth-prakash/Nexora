@@ -1,4 +1,5 @@
 const UserproductService = require("../../services/UserproductService");
+const { ReviewValidation } = require("../../utils/validation");
 const BaseController = require("../baseController")
 
 class ProductsController extends BaseController{
@@ -74,6 +75,34 @@ class ProductsController extends BaseController{
         return this.sendSuccessResponse(res, "category tree fetched successfully", result, 200)
     }
 )
+
+
+
+//creatingReview
+static createReview = BaseController.asyncHandler(async (req, res) => {
+  const userId = req.userId;
+
+  const { productId, variantId, rating, review } =
+    BaseController.validateRequest(ReviewValidation, req.body);
+
+  const newReview = await UserproductService.createReview(userId, {
+    productId,
+    variantId: variantId || null,
+    rating,
+    review,
+  });
+
+  BaseController.logAction(
+    `Review ${newReview._id} created by user ${userId} for product ${productId}`
+  );
+
+  return this.sendSuccessResponse(
+    res,
+    "Review added successfully",
+    newReview,
+    201
+  );
+});
 
 }
 

@@ -1,8 +1,9 @@
 const {Category,Subcategory} = require("../models/Category")
-const { NotFoundError } = require("../utils/errors")
+const { NotFoundError,ConflictError } = require("../utils/errors")
 const logger = require("../utils/logger")
 const Product = require('../models/Product')
 const config = require('../config/config')
+
  
 
 class UserproductService{
@@ -143,6 +144,46 @@ class UserproductService{
     })
 
     return categories.map(c => ({ ...c, subCategories: subMap[c._id] || [] }))
+}
+
+
+
+//creating review
+static async createReview(user, data) {
+  try {
+    const { productId, variantId = null, review, rating } = data;
+
+    const existing = await Review.findOne({
+      product: productId,
+      variant: variantId || null,
+      user: user._id,
+    });
+
+    if (existing) {
+      throw new ConflictError(
+        variantId
+          ? "You have already reviewed this variant"
+          : "You have already reviewed this product"
+      );
+    }
+
+    return await Review.create({
+      product: productId,
+      variant: variantId || null,
+      user: user._id,
+      rating,
+      review,
+    });
+  } catch (error) {
+    // Race condition: two simultaneous requests passed the findOne check,
+    // the unique index rejects the second one
+    if (error.code === 11000) {
+      throw new ConflictError("You have already reviewed this item");
+    }
+
+    logger.error("failed to add review", error);
+    throw error;
+  }
 }
 }
 

@@ -414,6 +414,43 @@ const ReturnValidation = Joi.object({
 });
 
 
+const ReviewValidation = Joi.object({
+  productId: Joi.string()
+    .trim()
+    .pattern(/^[0-9a-fA-F]{24}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "productId must be a valid ID",
+    }),
+
+  variantId: Joi.string()
+    .trim()
+    .pattern(/^[0-9a-fA-F]{24}$/)
+    .allow(null, "")
+    .optional()
+    .default(null)
+    .messages({
+      "string.pattern.base": "variantId must be a valid ID",
+    }),
+
+  rating: Joi.number().integer().min(1).max(5).required().messages({
+    "number.base": "rating must be a number",
+    "number.integer": "rating must be a whole number",
+    "number.min": "rating must be at least 1",
+    "number.max": "rating cannot be more than 5",
+  }),
+
+  review: Joi.string()
+    .trim()
+    .max(2000)
+    .allow("", null)
+    .optional()
+    .default(null)
+    .messages({
+      "string.max": "review cannot be more than 2000 characters",
+    }),
+});
+
 
 module.exports = {
   registerValidate,
@@ -430,5 +467,6 @@ module.exports = {
   UpdateProductValidation,
   VariantValidation,
   couponValidation,
-  ReturnValidation
+  ReturnValidation,
+  ReviewValidation
 };
