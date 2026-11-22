@@ -185,6 +185,53 @@ static async createReview(user, data) {
   }
 }
 
+//updating review
+static async updateReview(user, reviewId, data) {
+  const { review, rating } = data;
+  const logContext = { userId: user, reviewId };
+
+  try {
+    logger.info("updating review", {
+      ...logContext,
+      fields: ["review", "rating"].filter((k) => data[k] !== undefined),
+    });
+
+    const updated = await Review.findOneAndUpdate(
+      { _id: reviewId, user: user },
+      {
+        $set: {
+          ...(review !== undefined && { review }),
+          ...(rating !== undefined && { rating }),
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      logger.warn("review not found or not owned by user", logContext);
+      throw new NotFoundError("Review not found");
+    }
+
+    logger.info("review updated", {
+      ...logContext,
+      productId: updated.product,
+      variantId: updated.variant,
+    });
+
+    return updated;
+  } catch (error) {
+    // NotFoundError is already logged as a warning above.
+    if (!(error instanceof NotFoundError)) {
+      logger.error("failed to update review", {
+        ...logContext,
+        error: error.message,
+        stack: error.stack,
+      });
+    }
+    throw error;
+  }
+}
+
 //getReviews
 static async getReviews(productId, { variantId = null, page = 1, limit = 10 } = {}) {
   try {

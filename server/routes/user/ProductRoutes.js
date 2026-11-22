@@ -14,5 +14,6 @@ router.get('/category-tree', ProductsController.getCategoryTree)
 router.get('/products/review', ProductsController.getReviews)
 router.use(authenticate)
 router.post('/products/review',ProductsController.createReview)
+router.patch('/products/review/:reviewId', ProductsController.updateReview)
 
 module.exports = router

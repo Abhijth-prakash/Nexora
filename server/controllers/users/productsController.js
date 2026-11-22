@@ -99,6 +99,30 @@ static createReview = BaseController.asyncHandler(async (req, res) => {
 });
 
 
+// updatingReview
+static updateReview = BaseController.asyncHandler(async (req, res) => {
+  const userId = req.userId;
+  const { reviewId } = req.params;
+
+  const data = BaseController.validateRequest(UpdateReviewValidation, req.body);
+
+  const updatedReview = await UserproductService.updateReview(
+    userId,
+    reviewId,
+    data
+  );
+
+  BaseController.logAction(
+    `Review ${reviewId} updated by user ${userId}`
+  );
+
+  return this.sendSuccessResponse(
+    res,
+    "Review updated successfully",
+    updatedReview
+  );
+});
+
 
 //getReviews
 static getReviews = BaseController.asyncHandler(async (req, res) => {

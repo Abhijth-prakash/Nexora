@@ -49,7 +49,7 @@ module.exports = {
       api_key:process.env.Cloudinary_api_key,
       api_secret:process.env.Cloudinary_api_secret
   },
-  
+
   RazorPay:{
     api_key:process.env.RazorPay_api_key,
     api_secret:process.env.RazorPay_api_secret
