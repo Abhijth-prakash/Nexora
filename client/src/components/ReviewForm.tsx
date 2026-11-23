@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ReviewSchema } from '../utils/Validation'
-import { useAppDispatch } from '../redux/hooks'
-import { createReview } from '../redux/features/productSlice'
+import { useAppDispatch, useAppSelector } from '../redux/hooks'
+import { createReview, updateReview, getReviews } from '../redux/features/productSlice'
 import { toast } from 'react-toastify'
 
 export type reviewInput = z.input<typeof ReviewSchema>
@@ -15,12 +15,19 @@ export type CreateReviewPayload = {
     variantId?: string | null
     rating: number
     review?: string | null
+   
+}
+
+export type UpdateReviewPayload ={
+  rating: number
+  review?: string
 }
 
 export type props = {
     productId: string
     variantId?: string | null
     close: () => void
+     editId: string
 }
 
 const RATING_LABELS: Record<number, string> = {
@@ -31,7 +38,8 @@ const RATING_LABELS: Record<number, string> = {
     5: 'Excellent',
 }
 
-const ReviewForm = ({ productId, variantId = null, close }: props) => {
+const ReviewForm = ({ productId, variantId = null, close,editId }: props) => {
+    const {reviews} = useAppSelector(state=> state.productData)
     const dispatch = useAppDispatch()
     const [hovered, setHovered] = useState(0)
 
@@ -46,7 +54,53 @@ const ReviewForm = ({ productId, variantId = null, close }: props) => {
         defaultValues: { rating: '' } as Partial<reviewInput>,
     })
 
+    // edit mode: prefill the form with the review being edited
+    useEffect(() => {
+        if (!editId) return
+
+        const existing = (reviews ?? []).find(r => r._id === editId)
+        if (!existing) return
+
+        reset({
+            rating: String(existing.rating),
+            review: existing.review ?? '',
+        } as Partial<reviewInput>)
+    }, [editId, reviews, reset])
+
     const dataHandle = async (data: reviewForm) => {
+        // update an existing review
+        if (editId) {
+            try {
+                await dispatch(
+                    updateReview({
+                        reviewId: editId,
+                        data: {
+                            rating: Number(data.rating),
+                            review: data.review ?? '',
+                        },
+                    })
+                ).unwrap()
+
+                await dispatch(
+                    getReviews({
+                        productId,
+                        variantId,
+                        page: 1,
+                        limit: 10,
+                    })
+                ).unwrap()
+
+                toast.success('Review updated successfully')
+                reset()
+                setHovered(0)
+                close()
+            } catch (error) {
+                toast.error(typeof error === 'string' ? error : 'Failed to update review')
+            }
+            return
+        }
+
+        // create a new review
         const payload: CreateReviewPayload = {
             productId,
             variantId,
@@ -73,7 +127,9 @@ const ReviewForm = ({ productId, variantId = null, close }: props) => {
     return (
         <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Write a review</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                    {editId ? 'Edit your review' : 'Write a review'}
+                </h2>
                 <button
                     type="button"
                     onClick={close}
@@ -169,7 +225,9 @@ const ReviewForm = ({ productId, variantId = null, close }: props) => {
                         disabled={isSubmitting}
                         className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {isSubmitting ? 'Submitting...' : 'Submit review'}
+                        {isSubmitting
+                            ? editId ? 'Updating...' : 'Submitting...'
+                            : editId ? 'Update review' : 'Submit review'}
                     </button>
                 </div>
             </form>

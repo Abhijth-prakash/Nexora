@@ -1,5 +1,5 @@
 const UserproductService = require("../../services/UserproductService");
-const { ReviewValidation,GetReviewsValidation } = require("../../utils/validation");
+const { ReviewValidation,GetReviewsValidation, UpdateReviewValidation } = require("../../utils/validation");
 const BaseController = require("../baseController")
 
 class ProductsController extends BaseController{
@@ -103,7 +103,6 @@ static createReview = BaseController.asyncHandler(async (req, res) => {
 static updateReview = BaseController.asyncHandler(async (req, res) => {
   const userId = req.userId;
   const { reviewId } = req.params;
-
   const data = BaseController.validateRequest(UpdateReviewValidation, req.body);
 
   const updatedReview = await UserproductService.updateReview(
@@ -119,7 +118,8 @@ static updateReview = BaseController.asyncHandler(async (req, res) => {
   return this.sendSuccessResponse(
     res,
     "Review updated successfully",
-    updatedReview
+    null,
+    200
   );
 });
 

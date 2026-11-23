@@ -3,7 +3,7 @@ import { BASE_URL } from '../config'
 import type {  RegisterRequest,LoginData, forgetpassDAta, AddressFormData, Addressid, Email, passData, ProfileData } from '../utils/Validation'
 import type { addAddressResponse, AddressResponse, AddToCartPayload, addtoCartResponse, ApiResponse, BuyNowPayload, CartResponse, categoryresponse, CategoryTreeItem, changepasswordresponse, codOtpVeirfyResponse, CouponResponse, CouponValidationResponse, CreateReviewResponse, deleteAddressResponse, editProfileResponse, ForgetpassResponse, GenerateOrderResponse, GenerateReturnResponse, getAllreturnResponse, getOrderResponse, GetReviewParams, GetReviewResponse, GetWalletParams, getWalletResponse, LoginResponse, LogoutResponse, MergeCartResponse, orderSummaryResponse,  payBywalletRespponse, PaymentFailureResponse, PaymentStatusResponse, productResponse, profileResponse, RazorpaymentResponse, RegisterRes,resendOtpResponse,Resetpass,resetpassResponse,updateAddressResponse,VerifyOtpRequest,VerifyOtpResponse, verifyPaymentResponse } from '../utils/apiTypes'
 import type { BaseProduct } from "./baseTypes";
-import type { CreateReviewPayload } from "../components/ReviewForm";
+import type { CreateReviewPayload, UpdateReviewPayload } from "../components/ReviewForm";
 
 const ClientApi = axios.create({
   baseURL: BASE_URL,
@@ -130,6 +130,16 @@ getReviews: async (
   const response = await ClientApi.get<ApiResponse<GetReviewResponse>>(
     '/users/products/review',
     { params }
+  )
+  return response.data
+},
+updateReview: async (
+  reviewId: string,
+  data: UpdateReviewPayload
+): Promise<ApiResponse<null>> => {
+  const response = await ClientApi.patch<ApiResponse<null>>(
+    `/users/products/review/${reviewId}`,
+    data
   )
   return response.data
 },

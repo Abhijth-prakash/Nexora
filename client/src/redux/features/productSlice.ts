@@ -4,7 +4,7 @@ import axios from "axios"
 import { CartApi, ProductApi } from "../../utils/api"
 import type { CategoryTreeItem, GetReviewParams } from "../../utils/apiTypes"
 import type { PayloadAction } from "@reduxjs/toolkit"
-import type { CreateReviewPayload } from "../../components/ReviewForm"
+import type { CreateReviewPayload, UpdateReviewPayload } from "../../components/ReviewForm"
 
 
 
@@ -193,6 +193,24 @@ export const getReviews = createAsyncThunk(
 )
 
 
+//updateReview
+export const updateReview = createAsyncThunk(
+  'users/updateReview',
+  async (
+    { reviewId, data }: { reviewId: string; data: UpdateReviewPayload },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await ProductApi.updateReview(reviewId, data)
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || 'Failed to update review'
+      )
+    }
+  }
+)
+
 
 export const ProductSlice = createSlice({
   name: "product",
@@ -293,7 +311,7 @@ export const ProductSlice = createSlice({
         state.loading = false
       })
 
-      // get category tree
+      // get Reviews tree
       .addCase(getReviews.pending, (state) => {
         state.loading = true
       })
@@ -302,6 +320,17 @@ export const ProductSlice = createSlice({
         state.reviews = action.payload.reviews
       })
       .addCase(getReviews.rejected, (state) => {
+        state.loading = false
+      })
+
+      //updateReview
+      .addCase(updateReview.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(updateReview.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(updateReview.rejected, (state) => {
         state.loading = false
       })
   }

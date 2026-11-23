@@ -74,6 +74,7 @@ const Product = () => {
   const [activeImage, setActiveImage] = useState(0)
   const [quantity, setQuantiy] = useState(1)
   const [review, setReview] = useState(false)
+  const [editId,setEditId] = useState('')
 
   useEffect(() => {
     if (id) {
@@ -296,11 +297,19 @@ const Product = () => {
       navigate('/auth/login')
       return
     }
+    setEditId('')
+    setReview(true)
+  }
+
+  // open the modal in edit mode for the given review
+  const reviewEditHandle = (reviewId: string) => {
+    setEditId(reviewId)
     setReview(true)
   }
 
   const reviewCLose = () => {
     setReview(false)
+    setEditId('')
   }
 
   return (
@@ -510,6 +519,7 @@ const Product = () => {
                       <p className="text-xs font-medium text-red-500">Your review</p>
                       <button
                         type="button"
+                        onClick={() => reviewEditHandle(myReview._id)}
                         className="rounded-lg border border-red-500 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
                       >
                         Edit review
@@ -583,6 +593,7 @@ const Product = () => {
             <ReviewForm
               productId={product._id}
               variantId={selectedVariant?._id ?? null}
+              editId={editId}
               close={reviewCLose}
             />
           </div>

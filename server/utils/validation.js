@@ -479,6 +479,26 @@ const GetReviewsValidation = Joi.object({
 
 
 
+UpdateReviewValidation= Joi.object({
+    rating: Joi.number().integer().min(1).max(5).required().messages({
+    "number.base": "rating must be a number",
+    "number.integer": "rating must be a whole number",
+    "number.min": "rating must be at least 1",
+    "number.max": "rating cannot be more than 5",
+  }),
+
+  review: Joi.string()
+    .trim()
+    .max(2000)
+    .allow("", null)
+    .optional()
+    .default(null)
+    .messages({
+      "string.max": "review cannot be more than 2000 characters",
+    }),
+
+})
+
 module.exports = {
   registerValidate,
   OTPValidation,
@@ -496,5 +516,6 @@ module.exports = {
   couponValidation,
   ReturnValidation,
   ReviewValidation,
-  GetReviewsValidation
+  GetReviewsValidation,
+  UpdateReviewValidation
 };
