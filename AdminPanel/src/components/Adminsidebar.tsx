@@ -266,6 +266,35 @@ const AdminSidebar = () => {
 
             <span>Categories</span>
           </Link>
+
+          {/* SALES REPORT */}
+          <Link
+            to="/admin/sales"
+            className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 3v18h18"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M7 15l4-4 3 3 5-6"
+                />
+              </svg>
+            </div>
+
+            <span>Sales Report</span>
+          </Link>
         </div>
 
         {/* SETTINGS */}
