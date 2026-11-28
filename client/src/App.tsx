@@ -27,6 +27,7 @@ import Wallet from "./pages/wallet/Wallet"
 import Cancelled from "./pages/orders/Cancelled"
 import Returns from "./pages/orders/Returns"
 import ReturnDetails from "./pages/orders/ReturnDetails"
+import Ai from "./pages/ai/ai"
 
 
 function App() {
@@ -80,7 +81,12 @@ function App() {
           <Route path="/users/payment" element={<Payment />} />
           <Route path="/users/payment/sucess" element={<OrderSuccess />} />
           </Route>
-
+      
+      
+          
+          <Route path="/users/chatbot" element={<Ai />} />
+          
+          
 
 
 
